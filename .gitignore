@@ -1,14 +1,18 @@
-# Foundry
+# Foundry build artifacts
 contracts/out/
 contracts/cache/
 contracts/broadcast/
 
+# Foundry deps (forge-std, OpenZeppelin) are vendored in contracts/lib so that
+# `forge test` runs on a fresh clone with zero setup — judges run it in 3 min.
+
 # deps
 node_modules/
 
-# env / secrets
+# env / secrets — but keep the .example templates
 .env
 .env.*
+!.env.example
 *.key
 
 # next.js
