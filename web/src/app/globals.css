@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0a0a0c;
+  --panel: #131317;
+  --panel-hi: #1a1a20;
+  --line: #26262e;
+  --text: #ededf0;
+  --muted: #8a8a97;
+  --faint: #55555f;
+
+  --live: #f5a524; /* amber — active, ticking */
+  --done: #34d399; /* mint  — completed, refunded */
+  --gone: #f43f5e; /* rose  — forfeited, deadline missed */
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-hi: var(--panel-hi);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-live: var(--live);
+  --color-done: var(--done);
+  --color-gone: var(--gone);
+  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  /* faint grid so the dark plane has texture, not flat AI-slop black */
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(245, 165, 36, 0.06), transparent 45%),
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 100% 100%, 44px 44px, 44px 44px;
+  background-position: 0 0, -1px -1px, -1px -1px;
+  background-attachment: fixed;
+}
+
+/* dim the grid so it reads as texture, not a spreadsheet */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.82);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.tnum {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.pulse {
+  animation: pulse-live 1.4s ease-in-out infinite;
+}

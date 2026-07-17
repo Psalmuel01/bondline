@@ -100,9 +100,10 @@ contract ShipstakeVault is ReentrancyGuard {
         uint256 refund = c.stake;
         address creator = c.creator;
 
-        // effects
+        // effects — status is the state machine; a non-Active commitment can never
+        // pay out again (see the NotActive check above), so `stake` is left intact
+        // as the permanent historical record of what was on the line.
         c.status = Status.Completed;
-        c.stake = 0;
 
         // interaction
         (bool ok, ) = payable(creator).call{value: refund}("");
@@ -124,9 +125,9 @@ contract ShipstakeVault is ReentrancyGuard {
         uint256 stake = c.stake;
         address beneficiary = c.beneficiary;
 
-        // effects
+        // effects — status flips to Forfeited before the transfer; the NotActive
+        // guard makes a second payout impossible, so `stake` stays as the record.
         c.status = Status.Forfeited;
-        c.stake = 0;
 
         // interaction
         (bool ok, ) = payable(beneficiary).call{value: stake}("");

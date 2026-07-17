@@ -99,7 +99,7 @@ contract ShipstakeVaultTest is Test {
         assertEq(address(vault).balance, 0);
         (, , , uint96 stake, , ShipstakeVault.Status status, ) = vault.commitments(id);
         assertEq(uint256(status), uint256(ShipstakeVault.Status.Completed));
-        assertEq(stake, 0);
+        assertEq(stake, 1 ether); // stake kept as historical record
     }
 
     function test_markComplete_onlyWitness() public {
@@ -146,7 +146,7 @@ contract ShipstakeVaultTest is Test {
         assertEq(address(vault).balance, 0);
         (, , , uint96 stake, , ShipstakeVault.Status status, ) = vault.commitments(id);
         assertEq(uint256(status), uint256(ShipstakeVault.Status.Forfeited));
-        assertEq(stake, 0);
+        assertEq(stake, 1 ether); // stake kept as historical record
     }
 
     function test_claimForfeit_revertsBeforeDeadline() public {
