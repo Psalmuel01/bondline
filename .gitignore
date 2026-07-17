@@ -1,0 +1,21 @@
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# deps
+node_modules/
+
+# env / secrets
+.env
+.env.*
+*.key
+
+# next.js
+web/.next/
+web/out/
+web/node_modules/
+
+# misc
+.DS_Store
+*.log
