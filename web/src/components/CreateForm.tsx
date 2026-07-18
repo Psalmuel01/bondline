@@ -27,9 +27,20 @@ export function CreateForm({ onCreated }: { onCreated: () => void }) {
   const witnessOk = isAddress(witness);
   const witnessIsSelf = witnessOk && address && witness.toLowerCase() === address.toLowerCase();
   const beneficiaryOk = isAddress(beneficiary);
+  const beneficiaryIsSelf =
+    beneficiaryOk && address && beneficiary.toLowerCase() === address.toLowerCase();
+  const witnessIsBeneficiary =
+    witnessOk && beneficiaryOk && witness.toLowerCase() === beneficiary.toLowerCase();
   const stakeOk = Number(stake) > 0;
   const canSubmit =
-    isConnected && description.trim().length > 0 && witnessOk && !witnessIsSelf && beneficiaryOk && stakeOk;
+    isConnected &&
+    description.trim().length > 0 &&
+    witnessOk &&
+    !witnessIsSelf &&
+    beneficiaryOk &&
+    !beneficiaryIsSelf &&
+    !witnessIsBeneficiary &&
+    stakeOk;
 
   const busy = write.isPending || write.isConfirming;
 
@@ -121,6 +132,16 @@ export function CreateForm({ onCreated }: { onCreated: () => void }) {
           className="tnum rounded-md border border-line bg-bg px-3 py-2 text-sm text-text outline-none focus:border-live/50"
         />
         <span className="text-xs text-faint">Defaults to a public-goods address. Make forfeiting hurt.</span>
+        {beneficiaryIsSelf && (
+          <span className="text-xs text-gone">
+            Beneficiary can&apos;t be you — you&apos;d just refund yourself on a miss.
+          </span>
+        )}
+        {witnessIsBeneficiary && (
+          <span className="text-xs text-gone">
+            Witness and beneficiary must differ — else the witness profits from your miss.
+          </span>
+        )}
       </label>
 
       <button

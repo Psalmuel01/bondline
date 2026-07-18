@@ -86,6 +86,26 @@ contract ShipstakeVaultTest is Test {
         vault.createCommitment{value: 1 ether}("x", deadline, creator, beneficiary);
     }
 
+    function test_create_revertsWhenBeneficiaryIsCreator() public {
+        vm.prank(creator);
+        vm.expectRevert(ShipstakeVault.BeneficiaryCannotBeCreator.selector);
+        vault.createCommitment{value: 1 ether}("x", deadline, witness, creator);
+    }
+
+    function test_create_revertsWhenWitnessIsBeneficiary() public {
+        vm.prank(creator);
+        vm.expectRevert(ShipstakeVault.WitnessCannotBeBeneficiary.selector);
+        vault.createCommitment{value: 1 ether}("x", deadline, witness, witness);
+    }
+
+    function test_create_revertsOnStakeTooLarge() public {
+        uint256 tooBig = uint256(type(uint96).max) + 1;
+        vm.deal(creator, tooBig);
+        vm.prank(creator);
+        vm.expectRevert(ShipstakeVault.StakeTooLarge.selector);
+        vault.createCommitment{value: tooBig}("x", deadline, witness, beneficiary);
+    }
+
     // --- markComplete (refund path) ---
 
     function test_markComplete_refundsCreator() public {

@@ -40,7 +40,7 @@ Every action shows its transaction on the Monad explorer. Nothing is faked, noth
 cd contracts
 forge test -vv
 ```
-Expected: **20 passing** — both resolution paths, every revert, reentrancy on both fund-out paths, and a fuzz test on forfeit.
+Expected: **23 passing** — both resolution paths, every revert, reentrancy on both fund-out paths, and a fuzz test on forfeit.
 
 ### Run the frontend locally
 ```bash
@@ -58,7 +58,7 @@ One contract. The entire trust surface fits on one screen.
 
 ```
 contracts/src/ShipstakeVault.sol   ~145 lines, ReentrancyGuard + checks-effects-interactions
-contracts/test/ShipstakeVault.t.sol  20 tests incl. reentrancy attackers + fuzz
+contracts/test/ShipstakeVault.t.sol  23 tests incl. reentrancy attackers + fuzz
 web/                                 Next.js + wagmi/viem, dark "countdowns" UI
 ```
 
@@ -69,7 +69,7 @@ web/                                 Next.js + wagmi/viem, dark "countdowns" UI
 - `claimForfeit(id)` — permissionless, after deadline, if unconfirmed → sends stake to the beneficiary.
 
 ### Design decisions worth noting
-- **Witness ≠ creator** is enforced on creation. You can't vouch for yourself.
+- **No self-dealing is enforced on creation:** witness ≠ creator (you can't vouch for yourself), beneficiary ≠ creator (missing the deadline can't just refund you), and witness ≠ beneficiary (a witness who's also the beneficiary would profit from staying silent — turning "vouch for me" into a coin-flip on stealing the stake).
 - **Silence defaults to forfeiture, never deadlock.** A witness who goes dark can't trap your stake — the deadline itself is the fallback.
 - **Forfeit funds always go to the beneficiary, never the caller.** `claimForfeit` is permissionless by design, so there's no MEV race to win — only the promise being kept or not.
 - **Stake is retained as the historical record** after resolution; the `status` enum is the sole state machine, and the `NotActive` guard makes any second payout impossible. This keeps the resolved-history feed honest ("0.5 MON — FORFEITED") instead of showing zeros.

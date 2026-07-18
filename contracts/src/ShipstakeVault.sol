@@ -44,10 +44,13 @@ contract ShipstakeVault is ReentrancyGuard {
     event CommitmentForfeited(uint256 indexed id, address indexed caller, address indexed beneficiary, uint256 stake);
 
     error StakeRequired();
+    error StakeTooLarge();
     error DeadlineInPast();
     error WitnessRequired();
     error BeneficiaryRequired();
     error WitnessCannotBeCreator();
+    error BeneficiaryCannotBeCreator();
+    error WitnessCannotBeBeneficiary();
     error NoSuchCommitment();
     error NotWitness();
     error NotActive();
@@ -68,10 +71,17 @@ contract ShipstakeVault is ReentrancyGuard {
         address beneficiary
     ) external payable returns (uint256 id) {
         if (msg.value == 0) revert StakeRequired();
+        if (msg.value > type(uint96).max) revert StakeTooLarge();
         if (deadline <= block.timestamp) revert DeadlineInPast();
         if (witness == address(0)) revert WitnessRequired();
         if (beneficiary == address(0)) revert BeneficiaryRequired();
         if (witness == msg.sender) revert WitnessCannotBeCreator();
+        // A creator who is their own beneficiary just refunds themselves on
+        // miss, gutting the enforcement the whole protocol exists to provide.
+        if (beneficiary == msg.sender) revert BeneficiaryCannotBeCreator();
+        // The witness must never profit from the creator missing the deadline,
+        // or "vouch for me" degrades into a coin-flip on stealing the stake.
+        if (witness == beneficiary) revert WitnessCannotBeBeneficiary();
 
         id = commitmentCount++;
         commitments[id] = Commitment({
