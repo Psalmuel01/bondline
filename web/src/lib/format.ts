@@ -5,6 +5,24 @@ export function shortAddr(addr?: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
+/// Deterministic hue [0,360) from an address, for member avatars. Same address
+/// always gets the same color across the app, so a face is recognizable.
+export function addrHue(addr: string): number {
+  let h = 0;
+  const s = addr.toLowerCase();
+  for (let i = 2; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+  return h;
+}
+
+/// Two-char initials from an address (the two hex chars after 0x), upper-cased.
+export function addrInitials(addr: string): string {
+  return addr.slice(2, 4).toUpperCase();
+}
+
+export function bpsPct(bps: number): string {
+  return `${Math.round((bps / 10000) * 100)}%`;
+}
+
 export function formatMon(wei: bigint) {
   const s = formatEther(wei);
   // trim trailing zeros but keep it readable

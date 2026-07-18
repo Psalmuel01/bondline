@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Shipstake — put money behind your word",
+  title: "Bondline — stake on your word, with your crew",
   description:
-    "A stake-backed commitment protocol on Monad. Escrow MON behind a deadline, name a witness, and let the chain enforce the outcome.",
+    "A group commitment protocol on Monad. Stake MON against your own deadline. Miss it and your stake funds the group; hit it and you're refunded once enough of your crew confirms.",
 };
 
 export default function RootLayout({
