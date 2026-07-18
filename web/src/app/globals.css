@@ -7,6 +7,7 @@
  * charge. See docs/brand guide.
  */
 :root {
+  font-size: 17px;
   --ink: #14120f; /* warm near-black charcoal — primary background */
   --bone: #f2efe9; /* warm off-white — primary text on dark */
   --gold: #d9a441; /* the color of money on the line — stakes, countdowns */

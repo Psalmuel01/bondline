@@ -4,8 +4,8 @@ import { addrHue, addrInitials, shortAddr } from "@/lib/format";
 
 type Vote = "yes" | "no" | "pending";
 
-/// A member's identity chip. In the voting UI its ring lights green/red the
-/// instant that member's VoteCast event lands; elsewhere it's a neutral face.
+/// A member's identity chip. In the cosign UI its ring lights green/red the
+/// instant that member's Cosigned event lands; elsewhere it's a neutral face.
 export function Avatar({
   addr,
   size = 40,

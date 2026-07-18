@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 /// sense the first time someone lands here.
 export default function DocsPage() {
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-5 py-6 sm:px-8">
+    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 py-6 sm:px-8">
       <Header />
 
       <article className="py-12 sm:py-16">

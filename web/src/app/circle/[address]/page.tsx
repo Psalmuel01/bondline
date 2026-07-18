@@ -2,9 +2,9 @@
 
 import { useParams } from "next/navigation";
 import { isAddress } from "viem";
-import { PodDetail } from "@/components/PodDetail";
+import { CircleDetail } from "@/components/CircleDetail";
 
-export default function PodPage() {
+export default function CirclePage() {
   const params = useParams<{ address: string }>();
   const raw = params?.address ?? "";
 
@@ -16,5 +16,5 @@ export default function PodPage() {
     );
   }
 
-  return <PodDetail address={raw as `0x${string}`} />;
+  return <CircleDetail address={raw as `0x${string}`} />;
 }

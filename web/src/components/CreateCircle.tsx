@@ -9,10 +9,10 @@ import { explorerTx } from "@/lib/chain";
 import { shortAddr } from "@/lib/format";
 import { Avatar } from "./Avatar";
 
-/// Create-pod flow. Collects a name, the member set (creator auto-included), and
-/// an approval threshold, with a live sentence spelling out what the threshold
+/// Create-Circle flow. Collects a name, the member set (creator auto-included),
+/// and a cosign threshold, with a live sentence spelling out what the threshold
 /// means for this exact group before anything is signed.
-export function CreatePod({ onCreated }: { onCreated: () => void }) {
+export function CreateCircle({ onCreated }: { onCreated: () => void }) {
   const { address } = useAccount();
   const write = useBondlineWrite(onCreated);
 
@@ -56,7 +56,7 @@ export function CreatePod({ onCreated }: { onCreated: () => void }) {
 
   async function submit() {
     if (!canSubmit) return;
-    await write.createPod(name.trim(), parsed.members, bps);
+    await write.createCircle(name.trim(), parsed.members, bps);
   }
 
   return (

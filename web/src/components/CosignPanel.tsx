@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { useAccount, useWatchContractEvent } from "wagmi";
 import {
-  VAULT_ADDRESS,
-  vaultAbi,
-  type Commitment,
-  type Pod,
+  CORE_ADDRESS,
+  coreAbi,
+  type Bond,
+  type Circle,
 } from "@/lib/contracts";
-import { requiredForCommitment } from "@/lib/threshold";
+import { requiredForBond } from "@/lib/threshold";
 import { useBondlineWrite } from "@/lib/useBondlineWrite";
 import { shortAddr } from "@/lib/format";
 import { explorerTx } from "@/lib/chain";
@@ -16,16 +16,16 @@ import { Avatar } from "./Avatar";
 
 type Vote = "yes" | "no" | "pending";
 
-/// Live voting UI for a commitment in PendingVote. Seeds each member's vote
-/// state from chain reads, then flips avatars green/red in real time as VoteCast
+/// Live voting UI for a Bond in PendingCosign. Seeds each member's vote
+/// state from chain reads, then flips avatars green/red in real time as Cosigned
 /// logs arrive — no refresh needed. Shows a running tally against the bar.
-export function VotePanel({
-  c,
-  pod,
+export function CosignPanel({
+  b,
+  circle,
   onResolved,
 }: {
-  c: Commitment;
-  pod: Pod;
+  b: Bond;
+  circle: Circle;
   onResolved: () => void;
 }) {
   const { address } = useAccount();
@@ -33,51 +33,60 @@ export function VotePanel({
 
   // voter address -> how they voted, kept live via event watching
   const [votes, setVotes] = useState<Record<string, Vote>>({});
-  const [yes, setYes] = useState(c.yesVotes);
-  const [no, setNo] = useState(c.noVotes);
+  const [yes, setYes] = useState(b.cosigns);
+  const [no, setNo] = useState(b.objections);
 
-  // reset when the commitment identity changes
+  // reset when the Bond identity changes
   useEffect(() => {
     setVotes({});
-    setYes(c.yesVotes);
-    setNo(c.noVotes);
-  }, [c.id, c.yesVotes, c.noVotes]);
+    setYes(b.cosigns);
+    setNo(b.objections);
+  }, [b.id, b.cosigns, b.objections]);
 
+  // watch Cosigned events (approvals only)
   useWatchContractEvent({
-    address: VAULT_ADDRESS,
-    abi: vaultAbi,
-    eventName: "VoteCast",
+    address: CORE_ADDRESS,
+    abi: coreAbi,
+    eventName: "Cosigned",
     onLogs(logs) {
       let touched = false;
       for (const log of logs) {
-        const a = log.args as {
-          id?: bigint;
-          voter?: `0x${string}`;
-          approve?: boolean;
-          yesVotes?: number;
-          noVotes?: number;
-        };
-        if (a.id !== c.id || !a.voter) continue;
+        const a = log.args as { id?: bigint; cosigner?: `0x${string}`; cosigns?: number };
+        if (a.id !== b.id || !a.cosigner) continue;
         touched = true;
-        setVotes((prev) => ({
-          ...prev,
-          [a.voter!.toLowerCase()]: a.approve ? "yes" : "no",
-        }));
-        if (a.yesVotes !== undefined) setYes(Number(a.yesVotes));
-        if (a.noVotes !== undefined) setNo(Number(a.noVotes));
+        setVotes((prev) => ({ ...prev, [a.cosigner!.toLowerCase()]: "yes" }));
+        if (a.cosigns !== undefined) setYes(Number(a.cosigns));
       }
-      if (touched) onResolved(); // pull fresh status in case this vote resolved it
+      if (touched) onResolved();
     },
   });
 
-  const required = requiredForCommitment(pod.members.length, pod.approvalThresholdBps);
-  const voters = pod.members.filter(
-    (m) => m.toLowerCase() !== c.creator.toLowerCase(),
+  // watch Objected events (objections only)
+  useWatchContractEvent({
+    address: CORE_ADDRESS,
+    abi: coreAbi,
+    eventName: "Objected",
+    onLogs(logs) {
+      let touched = false;
+      for (const log of logs) {
+        const a = log.args as { id?: bigint; objector?: `0x${string}`; objections?: number };
+        if (a.id !== b.id || !a.objector) continue;
+        touched = true;
+        setVotes((prev) => ({ ...prev, [a.objector!.toLowerCase()]: "no" }));
+        if (a.objections !== undefined) setNo(Number(a.objections));
+      }
+      if (touched) onResolved();
+    },
+  });
+
+  const required = requiredForBond(circle.members.length, circle.cosignThresholdBps);
+  const voters = circle.members.filter(
+    (m) => m.toLowerCase() !== b.creator.toLowerCase(),
   );
   const isVoter =
     !!address &&
-    address.toLowerCase() !== c.creator.toLowerCase() &&
-    pod.members.some((m) => m.toLowerCase() === address.toLowerCase());
+    address.toLowerCase() !== b.creator.toLowerCase() &&
+    circle.members.some((m) => m.toLowerCase() === address.toLowerCase());
   const alreadyVoted = !!address && votes[address.toLowerCase()] !== undefined;
   const busy = write.isPending || write.isConfirming;
 
@@ -121,9 +130,9 @@ export function VotePanel({
       </div>
 
       {/* receipts */}
-      {c.evidenceUri && (
+      {b.receiptsUri && (
         <a
-          href={c.evidenceUri}
+          href={b.receiptsUri}
           target="_blank"
           rel="noreferrer"
           className="text-xs text-gold underline decoration-dotted underline-offset-2"
@@ -136,14 +145,14 @@ export function VotePanel({
       {isVoter && !alreadyVoted && (
         <div className="flex gap-2">
           <button
-            onClick={() => write.castVote(c.id, true)}
+            onClick={() => write.cosign(b.id)}
             disabled={busy}
             className="flex-1 rounded-md border border-confirm/50 bg-confirm/10 px-3 py-2 text-sm font-medium text-confirm transition hover:bg-confirm/20 disabled:opacity-50"
           >
             {busy ? "Confirming…" : "Cosign — they shipped"}
           </button>
           <button
-            onClick={() => write.castVote(c.id, false)}
+            onClick={() => write.object(b.id)}
             disabled={busy}
             className="flex-1 rounded-md border border-forfeit/50 bg-forfeit/10 px-3 py-2 text-sm font-medium text-forfeit transition hover:bg-forfeit/20 disabled:opacity-50"
           >
@@ -154,7 +163,7 @@ export function VotePanel({
       {isVoter && alreadyVoted && (
         <p className="text-xs text-faint">You&apos;ve cosigned. Waiting on the rest of the Circle.</p>
       )}
-      {!isVoter && address?.toLowerCase() === c.creator.toLowerCase() && (
+      {!isVoter && address?.toLowerCase() === b.creator.toLowerCase() && (
         <p className="text-xs text-faint">Your Bond is up. The Circle decides from here.</p>
       )}
 

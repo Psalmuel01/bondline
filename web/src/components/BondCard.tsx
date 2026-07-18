@@ -3,31 +3,31 @@
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { keccak256, toBytes } from "viem";
-import { type Commitment, type Pod, Status } from "@/lib/contracts";
+import { type Bond, type Circle, Status } from "@/lib/contracts";
 import { countdownParts, formatMon, shortAddr } from "@/lib/format";
 import { explorerAddr, explorerTx } from "@/lib/chain";
 import { useBondlineWrite } from "@/lib/useBondlineWrite";
-import { VotePanel } from "./VotePanel";
+import { CosignPanel } from "./CosignPanel";
 
 const STATUS_META: Record<Status, { label: string; cls: string; dot: string }> = {
   [Status.Active]: { label: "ON THE LINE", cls: "text-gold border-gold/40 bg-gold/10", dot: "bg-gold" },
-  [Status.PendingVote]: {
+  [Status.PendingCosign]: {
     label: "COSIGNING",
     cls: "text-gold border-gold/40 bg-gold/10",
     dot: "bg-gold",
   },
-  [Status.Completed]: { label: "BEAT THE LINE", cls: "text-confirm border-confirm/40 bg-confirm/10", dot: "bg-confirm" },
-  [Status.Forfeited]: { label: "CROSSED THE LINE", cls: "text-forfeit border-forfeit/40 bg-forfeit/10", dot: "bg-forfeit" },
+  [Status.Met]: { label: "BEAT THE LINE", cls: "text-confirm border-confirm/40 bg-confirm/10", dot: "bg-confirm" },
+  [Status.Crossed]: { label: "CROSSED THE LINE", cls: "text-forfeit border-forfeit/40 bg-forfeit/10", dot: "bg-forfeit" },
 };
 
-export function CommitmentCard({
-  c,
-  pod,
+export function BondCard({
+  b,
+  circle,
   now,
   onResolved,
 }: {
-  c: Commitment;
-  pod: Pod;
+  b: Bond;
+  circle: Circle;
   now: number;
   onResolved: () => void;
 }) {
@@ -36,13 +36,13 @@ export function CommitmentCard({
   const [declaring, setDeclaring] = useState(false);
   const [evidenceUri, setEvidenceUri] = useState("");
 
-  const meta = STATUS_META[c.status];
-  const cd = countdownParts(c.deadline, now);
-  const voteCd = countdownParts(c.voteClosesAt, now);
-  const isCreator = address?.toLowerCase() === c.creator.toLowerCase();
+  const meta = STATUS_META[b.status];
+  const cd = countdownParts(b.deadline, now);
+  const voteCd = countdownParts(b.cosignClosesAt, now);
+  const isCreator = address?.toLowerCase() === b.creator.toLowerCase();
 
-  const active = c.status === Status.Active;
-  const pending = c.status === Status.PendingVote;
+  const active = b.status === Status.Active;
+  const pending = b.status === Status.PendingCosign;
   const expired = active && cd.expired;
 
   const canDeclare = active && !cd.expired && isCreator;
@@ -52,7 +52,7 @@ export function CommitmentCard({
 
   async function submitDeclare() {
     const hash = evidenceUri ? keccak256(toBytes(evidenceUri)) : ("0x" + "0".repeat(64) as `0x${string}`);
-    await write.declareComplete(c.id, hash, evidenceUri.trim());
+    await write.declareDone(b.id, hash, evidenceUri.trim());
     setDeclaring(false);
   }
 
@@ -69,10 +69,10 @@ export function CommitmentCard({
           <span className={`h-1.5 w-1.5 rounded-full ${meta.dot} ${active || pending ? "pulse" : ""}`} />
           {expired ? "LINE CROSSED" : meta.label}
         </span>
-        <span className="tnum text-xs text-faint">#{c.id.toString().padStart(3, "0")}</span>
+          <span className="tnum text-xs text-faint">#{b.id.toString().padStart(3, "0")}</span>
       </div>
 
-      <p className="text-[15px] leading-snug text-bone">{c.description}</p>
+      <p className="text-[15px] leading-snug text-bone">{b.description}</p>
 
       <div className="flex items-end justify-between">
         <div>
@@ -81,9 +81,9 @@ export function CommitmentCard({
           </div>
           <div
             className={`tnum text-2xl font-semibold ${
-              c.status === Status.Completed
+              b.status === Status.Met
                 ? "text-confirm"
-                : c.status === Status.Forfeited || expired
+                : b.status === Status.Crossed || expired
                   ? "text-forfeit"
                   : "text-gold"
             }`}
@@ -93,14 +93,14 @@ export function CommitmentCard({
         </div>
         <div className="text-right">
           <div className="text-[10px] uppercase tracking-widest text-faint">
-            {c.status === Status.Completed
+            {b.status === Status.Met
               ? "Refunded"
-              : c.status === Status.Forfeited
+              : b.status === Status.Crossed
                 ? "Into the Pot"
                 : "Staked"}
           </div>
           <div className="tnum text-2xl font-semibold text-gold">
-            {formatMon(c.stake)}
+            {formatMon(b.stake)}
             <span className="ml-1 text-sm text-muted">MON</span>
           </div>
         </div>
@@ -109,17 +109,17 @@ export function CommitmentCard({
       <div className="tnum flex items-center justify-between border-t border-line pt-3 text-xs text-muted">
         <span>
           <span className="text-faint">by </span>
-          <a href={explorerAddr(c.creator)} target="_blank" rel="noreferrer" className="hover:text-bone">
-            {shortAddr(c.creator)}
+          <a href={explorerAddr(b.creator)} target="_blank" rel="noreferrer" className="hover:text-bone">
+            {shortAddr(b.creator)}
           </a>
           {isCreator && <span className="text-faint"> (you)</span>}
         </span>
-        {c.status === Status.Forfeited && <span className="text-forfeit">fed the Pot</span>}
-        {c.status === Status.Completed && <span className="text-confirm">shipped in time</span>}
+        {b.status === Status.Crossed && <span className="text-forfeit">fed the Pot</span>}
+        {b.status === Status.Met && <span className="text-confirm">shipped in time</span>}
       </div>
 
       {/* live voting */}
-      {pending && !voteCd.expired && <VotePanel c={c} pod={pod} onResolved={onResolved} />}
+      {pending && !voteCd.expired && <CosignPanel b={b} circle={circle} onResolved={onResolved} />}
 
       {/* creator: declare complete */}
       {canDeclare && !declaring && (
@@ -163,7 +163,7 @@ export function CommitmentCard({
       {/* anyone: resolve a lapsed cosign window */}
       {canResolveExpired && (
         <button
-          onClick={() => write.resolveExpired(c.id)}
+          onClick={() => write.resolveExpired(b.id)}
           disabled={busy}
           className="w-full rounded-md border border-line bg-panel px-3 py-2 text-sm font-medium text-bone transition hover:border-panel-hi disabled:opacity-50"
         >
@@ -179,7 +179,7 @@ export function CommitmentCard({
             The Line passed with no Receipts. This stake drops into the Pot.
           </p>
           <button
-            onClick={() => write.forfeitMissed(c.id)}
+            onClick={() => write.crossMissed(b.id)}
             disabled={busy}
             className="w-full rounded-md border border-forfeit/50 bg-forfeit/10 px-3 py-2 text-sm font-medium text-forfeit transition hover:bg-forfeit/20 disabled:opacity-50"
           >

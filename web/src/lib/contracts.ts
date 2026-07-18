@@ -1,111 +1,112 @@
 // Bondline contract layer — addresses, ABIs, types, enums.
-// Two singletons (factory + vault) plus per-pod clones discovered at runtime.
+// Two singletons (CircleFactory + BondlineCore) plus per-Circle clones
+// discovered at runtime.
 //
 // Set these in web/.env.local after deploying (see contracts/README):
-//   NEXT_PUBLIC_FACTORY_ADDRESS=0x…
-//   NEXT_PUBLIC_VAULT_ADDRESS=0x…
+//   NEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS=0x…
+//   NEXT_PUBLIC_CORE_ADDRESS=0x…
 
 const ZERO = "0x0000000000000000000000000000000000000000" as const;
 
-export const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_FACTORY_ADDRESS ??
-  ZERO) as `0x${string}`;
-export const VAULT_ADDRESS = (process.env.NEXT_PUBLIC_VAULT_ADDRESS ??
+export const CIRCLE_FACTORY_ADDRESS = (process.env
+  .NEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS ?? ZERO) as `0x${string}`;
+export const CORE_ADDRESS = (process.env.NEXT_PUBLIC_CORE_ADDRESS ??
   ZERO) as `0x${string}`;
 
 export const isConfigured =
-  FACTORY_ADDRESS !== ZERO && VAULT_ADDRESS !== ZERO;
+  CIRCLE_FACTORY_ADDRESS !== ZERO && CORE_ADDRESS !== ZERO;
 
 // --- enums / types ---
 
 export enum Status {
   Active = 0, // staked, deadline running
-  PendingVote = 1, // creator declared, group is voting
-  Completed = 2, // approved -> refunded
-  Forfeited = 3, // rejected or expired -> funded the pod
+  PendingCosign = 1, // creator declared met, Circle is cosigning
+  Met = 2, // cleared -> refunded
+  Crossed = 3, // objected or lapsed -> funded the Pot
 }
 
-export type Commitment = {
+export type Bond = {
   id: bigint;
   creator: `0x${string}`;
-  pod: `0x${string}`;
+  circle: `0x${string}`;
   stake: bigint;
   deadline: bigint;
-  voteClosesAt: bigint;
+  cosignClosesAt: bigint;
   status: Status;
-  yesVotes: number;
-  noVotes: number;
+  cosigns: number;
+  objections: number;
   description: string;
-  evidenceHash: `0x${string}`;
-  evidenceUri: string;
+  receiptsHash: `0x${string}`;
+  receiptsUri: string;
 };
 
-export type Pod = {
+export type Circle = {
   address: `0x${string}`;
   name: string;
   members: `0x${string}`[];
-  approvalThresholdBps: number;
+  cosignThresholdBps: number;
   balance: bigint;
 };
 
-export type Proposal = {
+export type Payout = {
   id: bigint;
-  pod: `0x${string}`;
+  circle: `0x${string}`;
   to: `0x${string}`;
   amount: bigint;
   executed: boolean;
-  approvals: number;
+  cosigns: number;
   memo: string;
 };
 
 // --- ABIs ---
 
-export const factoryAbi = [
+export const circleFactoryAbi = [
   {
     type: "function",
-    name: "createPod",
+    name: "createCircle",
     stateMutability: "nonpayable",
     inputs: [
       { name: "name_", type: "string" },
       { name: "members_", type: "address[]" },
-      { name: "approvalThresholdBps_", type: "uint16" },
+      { name: "cosignThresholdBps_", type: "uint16" },
     ],
-    outputs: [{ name: "pod", type: "address" }],
+    outputs: [{ name: "circle", type: "address" }],
   },
   {
     type: "function",
-    name: "allPods",
+    name: "allCircles",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "address[]" }],
   },
   {
     type: "function",
-    name: "podCount",
+    name: "circleCount",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "uint256" }],
   },
   {
     type: "function",
-    name: "isPod",
+    name: "isCircle",
     stateMutability: "view",
     inputs: [{ name: "", type: "address" }],
     outputs: [{ name: "", type: "bool" }],
   },
   {
     type: "event",
-    name: "PodCreated",
+    name: "CircleCreated",
     inputs: [
-      { name: "pod", type: "address", indexed: true },
+      { name: "circle", type: "address", indexed: true },
       { name: "creator", type: "address", indexed: true },
       { name: "name", type: "string", indexed: false },
       { name: "members", type: "address[]", indexed: false },
-      { name: "approvalThresholdBps", type: "uint16", indexed: false },
+      { name: "cosignThresholdBps", type: "uint16", indexed: false },
     ],
   },
 ] as const;
 
-export const podAbi = [
+export const circleAbi = [
   {
     type: "function",
     name: "name",
@@ -115,7 +116,7 @@ export const podAbi = [
   },
   {
     type: "function",
-    name: "approvalThresholdBps",
+    name: "cosignThresholdBps",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "uint16" }],
@@ -150,20 +151,20 @@ export const podAbi = [
   },
   {
     type: "function",
-    name: "requiredApprovals",
+    name: "requiredCosigns",
     stateMutability: "view",
-    inputs: [{ name: "eligibleVoters", type: "uint256" }],
+    inputs: [{ name: "eligibleCosigners", type: "uint256" }],
     outputs: [{ name: "", type: "uint256" }],
   },
 ] as const;
 
-export const vaultAbi = [
+export const coreAbi = [
   {
     type: "function",
-    name: "createCommitment",
+    name: "openBond",
     stateMutability: "payable",
     inputs: [
-      { name: "pod", type: "address" },
+      { name: "circle", type: "address" },
       { name: "description", type: "string" },
       { name: "deadline", type: "uint64" },
     ],
@@ -171,23 +172,27 @@ export const vaultAbi = [
   },
   {
     type: "function",
-    name: "declareComplete",
+    name: "declareDone",
     stateMutability: "nonpayable",
     inputs: [
       { name: "id", type: "uint256" },
-      { name: "evidenceHash", type: "bytes32" },
-      { name: "evidenceUri", type: "string" },
+      { name: "receiptsHash", type: "bytes32" },
+      { name: "receiptsUri", type: "string" },
     ],
     outputs: [],
   },
   {
     type: "function",
-    name: "castVote",
+    name: "cosign",
     stateMutability: "nonpayable",
-    inputs: [
-      { name: "id", type: "uint256" },
-      { name: "approve", type: "bool" },
-    ],
+    inputs: [{ name: "id", type: "uint256" }],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "object",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "id", type: "uint256" }],
     outputs: [],
   },
   {
@@ -199,73 +204,73 @@ export const vaultAbi = [
   },
   {
     type: "function",
-    name: "forfeitMissed",
+    name: "crossMissed",
     stateMutability: "nonpayable",
     inputs: [{ name: "id", type: "uint256" }],
     outputs: [],
   },
   {
     type: "function",
-    name: "proposeWithdrawal",
+    name: "proposePayout",
     stateMutability: "nonpayable",
     inputs: [
-      { name: "pod", type: "address" },
+      { name: "circle", type: "address" },
       { name: "to", type: "address" },
       { name: "amount", type: "uint96" },
       { name: "memo", type: "string" },
     ],
-    outputs: [{ name: "proposalId", type: "uint256" }],
+    outputs: [{ name: "payoutId", type: "uint256" }],
   },
   {
     type: "function",
-    name: "approveWithdrawal",
+    name: "cosignPayout",
     stateMutability: "nonpayable",
-    inputs: [{ name: "proposalId", type: "uint256" }],
+    inputs: [{ name: "payoutId", type: "uint256" }],
     outputs: [],
   },
   {
     type: "function",
-    name: "commitmentCount",
+    name: "bondCount",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "uint256" }],
   },
   {
     type: "function",
-    name: "commitments",
+    name: "bonds",
     stateMutability: "view",
     inputs: [{ name: "id", type: "uint256" }],
     outputs: [
       { name: "creator", type: "address" },
-      { name: "pod", type: "address" },
+      { name: "circle", type: "address" },
       { name: "stake", type: "uint96" },
       { name: "deadline", type: "uint64" },
-      { name: "voteClosesAt", type: "uint64" },
+      { name: "cosignClosesAt", type: "uint64" },
       { name: "status", type: "uint8" },
-      { name: "yesVotes", type: "uint32" },
-      { name: "noVotes", type: "uint32" },
+      { name: "cosigns", type: "uint32" },
+      { name: "objections", type: "uint32" },
       { name: "description", type: "string" },
-      { name: "evidenceHash", type: "bytes32" },
-      { name: "evidenceUri", type: "string" },
+      { name: "receiptsHash", type: "bytes32" },
+      { name: "receiptsUri", type: "string" },
     ],
   },
   {
     type: "function",
-    name: "voteState",
+    name: "cosignState",
     stateMutability: "view",
     inputs: [{ name: "id", type: "uint256" }],
     outputs: [
       { name: "eligible", type: "uint256" },
       { name: "required", type: "uint256" },
-      { name: "yes", type: "uint32" },
-      { name: "no", type: "uint32" },
-      { name: "approvedNow", type: "bool" },
-      { name: "rejectableNow", type: "bool" },
+      { name: "confirms", type: "uint32" },
+      { name: "objections", type: "uint32" },
+      { name: "clearedNow", type: "bool" },
+      { name: "crossableNow", type: "bool" },
     ],
   },
   {
     type: "function",
-    name: "hasVoted",
+    name: "hasCosigned",
     stateMutability: "view",
     inputs: [
       { name: "", type: "uint256" },
@@ -275,28 +280,28 @@ export const vaultAbi = [
   },
   {
     type: "function",
-    name: "proposalCount",
+    name: "payoutCount",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "uint256" }],
   },
   {
     type: "function",
-    name: "proposals",
+    name: "payouts",
     stateMutability: "view",
     inputs: [{ name: "id", type: "uint256" }],
     outputs: [
-      { name: "pod", type: "address" },
+      { name: "circle", type: "address" },
       { name: "to", type: "address" },
       { name: "amount", type: "uint96" },
       { name: "executed", type: "bool" },
-      { name: "approvals", type: "uint32" },
+      { name: "cosigns", type: "uint32" },
       { name: "memo", type: "string" },
     ],
   },
   {
     type: "function",
-    name: "hasApprovedWithdrawal",
+    name: "hasCosignedPayout",
     stateMutability: "view",
     inputs: [
       { name: "", type: "uint256" },
@@ -306,18 +311,18 @@ export const vaultAbi = [
   },
   {
     type: "function",
-    name: "VOTE_WINDOW",
+    name: "COSIGN_WINDOW",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "uint64" }],
   },
   {
     type: "event",
-    name: "CommitmentCreated",
+    name: "BondOpened",
     inputs: [
       { name: "id", type: "uint256", indexed: true },
       { name: "creator", type: "address", indexed: true },
-      { name: "pod", type: "address", indexed: true },
+      { name: "circle", type: "address", indexed: true },
       { name: "stake", type: "uint256", indexed: false },
       { name: "deadline", type: "uint64", indexed: false },
       { name: "description", type: "string", indexed: false },
@@ -325,18 +330,25 @@ export const vaultAbi = [
   },
   {
     type: "event",
-    name: "VoteCast",
+    name: "Cosigned",
     inputs: [
       { name: "id", type: "uint256", indexed: true },
-      { name: "voter", type: "address", indexed: true },
-      { name: "approve", type: "bool", indexed: false },
-      { name: "yesVotes", type: "uint32", indexed: false },
-      { name: "noVotes", type: "uint32", indexed: false },
+      { name: "cosigner", type: "address", indexed: true },
+      { name: "cosigns", type: "uint32", indexed: false },
     ],
   },
   {
     type: "event",
-    name: "CommitmentResolved",
+    name: "Objected",
+    inputs: [
+      { name: "id", type: "uint256", indexed: true },
+      { name: "objector", type: "address", indexed: true },
+      { name: "objections", type: "uint32", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "BondResolved",
     inputs: [
       { name: "id", type: "uint256", indexed: true },
       { name: "status", type: "uint8", indexed: false },

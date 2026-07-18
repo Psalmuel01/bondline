@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { parseEther } from "viem";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { FACTORY_ADDRESS, VAULT_ADDRESS, factoryAbi, vaultAbi } from "./contracts";
+import {
+  CIRCLE_FACTORY_ADDRESS,
+  CORE_ADDRESS,
+  circleFactoryAbi,
+  coreAbi,
+} from "./contracts";
 
 /// Wraps every Bondline write with pending/confirming/tx-hash state so the UI
 /// can show each step happening on-chain (no fake optimistic updates). One hook
@@ -44,110 +49,121 @@ export function useBondlineWrite(onConfirmed?: () => void) {
     }
   }
 
-  const createPod = (name: string, members: `0x${string}`[], bps: number) =>
+  const createCircle = (name: string, members: `0x${string}`[], bps: number) =>
     run(() =>
       writeContractAsync({
-        address: FACTORY_ADDRESS,
-        abi: factoryAbi,
-        functionName: "createPod",
+        address: CIRCLE_FACTORY_ADDRESS,
+        abi: circleFactoryAbi,
+        functionName: "createCircle",
         args: [name, members, bps],
       }),
     );
 
-  const createCommitment = (
-    pod: `0x${string}`,
+  const openBond = (
+    circle: `0x${string}`,
     description: string,
     deadlineSec: bigint,
     stakeMon: string,
   ) =>
     run(() =>
       writeContractAsync({
-        address: VAULT_ADDRESS,
-        abi: vaultAbi,
-        functionName: "createCommitment",
-        args: [pod, description, deadlineSec],
+        address: CORE_ADDRESS,
+        abi: coreAbi,
+        functionName: "openBond",
+        args: [circle, description, deadlineSec],
         value: parseEther(stakeMon),
       }),
     );
 
-  const declareComplete = (
+  const declareDone = (
     id: bigint,
-    evidenceHash: `0x${string}`,
-    evidenceUri: string,
+    receiptsHash: `0x${string}`,
+    receiptsUri: string,
   ) =>
     run(() =>
       writeContractAsync({
-        address: VAULT_ADDRESS,
-        abi: vaultAbi,
-        functionName: "declareComplete",
-        args: [id, evidenceHash, evidenceUri],
+        address: CORE_ADDRESS,
+        abi: coreAbi,
+        functionName: "declareDone",
+        args: [id, receiptsHash, receiptsUri],
       }),
     );
 
-  const castVote = (id: bigint, approve: boolean) =>
+  const cosign = (id: bigint) =>
     run(() =>
       writeContractAsync({
-        address: VAULT_ADDRESS,
-        abi: vaultAbi,
-        functionName: "castVote",
-        args: [id, approve],
+        address: CORE_ADDRESS,
+        abi: coreAbi,
+        functionName: "cosign",
+        args: [id],
+      }),
+    );
+
+  const object = (id: bigint) =>
+    run(() =>
+      writeContractAsync({
+        address: CORE_ADDRESS,
+        abi: coreAbi,
+        functionName: "object",
+        args: [id],
       }),
     );
 
   const resolveExpired = (id: bigint) =>
     run(() =>
       writeContractAsync({
-        address: VAULT_ADDRESS,
-        abi: vaultAbi,
+        address: CORE_ADDRESS,
+        abi: coreAbi,
         functionName: "resolveExpired",
         args: [id],
       }),
     );
 
-  const forfeitMissed = (id: bigint) =>
+  const crossMissed = (id: bigint) =>
     run(() =>
       writeContractAsync({
-        address: VAULT_ADDRESS,
-        abi: vaultAbi,
-        functionName: "forfeitMissed",
+        address: CORE_ADDRESS,
+        abi: coreAbi,
+        functionName: "crossMissed",
         args: [id],
       }),
     );
 
-  const proposeWithdrawal = (
-    pod: `0x${string}`,
+  const proposePayout = (
+    circle: `0x${string}`,
     to: `0x${string}`,
     amountMon: string,
     memo: string,
   ) =>
     run(() =>
       writeContractAsync({
-        address: VAULT_ADDRESS,
-        abi: vaultAbi,
-        functionName: "proposeWithdrawal",
-        args: [pod, to, parseEther(amountMon), memo],
+        address: CORE_ADDRESS,
+        abi: coreAbi,
+        functionName: "proposePayout",
+        args: [circle, to, parseEther(amountMon), memo],
       }),
     );
 
-  const approveWithdrawal = (proposalId: bigint) =>
+  const cosignPayout = (payoutId: bigint) =>
     run(() =>
       writeContractAsync({
-        address: VAULT_ADDRESS,
-        abi: vaultAbi,
-        functionName: "approveWithdrawal",
-        args: [proposalId],
+        address: CORE_ADDRESS,
+        abi: coreAbi,
+        functionName: "cosignPayout",
+        args: [payoutId],
       }),
     );
 
   return {
-    createPod,
-    createCommitment,
-    declareComplete,
-    castVote,
+    createCircle,
+    openBond,
+    declareDone,
+    cosign,
+    object,
     resolveExpired,
-    forfeitMissed,
-    proposeWithdrawal,
-    approveWithdrawal,
+    crossMissed,
+    proposePayout,
+    cosignPayout,
     hash,
     error,
     isPending,
@@ -161,7 +177,7 @@ function friendly(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e);
   if (/user rejected|denied/i.test(msg)) return "Transaction rejected.";
   const m = msg.match(
-    /(StakeRequired|StakeTooLarge|DeadlineInPast|UnknownPod|NotPodMember|NotCreator|NotActive|DeadlinePassed|NotPending|CreatorCannotVote|AlreadyVoted|VoteClosed|VoteStillOpen|TransferFailed|InsufficientPodBalance|AlreadyExecuted|AlreadyApproved|PodTooSmall|ZeroMember|DuplicateMember|ThresholdOutOfRange|NoSuch\w+)/,
+    /(StakeRequired|StakeTooLarge|DeadlineInPast|UnknownCircle|NotCircleMember|NotCreator|NotActive|DeadlinePassed|NotPending|CreatorCannotCosign|AlreadyCosigned|CosignClosed|CosignStillOpen|TransferFailed|InsufficientPotBalance|AlreadyExecuted|CircleTooSmall|ZeroMember|DuplicateMember|ThresholdOutOfRange|NoSuch\w+)/,
   );
   if (m) return m[1].replace(/([A-Z])/g, " $1").trim();
   return msg.split("\n")[0].slice(0, 140);

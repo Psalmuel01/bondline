@@ -1,66 +1,45 @@
-## Foundry
+# Bondline Smart Contracts
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+Solidity smart contracts implementing the core Bondline logic on Monad.
 
-Foundry consists of:
+## Setup & Compilation
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+Ensure you have Foundry installed. If not, follow instructions at [book.getfoundry.sh](https://book.getfoundry.sh/).
 
-## Documentation
-
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
+Compile contracts:
+```bash
+forge build
 ```
 
-### Test
+## Running Tests
 
-```shell
-$ forge test
+Execute the unit tests covering the math, clone isolation, voting, and reentrancy protections:
+```bash
+forge test
 ```
 
-### Format
-
-```shell
-$ forge fmt
+Generate gas snapshots:
+```bash
+forge snapshot
 ```
 
-### Gas Snapshots
+## Deployment
 
-```shell
-$ forge snapshot
+1. Copy `.env.example` to `.env` and fill out your private key.
+2. Deploy the suite to Monad testnet:
+```bash
+make deploy
+```
+This runs the Foundry deployment script, extracts the deployed addresses, and automatically writes them to `web/.env.local` for the frontend.
+
+## Verification
+
+To verify the contract bytecode on block explorers:
+```bash
+make verify
 ```
 
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+Alternatively, use the direct sequence target:
+```bash
+make deploy-verify
 ```

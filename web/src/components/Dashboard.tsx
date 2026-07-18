@@ -2,44 +2,44 @@
 
 import { useMemo, useState } from "react";
 import { useAccount } from "wagmi";
-import { usePods, useCommitments } from "@/lib/hooks";
+import { useCircles, useBonds } from "@/lib/hooks";
 import { isConfigured } from "@/lib/contracts";
-import { PodCard } from "./PodCard";
-import { CreatePod } from "./CreatePod";
+import { CircleCard } from "./CircleCard";
+import { CreateCircle } from "./CreateCircle";
 
-/// Multi-group dashboard: every pod you're in, plus a toggle to spin up a new
-/// one. Pods you're not a member of are shown dimmed under "other pods" so the
-/// registry is visible without cluttering your crews.
+/// Multi-group dashboard: every Circle you're in, plus a toggle to spin up a new
+/// one. Circles you're not a member of are shown dimmed under "other Circles" so
+/// the registry is visible without cluttering your crews.
 export function Dashboard() {
   const { address } = useAccount();
-  const { pods, isLoading, refresh } = usePods();
-  const { commitments, refresh: refreshCommitments } = useCommitments();
+  const { circles, isLoading, refresh } = useCircles();
+  const { bonds, refresh: refreshBonds } = useBonds();
   const [creating, setCreating] = useState(false);
 
   const { mine, others } = useMemo(() => {
     const mine = [];
     const others = [];
-    for (const p of pods) {
-      if (address && p.members.some((m) => m.toLowerCase() === address.toLowerCase())) {
-        mine.push(p);
+    for (const c of circles) {
+      if (address && c.members.some((m) => m.toLowerCase() === address.toLowerCase())) {
+        mine.push(c);
       } else {
-        others.push(p);
+        others.push(c);
       }
     }
     return { mine, others };
-  }, [pods, address]);
+  }, [circles, address]);
 
   function refreshAll() {
     refresh();
-    refreshCommitments();
+    refreshBonds();
     setCreating(false);
   }
 
   if (!isConfigured) {
     return (
       <div className="rounded-xl border border-forfeit/30 bg-forfeit/5 p-6 text-sm text-forfeit">
-        Contracts aren&apos;t configured yet. Set NEXT_PUBLIC_FACTORY_ADDRESS and
-        NEXT_PUBLIC_VAULT_ADDRESS in web/.env.local after deploying.
+        Contracts aren&apos;t configured yet. Set NEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS
+        and NEXT_PUBLIC_CORE_ADDRESS in web/.env.local after deploying.
       </div>
     );
   }
@@ -58,9 +58,9 @@ export function Dashboard() {
         </button>
       </div>
 
-      {creating && <CreatePod onCreated={refreshAll} />}
+      {creating && <CreateCircle onCreated={refreshAll} />}
 
-      {isLoading && pods.length === 0 ? (
+      {isLoading && circles.length === 0 ? (
         <p className="text-sm text-faint">Loading Circles…</p>
       ) : mine.length === 0 && !creating ? (
         <div className="rounded-xl border border-line bg-panel p-6">
@@ -71,8 +71,8 @@ export function Dashboard() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {mine.map((p) => (
-            <PodCard key={p.address} pod={p} commitments={commitments} />
+          {mine.map((c) => (
+            <CircleCard key={c.address} circle={c} bonds={bonds} />
           ))}
         </div>
       )}
@@ -83,8 +83,8 @@ export function Dashboard() {
             Other Circles
           </h2>
           <div className="grid gap-4 opacity-60 sm:grid-cols-2 lg:grid-cols-3">
-            {others.map((p) => (
-              <PodCard key={p.address} pod={p} commitments={commitments} />
+            {others.map((c) => (
+              <CircleCard key={c.address} circle={c} bonds={bonds} />
             ))}
           </div>
         </div>

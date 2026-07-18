@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 import { useReadContract, useReadContracts } from "wagmi";
 import {
-  FACTORY_ADDRESS,
-  VAULT_ADDRESS,
-  factoryAbi,
-  podAbi,
-  vaultAbi,
+  CIRCLE_FACTORY_ADDRESS,
+  CORE_ADDRESS,
+  circleFactoryAbi,
+  circleAbi,
+  coreAbi,
   Status,
-  type Commitment,
-  type Pod,
-  type Proposal,
+  type Bond,
+  type Circle,
+  type Payout,
 } from "./contracts";
 
 /// Shared 1s ticker so every countdown on the page updates in lockstep.
@@ -24,22 +24,22 @@ export function useNow() {
   return now;
 }
 
-/// All pods from the factory registry, with each clone's name/threshold/
+/// All Circles from the factory registry, with each clone's name/threshold/
 /// members/balance batched in a single multicall. No indexer needed.
-export function usePods() {
-  const { data: podAddrs, refetch: refetchAddrs } = useReadContract({
-    address: FACTORY_ADDRESS,
-    abi: factoryAbi,
-    functionName: "allPods",
+export function useCircles() {
+  const { data: circleAddrs, refetch: refetchAddrs } = useReadContract({
+    address: CIRCLE_FACTORY_ADDRESS,
+    abi: circleFactoryAbi,
+    functionName: "allCircles",
   });
 
-  const addrs = (podAddrs ?? []) as `0x${string}`[];
+  const addrs = (circleAddrs ?? []) as `0x${string}`[];
 
   const calls = addrs.flatMap((address) => [
-    { address, abi: podAbi, functionName: "name" as const },
-    { address, abi: podAbi, functionName: "approvalThresholdBps" as const },
-    { address, abi: podAbi, functionName: "members" as const },
-    { address, abi: podAbi, functionName: "balance" as const },
+    { address, abi: circleAbi, functionName: "name" as const },
+    { address, abi: circleAbi, functionName: "cosignThresholdBps" as const },
+    { address, abi: circleAbi, functionName: "members" as const },
+    { address, abi: circleAbi, functionName: "balance" as const },
   ]);
 
   const { data, isLoading, refetch } = useReadContracts({
@@ -47,12 +47,12 @@ export function usePods() {
     query: { enabled: addrs.length > 0 },
   });
 
-  const pods: Pod[] = addrs.map((address, i) => {
+  const circles: Circle[] = addrs.map((address, i) => {
     const base = i * 4;
     return {
       address,
       name: (data?.[base]?.result as string) ?? "",
-      approvalThresholdBps: Number(data?.[base + 1]?.result ?? 0),
+      cosignThresholdBps: Number(data?.[base + 1]?.result ?? 0),
       members: ((data?.[base + 2]?.result as `0x${string}`[]) ?? []),
       balance: (data?.[base + 3]?.result as bigint) ?? 0n,
     };
@@ -63,52 +63,52 @@ export function usePods() {
     refetch();
   };
 
-  return { pods, isLoading, refresh };
+  return { circles, isLoading, refresh };
 }
 
-/// A single pod's full detail (used by the pod page).
-export function usePod(address?: `0x${string}`) {
+/// A single Circle's full detail (used by the Circle page).
+export function useCircle(address?: `0x${string}`) {
   const enabled = !!address;
   const { data, isLoading, refetch } = useReadContracts({
     contracts: enabled
       ? [
-          { address, abi: podAbi, functionName: "name" },
-          { address, abi: podAbi, functionName: "approvalThresholdBps" },
-          { address, abi: podAbi, functionName: "members" },
-          { address, abi: podAbi, functionName: "balance" },
+          { address, abi: circleAbi, functionName: "name" },
+          { address, abi: circleAbi, functionName: "cosignThresholdBps" },
+          { address, abi: circleAbi, functionName: "members" },
+          { address, abi: circleAbi, functionName: "balance" },
         ]
       : [],
     query: { enabled },
   });
 
-  const pod: Pod | undefined =
+  const circle: Circle | undefined =
     enabled && data
       ? {
           address,
           name: (data[0]?.result as string) ?? "",
-          approvalThresholdBps: Number(data[1]?.result ?? 0),
+          cosignThresholdBps: Number(data[1]?.result ?? 0),
           members: ((data[2]?.result as `0x${string}`[]) ?? []),
           balance: (data[3]?.result as bigint) ?? 0n,
         }
       : undefined;
 
-  return { pod, isLoading, refresh: refetch };
+  return { circle, isLoading, refresh: refetch };
 }
 
-/// All withdrawal proposals across all pods. Same fan-out pattern as
-/// commitments; callers filter by pod.
-export function useProposals() {
+/// All Pot payouts across all Circles. Same fan-out pattern as Bonds; callers
+/// filter by Circle.
+export function usePayouts() {
   const { data: count, refetch: refetchCount } = useReadContract({
-    address: VAULT_ADDRESS,
-    abi: vaultAbi,
-    functionName: "proposalCount",
+    address: CORE_ADDRESS,
+    abi: coreAbi,
+    functionName: "payoutCount",
   });
 
   const n = count ? Number(count) : 0;
   const contracts = Array.from({ length: n }, (_, i) => ({
-    address: VAULT_ADDRESS,
-    abi: vaultAbi,
-    functionName: "proposals" as const,
+    address: CORE_ADDRESS,
+    abi: coreAbi,
+    functionName: "payouts" as const,
     args: [BigInt(i)] as const,
   }));
 
@@ -117,7 +117,7 @@ export function useProposals() {
     query: { enabled: n > 0 },
   });
 
-  const proposals: Proposal[] = (data ?? [])
+  const payouts: Payout[] = (data ?? [])
     .map((r, i) => {
       if (r.status !== "success" || !r.result) return null;
       const t = r.result as unknown as [
@@ -130,38 +130,38 @@ export function useProposals() {
       ];
       return {
         id: BigInt(i),
-        pod: t[0],
+        circle: t[0],
         to: t[1],
         amount: t[2],
         executed: t[3],
-        approvals: Number(t[4]),
+        cosigns: Number(t[4]),
         memo: t[5],
-      } satisfies Proposal;
+      } satisfies Payout;
     })
-    .filter((p): p is Proposal => p !== null);
+    .filter((p): p is Payout => p !== null);
 
   const refresh = () => {
     refetchCount();
     refetch();
   };
 
-  return { proposals, isLoading, refresh };
+  return { payouts, isLoading, refresh };
 }
 
-/// All commitments across all pods. Reads commitmentCount then fans out one
-/// read per id. Callers filter by pod client-side.
-export function useCommitments() {
+/// All Bonds across all Circles. Reads bondCount then fans out one read per id.
+/// Callers filter by Circle client-side.
+export function useBonds() {
   const { data: count, refetch: refetchCount } = useReadContract({
-    address: VAULT_ADDRESS,
-    abi: vaultAbi,
-    functionName: "commitmentCount",
+    address: CORE_ADDRESS,
+    abi: coreAbi,
+    functionName: "bondCount",
   });
 
   const n = count ? Number(count) : 0;
   const contracts = Array.from({ length: n }, (_, i) => ({
-    address: VAULT_ADDRESS,
-    abi: vaultAbi,
-    functionName: "commitments" as const,
+    address: CORE_ADDRESS,
+    abi: coreAbi,
+    functionName: "bonds" as const,
     args: [BigInt(i)] as const,
   }));
 
@@ -170,7 +170,7 @@ export function useCommitments() {
     query: { enabled: n > 0 },
   });
 
-  const commitments: Commitment[] = (data ?? [])
+  const bonds: Bond[] = (data ?? [])
     .map((r, i) => {
       if (r.status !== "success" || !r.result) return null;
       const t = r.result as unknown as [
@@ -189,24 +189,24 @@ export function useCommitments() {
       return {
         id: BigInt(i),
         creator: t[0],
-        pod: t[1],
+        circle: t[1],
         stake: t[2],
         deadline: t[3],
-        voteClosesAt: t[4],
+        cosignClosesAt: t[4],
         status: t[5] as Status,
-        yesVotes: Number(t[6]),
-        noVotes: Number(t[7]),
+        cosigns: Number(t[6]),
+        objections: Number(t[7]),
         description: t[8],
-        evidenceHash: t[9],
-        evidenceUri: t[10],
-      } satisfies Commitment;
+        receiptsHash: t[9],
+        receiptsUri: t[10],
+      } satisfies Bond;
     })
-    .filter((c): c is Commitment => c !== null);
+    .filter((b): b is Bond => b !== null);
 
   const refresh = () => {
     refetchCount();
     refetch();
   };
 
-  return { commitments, count: n, isLoading, refresh };
+  return { bonds, count: n, isLoading, refresh };
 }

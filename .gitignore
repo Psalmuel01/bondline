@@ -20,6 +20,11 @@ web/.next/
 web/out/
 web/node_modules/
 
+# agent / skill tooling
+.agents/
+.claude/
+skills-lock.json
+
 # misc
 .DS_Store
 *.log

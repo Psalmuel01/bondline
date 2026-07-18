@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useBondlineWrite } from "@/lib/useBondlineWrite";
 import { explorerTx } from "@/lib/chain";
-import type { Pod } from "@/lib/contracts";
+import type { Circle } from "@/lib/contracts";
 
 const PRESETS = [
   { label: "1 day", hours: 24 },
@@ -12,14 +12,14 @@ const PRESETS = [
   { label: "2 weeks", hours: 336 },
 ];
 
-/// Stake MON against a personal deadline inside a pod. The stake is escrowed by
-/// the vault; hit the deadline and get it back on a group vote, miss and it
-/// funds the pod.
-export function CreateCommitment({
-  pod,
+/// Stake MON against a personal deadline inside a Circle. The stake is escrowed by
+/// the Core; hit the deadline and get it back on a group vote, miss and it
+/// funds the Circle's Pot.
+export function OpenBond({
+  circle,
   onCreated,
 }: {
-  pod: Pod;
+  circle: Circle;
   onCreated: () => void;
 }) {
   const write = useBondlineWrite(onCreated);
@@ -34,7 +34,7 @@ export function CreateCommitment({
   async function submit() {
     if (!canSubmit) return;
     const deadline = BigInt(Math.floor(Date.now() / 1000) + hours * 3600);
-    await write.createCommitment(pod.address, description.trim(), deadline, stake);
+    await write.openBond(circle.address, description.trim(), deadline, stake);
     setDescription("");
     setStake("");
   }

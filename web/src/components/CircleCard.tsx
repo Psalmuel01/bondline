@@ -2,45 +2,48 @@
 
 import Link from "next/link";
 import { useAccount } from "wagmi";
-import type { Commitment, Pod } from "@/lib/contracts";
+import type { Bond, Circle } from "@/lib/contracts";
 import { Status } from "@/lib/contracts";
 import { bpsPct, formatMon } from "@/lib/format";
 import { Avatar } from "./Avatar";
 
-/// One pod tile on the dashboard. Surfaces the numbers that matter at a glance:
-/// pooled balance, live/voting count, and whether it's your turn to vote.
-export function PodCard({
-  pod,
-  commitments,
+/// One Circle tile on the dashboard. Surfaces the numbers that matter at a
+/// glance: the Pot balance, live/cosigning count, and whether it's your turn to
+/// cosign.
+export function CircleCard({
+  circle,
+  bonds,
 }: {
-  pod: Pod;
-  commitments: Commitment[];
+  circle: Circle;
+  bonds: Bond[];
 }) {
   const { address } = useAccount();
-  const mine = commitments.filter((c) => c.pod.toLowerCase() === pod.address.toLowerCase());
-  const live = mine.filter((c) => c.status === Status.Active).length;
-  const voting = mine.filter((c) => c.status === Status.PendingVote);
+  const mine = bonds.filter(
+    (b) => b.circle.toLowerCase() === circle.address.toLowerCase(),
+  );
+  const live = mine.filter((b) => b.status === Status.Active).length;
+  const cosigning = mine.filter((b) => b.status === Status.PendingCosign);
 
   const needsYou =
     !!address &&
-    voting.some(
-      (c) =>
-        c.creator.toLowerCase() !== address.toLowerCase() &&
-        pod.members.some((m) => m.toLowerCase() === address.toLowerCase()),
+    cosigning.some(
+      (b) =>
+        b.creator.toLowerCase() !== address.toLowerCase() &&
+        circle.members.some((m) => m.toLowerCase() === address.toLowerCase()),
     );
 
   return (
     <Link
-      href={`/pod/${pod.address}`}
+      href={`/circle/${circle.address}`}
       className="group flex flex-col gap-4 rounded-xl border border-line bg-panel p-5 transition hover:border-panel-hi"
     >
       <div className="flex items-start justify-between">
         <div>
           <h3 className="font-display text-base font-semibold tracking-tight text-bone">
-            {pod.name || "Untitled Circle"}
+            {circle.name || "Untitled Circle"}
           </h3>
           <p className="tnum mt-0.5 text-xs text-faint">
-            {pod.members.length} members · {bpsPct(pod.approvalThresholdBps)} to cosign
+            {circle.members.length} members · {bpsPct(circle.cosignThresholdBps)} to cosign
           </p>
         </div>
         {needsYou && (
@@ -54,17 +57,17 @@ export function PodCard({
         <div>
           <div className="text-[10px] uppercase tracking-widest text-faint">The Pot</div>
           <div className="tnum text-2xl font-semibold text-bone">
-            {formatMon(pod.balance)}
+            {formatMon(circle.balance)}
             <span className="ml-1 text-sm text-muted">MON</span>
           </div>
         </div>
         <div className="flex -space-x-2">
-          {pod.members.slice(0, 5).map((m) => (
+          {circle.members.slice(0, 5).map((m) => (
             <Avatar key={m} addr={m} size={26} />
           ))}
-          {pod.members.length > 5 && (
+          {circle.members.length > 5 && (
             <div className="tnum flex h-[26px] w-[26px] items-center justify-center rounded-full border border-line bg-bg text-[10px] text-muted">
-              +{pod.members.length - 5}
+              +{circle.members.length - 5}
             </div>
           )}
         </div>
@@ -77,8 +80,8 @@ export function PodCard({
             {live} on the Line
           </span>
         )}
-        {voting.length > 0 && <span className="text-gold">{voting.length} in cosign</span>}
-        {live === 0 && voting.length === 0 && <span className="text-faint">no live Bonds</span>}
+        {cosigning.length > 0 && <span className="text-gold">{cosigning.length} in cosign</span>}
+        {live === 0 && cosigning.length === 0 && <span className="text-faint">no live Bonds</span>}
       </div>
     </Link>
   );

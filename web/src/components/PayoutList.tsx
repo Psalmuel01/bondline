@@ -1,38 +1,38 @@
 "use client";
 
 import { useAccount } from "wagmi";
-import type { Pod, Proposal } from "@/lib/contracts";
+import type { Circle, Payout } from "@/lib/contracts";
 import { useBondlineWrite } from "@/lib/useBondlineWrite";
-import { requiredForWithdrawal } from "@/lib/threshold";
+import { requiredForPayout } from "@/lib/threshold";
 import { formatMon, shortAddr } from "@/lib/format";
 import { explorerAddr } from "@/lib/chain";
 
-/// Pending + settled withdrawal proposals for a pod, each with an approve
+/// Pending + settled payout proposals for a Circle, each with an approve
 /// button that executes automatically once the bar is cleared on-chain.
-export function ProposalList({
-  pod,
-  proposals,
+export function PayoutList({
+  circle,
+  payouts,
   onChange,
 }: {
-  pod: Pod;
-  proposals: Proposal[];
+  circle: Circle;
+  payouts: Payout[];
   onChange: () => void;
 }) {
   const { address } = useAccount();
   const write = useBondlineWrite(onChange);
-  const required = requiredForWithdrawal(pod.members.length, pod.approvalThresholdBps);
+  const required = requiredForPayout(circle.members.length, circle.cosignThresholdBps);
   const isMember =
-    !!address && pod.members.some((m) => m.toLowerCase() === address.toLowerCase());
+    !!address && circle.members.some((m) => m.toLowerCase() === address.toLowerCase());
   const busy = write.isPending || write.isConfirming;
 
-  if (proposals.length === 0) return null;
+  if (payouts.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-3">
       <h3 className="font-display text-xs font-semibold uppercase tracking-widest text-muted">
         Payout proposals
       </h3>
-      {proposals.map((p) => (
+      {payouts.map((p) => (
         <div
           key={p.id.toString()}
           className={`flex flex-col gap-2 rounded-lg border bg-panel p-4 ${
@@ -61,13 +61,13 @@ export function ProposalList({
               <span className="text-confirm">paid out</span>
             ) : (
               <span>
-                {p.approvals} of {required} cosigns
+                {p.cosigns} of {required} cosigns
               </span>
             )}
           </div>
           {!p.executed && isMember && (
             <button
-              onClick={() => write.approveWithdrawal(p.id)}
+              onClick={() => write.cosignPayout(p.id)}
               disabled={busy}
               className="rounded-md border border-confirm/50 bg-confirm/10 px-3 py-1.5 text-sm font-medium text-confirm transition hover:bg-confirm/20 disabled:opacity-40"
             >
