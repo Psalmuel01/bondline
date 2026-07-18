@@ -3,9 +3,11 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import {ShipstakeVault} from "../src/ShipstakeVault.sol";
+import {PodFund} from "../src/PodFund.sol";
 
 contract ShipstakeVaultTest is Test {
     ShipstakeVault vault;
+    PodFund podFund;
 
     address creator = makeAddr("creator");
     address witness = makeAddr("witness");
@@ -15,7 +17,9 @@ contract ShipstakeVaultTest is Test {
     uint64 deadline;
 
     function setUp() public {
-        vault = new ShipstakeVault();
+        podFund = new PodFund();
+        vault = new ShipstakeVault(podFund);
+        podFund.initVault(address(vault));
         deadline = uint64(block.timestamp + 1 days);
         vm.deal(creator, 100 ether);
         vm.deal(stranger, 100 ether);
@@ -37,6 +41,7 @@ contract ShipstakeVaultTest is Test {
             uint96 stake,
             uint64 dl,
             ShipstakeVault.Status status,
+            uint256 podId,
             string memory desc
         ) = vault.commitments(id);
 
@@ -46,6 +51,7 @@ contract ShipstakeVaultTest is Test {
         assertEq(stake, 1 ether);
         assertEq(dl, deadline);
         assertEq(uint256(status), uint256(ShipstakeVault.Status.Active));
+        assertEq(podId, vault.NO_POD());
         assertEq(desc, "Ship Privara milestone 2");
         assertEq(address(vault).balance, 1 ether);
         assertEq(vault.commitmentCount(), 1);
@@ -117,7 +123,7 @@ contract ShipstakeVaultTest is Test {
 
         assertEq(creator.balance, before + 1 ether);
         assertEq(address(vault).balance, 0);
-        (, , , uint96 stake, , ShipstakeVault.Status status, ) = vault.commitments(id);
+        (, , , uint96 stake, , ShipstakeVault.Status status, , ) = vault.commitments(id);
         assertEq(uint256(status), uint256(ShipstakeVault.Status.Completed));
         assertEq(stake, 1 ether); // stake kept as historical record
     }
@@ -164,7 +170,7 @@ contract ShipstakeVaultTest is Test {
 
         assertEq(beneficiary.balance, before + 1 ether);
         assertEq(address(vault).balance, 0);
-        (, , , uint96 stake, , ShipstakeVault.Status status, ) = vault.commitments(id);
+        (, , , uint96 stake, , ShipstakeVault.Status status, , ) = vault.commitments(id);
         assertEq(uint256(status), uint256(ShipstakeVault.Status.Forfeited));
         assertEq(stake, 1 ether); // stake kept as historical record
     }
