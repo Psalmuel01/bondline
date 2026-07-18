@@ -26,11 +26,11 @@ export function bpsToPct(bps: number): number {
   return Math.round((bps / BPS) * 100);
 }
 
-/// Human sentence for the create-pod preview.
+/// Human sentence for the create-Circle preview.
 export function thresholdSentence(memberCount: number, bps: number): string {
-  if (memberCount < 2) return "Add at least two members to preview the rule.";
+  if (memberCount < 2) return "Add at least one friend to preview the rule.";
   const eligible = memberCount - 1;
   const need = requiredForCommitment(memberCount, bps);
   const friends = memberCount - 1;
-  return `With ${friends} other ${friends === 1 ? "member" : "members"}, at least ${need} of ${eligible} must confirm a claim.`;
+  return `With ${friends} other ${friends === 1 ? "member" : "members"}, at least ${need} of ${eligible} must cosign a Bond for it to clear.`;
 }

@@ -20,22 +20,32 @@ export function Avatar({
   title?: string;
 }) {
   const hue = addrHue(addr);
+  const cosigned = vote === "yes" || vote === "no";
   const ring =
     vote === "yes"
-      ? "0 0 0 2px var(--done)"
+      ? "0 0 0 2px var(--confirm), 0 0 12px rgba(63,166,108,0.45)"
       : vote === "no"
-        ? "0 0 0 2px var(--gone)"
-        : "0 0 0 1px var(--line)";
+        ? "0 0 0 2px var(--forfeit), 0 0 12px rgba(193,80,63,0.4)"
+        : you
+          ? "0 0 0 1.5px var(--gold)"
+          : "0 0 0 1px var(--line)";
 
   return (
     <div
-      className="tnum flex items-center justify-center rounded-full font-semibold transition-all duration-500"
+      className={`tnum flex items-center justify-center rounded-full font-semibold transition-all duration-500 ${
+        cosigned ? "cosign-in" : ""
+      }`}
       style={{
         width: size,
         height: size,
         fontSize: size * 0.34,
-        background: `hsl(${hue} 45% 22%)`,
-        color: `hsl(${hue} 70% 78%)`,
+        background: cosigned
+          ? undefined
+          : `hsl(${hue} 30% 20%)`,
+        backgroundColor: cosigned
+          ? `hsl(${hue} 22% 16%)`
+          : undefined,
+        color: `hsl(${hue} 55% 74%)`,
         boxShadow: ring,
       }}
       title={title ?? `${shortAddr(addr)}${you ? " (you)" : ""}`}

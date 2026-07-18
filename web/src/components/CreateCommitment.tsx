@@ -41,19 +41,19 @@ export function CreateCommitment({
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-line bg-panel p-5">
-      <span className="text-xs font-semibold uppercase tracking-widest text-muted">
-        Put money on it
+      <span className="font-display text-sm font-semibold uppercase tracking-widest text-bone">
+        Put money on the Line
       </span>
 
       <input
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Ship the landing page · Run the 10k · Send the invoices"
-        className="rounded-md border border-line bg-bg px-3 py-2 text-sm text-text outline-none focus:border-live/50"
+        className="rounded-md border border-line bg-bg px-3 py-2 text-sm text-bone outline-none focus:border-gold/50"
       />
 
       <div className="flex flex-col gap-2">
-        <span className="text-xs uppercase tracking-widest text-faint">Deadline</span>
+        <span className="text-xs uppercase tracking-widest text-faint">The Line</span>
         <div className="flex flex-wrap gap-2">
           {PRESETS.map((p) => (
             <button
@@ -61,8 +61,8 @@ export function CreateCommitment({
               onClick={() => setHours(p.hours)}
               className={`rounded-md border px-3 py-1.5 text-xs transition ${
                 hours === p.hours
-                  ? "border-live/50 bg-live/10 text-live"
-                  : "border-line text-muted hover:text-text"
+                  ? "border-gold/50 bg-gold/10 text-gold"
+                  : "border-line text-muted hover:text-bone"
               }`}
             >
               {p.label}
@@ -78,25 +78,25 @@ export function CreateCommitment({
           onChange={(e) => setStake(e.target.value.replace(/[^0-9.]/g, ""))}
           inputMode="decimal"
           placeholder="0.5"
-          className="tnum rounded-md border border-line bg-bg px-3 py-2 text-sm text-text outline-none focus:border-live/50"
+          className="tnum rounded-md border border-line bg-bg px-3 py-2 text-sm text-bone outline-none focus:border-gold/50"
         />
       </label>
 
       <button
         onClick={submit}
         disabled={!canSubmit || busy}
-        className="w-full rounded-md border border-live/50 bg-live/10 px-3 py-2.5 text-sm font-semibold text-live transition hover:bg-live/20 disabled:opacity-40"
+        className="w-full rounded-lg bg-gold px-3 py-2.5 text-sm font-semibold text-ink transition hover:brightness-108 disabled:opacity-40"
       >
-        {busy ? "Staking on-chain…" : "Stake it"}
+        {busy ? "Staking on-chain…" : "Stake the Bond"}
       </button>
 
-      {write.error && <p className="text-xs text-gone">{write.error}</p>}
+      {write.error && <p className="text-xs text-forfeit">{write.error}</p>}
       {write.hash && (
         <a
           href={explorerTx(write.hash)}
           target="_blank"
           rel="noreferrer"
-          className="tnum text-xs text-live underline decoration-dotted underline-offset-2"
+          className="tnum text-xs text-gold underline decoration-dotted underline-offset-2"
         >
           {write.isConfirming ? "stake pending ↗" : "staked ↗"}
         </a>

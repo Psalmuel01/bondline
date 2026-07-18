@@ -11,7 +11,7 @@ export default function PodPage() {
   if (!isAddress(raw)) {
     return (
       <div className="mx-auto w-full max-w-6xl px-5 py-10 text-sm text-gone sm:px-8">
-        Invalid pod address.
+        Invalid Circle address.
       </div>
     );
   }

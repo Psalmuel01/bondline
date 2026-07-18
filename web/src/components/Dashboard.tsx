@@ -37,7 +37,7 @@ export function Dashboard() {
 
   if (!isConfigured) {
     return (
-      <div className="rounded-xl border border-gone/30 bg-gone/5 p-6 text-sm text-gone">
+      <div className="rounded-xl border border-forfeit/30 bg-forfeit/5 p-6 text-sm text-forfeit">
         Contracts aren&apos;t configured yet. Set NEXT_PUBLIC_FACTORY_ADDRESS and
         NEXT_PUBLIC_VAULT_ADDRESS in web/.env.local after deploying.
       </div>
@@ -47,25 +47,26 @@ export function Dashboard() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted">
-          Your pods
+        <h2 className="font-display text-lg font-semibold tracking-tight text-bone">
+          Your Circles
         </h2>
         <button
           onClick={() => setCreating((v) => !v)}
-          className="rounded-md border border-live/50 bg-live/10 px-3 py-1.5 text-sm font-medium text-live transition hover:bg-live/20"
+          className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-ink transition hover:brightness-108"
         >
-          {creating ? "Close" : "+ New pod"}
+          {creating ? "Close" : "+ New Circle"}
         </button>
       </div>
 
       {creating && <CreatePod onCreated={refreshAll} />}
 
       {isLoading && pods.length === 0 ? (
-        <p className="text-sm text-faint">Loading pods…</p>
+        <p className="text-sm text-faint">Loading Circles…</p>
       ) : mine.length === 0 && !creating ? (
         <div className="rounded-xl border border-line bg-panel p-6">
           <p className="text-sm text-muted">
-            You&apos;re not in a pod yet. Spin one up with your crew to start staking.
+            You&apos;re not in a Circle yet. Start one with your crew and put a
+            deadline on the Line.
           </p>
         </div>
       ) : (
@@ -78,8 +79,8 @@ export function Dashboard() {
 
       {others.length > 0 && (
         <div className="flex flex-col gap-4">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-faint">
-            Other pods
+          <h2 className="font-display text-sm font-semibold uppercase tracking-widest text-faint">
+            Other Circles
           </h2>
           <div className="grid gap-4 opacity-60 sm:grid-cols-2 lg:grid-cols-3">
             {others.map((p) => (

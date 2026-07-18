@@ -7,6 +7,7 @@ import { Status } from "@/lib/contracts";
 import { bpsPct, formatMon, shortAddr } from "@/lib/format";
 import { explorerAddr } from "@/lib/chain";
 import { Header } from "./Header";
+import { Footer } from "./Footer";
 import { Avatar } from "./Avatar";
 import { CommitmentCard } from "./CommitmentCard";
 import { CreateCommitment } from "./CreateCommitment";
@@ -52,21 +53,21 @@ export function PodDetail({ address: podAddress }: { address: `0x${string}` }) {
       <Header />
 
       <Link href="/" className="mt-6 text-xs text-faint hover:text-muted">
-        ← all pods
+        ← all Circles
       </Link>
 
       {isLoading && !pod ? (
-        <p className="mt-8 text-sm text-faint">Loading pod…</p>
+        <p className="mt-8 text-sm text-faint">Loading Circle…</p>
       ) : !pod ? (
-        <p className="mt-8 text-sm text-gone">Pod not found.</p>
+        <p className="mt-8 text-sm text-forfeit">Circle not found.</p>
       ) : (
         <>
           {/* pod header */}
           <section className="mt-4 flex flex-col gap-5 border-b border-line pb-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">
-                  {pod.name || "Untitled pod"}
+                <h1 className="font-display text-3xl font-semibold tracking-tight text-bone">
+                  {pod.name || "Untitled Circle"}
                 </h1>
                 <a
                   href={explorerAddr(pod.address)}
@@ -79,9 +80,9 @@ export function PodDetail({ address: podAddress }: { address: `0x${string}` }) {
               </div>
               <div className="text-right">
                 <div className="text-[10px] uppercase tracking-widest text-faint">
-                  Pooled in this pod
+                  The Pot
                 </div>
-                <div className="tnum text-3xl font-semibold text-text">
+                <div className="tnum text-3xl font-semibold text-gold">
                   {formatMon(pod.balance)}
                   <span className="ml-1 text-base text-muted">MON</span>
                 </div>
@@ -91,7 +92,7 @@ export function PodDetail({ address: podAddress }: { address: `0x${string}` }) {
             {/* roster */}
             <div className="flex flex-col gap-2">
               <span className="text-[10px] uppercase tracking-widest text-faint">
-                {pod.members.length} members · {bpsPct(pod.approvalThresholdBps)} to approve
+                {pod.members.length} members · {bpsPct(pod.approvalThresholdBps)} to cosign
               </span>
               <div className="flex flex-wrap gap-3">
                 {pod.members.map((m) => (
@@ -114,12 +115,12 @@ export function PodDetail({ address: podAddress }: { address: `0x${string}` }) {
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
             {/* commitments */}
             <div className="flex flex-col gap-4">
-              <h2 className="text-sm font-semibold uppercase tracking-widest text-muted">
-                Commitments
+              <h2 className="font-display text-lg font-semibold tracking-tight text-bone">
+                Bonds on the Line
               </h2>
               {podCommitments.length === 0 ? (
                 <div className="rounded-xl border border-line bg-panel p-6 text-sm text-faint">
-                  No stakes yet. Be the first to put money on a deadline.
+                  No Bonds yet. Be the first to put money on the Line.
                 </div>
               ) : (
                 podCommitments.map((c) => (
@@ -140,7 +141,7 @@ export function PodDetail({ address: podAddress }: { address: `0x${string}` }) {
                 <CreateCommitment pod={pod} onCreated={refreshAll} />
               ) : (
                 <div className="rounded-xl border border-line bg-panel p-5 text-xs text-faint">
-                  You&apos;re not a member of this pod, so you can watch but not stake.
+                  You&apos;re not in this Circle, so you can watch but not stake.
                 </div>
               )}
               <WithdrawPanel pod={pod} onDone={refreshAll} />
@@ -149,6 +150,8 @@ export function PodDetail({ address: podAddress }: { address: `0x${string}` }) {
           </div>
         </>
       )}
+
+      <Footer />
     </div>
   );
 }

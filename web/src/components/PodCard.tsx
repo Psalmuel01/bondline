@@ -36,22 +36,24 @@ export function PodCard({
     >
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="text-base font-semibold text-text">{pod.name || "Untitled pod"}</h3>
+          <h3 className="font-display text-base font-semibold tracking-tight text-bone">
+            {pod.name || "Untitled Circle"}
+          </h3>
           <p className="tnum mt-0.5 text-xs text-faint">
-            {pod.members.length} members · {bpsPct(pod.approvalThresholdBps)} to approve
+            {pod.members.length} members · {bpsPct(pod.approvalThresholdBps)} to cosign
           </p>
         </div>
         {needsYou && (
-          <span className="tnum rounded-full border border-live/40 bg-live/10 px-2 py-0.5 text-[10px] font-semibold text-live pulse">
-            YOUR VOTE
+          <span className="tnum rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] font-semibold text-gold pulse">
+            COSIGN NOW
           </span>
         )}
       </div>
 
       <div className="flex items-end justify-between">
         <div>
-          <div className="text-[10px] uppercase tracking-widest text-faint">Pooled</div>
-          <div className="tnum text-2xl font-semibold text-text">
+          <div className="text-[10px] uppercase tracking-widest text-faint">The Pot</div>
+          <div className="tnum text-2xl font-semibold text-bone">
             {formatMon(pod.balance)}
             <span className="ml-1 text-sm text-muted">MON</span>
           </div>
@@ -71,12 +73,12 @@ export function PodCard({
       <div className="tnum flex gap-3 border-t border-line pt-3 text-xs text-muted">
         {live > 0 && (
           <span className="flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-live pulse" />
-            {live} live
+            <span className="h-1.5 w-1.5 rounded-full bg-gold pulse" />
+            {live} on the Line
           </span>
         )}
-        {voting.length > 0 && <span className="text-live">{voting.length} voting</span>}
-        {live === 0 && voting.length === 0 && <span className="text-faint">no active stakes</span>}
+        {voting.length > 0 && <span className="text-gold">{voting.length} in cosign</span>}
+        {live === 0 && voting.length === 0 && <span className="text-faint">no live Bonds</span>}
       </div>
     </Link>
   );

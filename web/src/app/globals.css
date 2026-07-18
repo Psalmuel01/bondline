@@ -1,21 +1,43 @@
 @import "tailwindcss";
 
+/*
+ * Bondline brand palette. Reads as fintech and friendship at once — warm
+ * near-black, warm off-white, and money-gold, with green/red held in reserve
+ * so the one moment that should feel electric (a cosign landing) keeps its
+ * charge. See docs/brand guide.
+ */
 :root {
-  --bg: #0a0a0c;
-  --panel: #131317;
-  --panel-hi: #1a1a20;
-  --line: #26262e;
-  --text: #ededf0;
-  --muted: #8a8a97;
-  --faint: #55555f;
+  --ink: #14120f; /* warm near-black charcoal — primary background */
+  --bone: #f2efe9; /* warm off-white — primary text on dark */
+  --gold: #d9a441; /* the color of money on the line — stakes, countdowns */
+  --confirm: #3fa66c; /* a landed "yes" cosign, nowhere else */
+  --forfeit: #c1503f; /* a landed "no" cosign or a resolved forfeit */
+  --linegrey: #6b675f; /* muted — resolved/inactive states, secondary text */
 
-  --live: #f5a524; /* amber — active, ticking */
-  --done: #34d399; /* mint  — completed, refunded */
-  --gone: #f43f5e; /* rose  — forfeited, deadline missed */
+  /* derived surfaces, warmed toward the ink so nothing reads as flat black */
+  --panel: #1c1a16;
+  --panel-hi: #262319;
+  --line: #34302a;
+  --faint: #565048;
+
+  /* semantic aliases kept from the original build so component classNames
+     (text-live / text-done / text-gone) map onto the brand without a rename */
+  --bg: var(--ink);
+  --text: var(--bone);
+  --muted: #9a9488;
+  --live: var(--gold);
+  --done: var(--confirm);
+  --gone: var(--forfeit);
 }
 
 @theme inline {
   --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-bone: var(--bone);
+  --color-gold: var(--gold);
+  --color-confirm: var(--confirm);
+  --color-forfeit: var(--forfeit);
+  --color-linegrey: var(--linegrey);
   --color-panel: var(--panel);
   --color-panel-hi: var(--panel-hi);
   --color-line: var(--line);
@@ -25,8 +47,9 @@
   --color-live: var(--live);
   --color-done: var(--done);
   --color-gone: var(--gone);
-  --font-mono: var(--font-geist-mono);
-  --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-space-grotesk);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-sans: var(--font-inter);
 }
 
 html,
@@ -36,29 +59,35 @@ body {
 }
 
 body {
-  font-family: var(--font-sans), system-ui, sans-serif;
-  /* faint grid so the dark plane has texture, not flat AI-slop black */
+  font-family: var(--font-inter), system-ui, sans-serif;
+  /* a faint warm halo + hairline grid so the ink plane has texture, not
+     flat black. the grid ticks like a ledger without reading as a spreadsheet */
   background-image:
-    radial-gradient(circle at 50% 0%, rgba(245, 165, 36, 0.06), transparent 45%),
+    radial-gradient(circle at 50% -5%, rgba(217, 164, 65, 0.07), transparent 45%),
     linear-gradient(var(--line) 1px, transparent 1px),
     linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 100% 100%, 44px 44px, 44px 44px;
+  background-size: 100% 100%, 46px 46px, 46px 46px;
   background-position: 0 0, -1px -1px, -1px -1px;
   background-attachment: fixed;
 }
 
-/* dim the grid so it reads as texture, not a spreadsheet */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: rgba(10, 10, 12, 0.82);
+  background: rgba(20, 18, 15, 0.84);
   pointer-events: none;
   z-index: -1;
 }
 
+.font-display {
+  font-family: var(--font-space-grotesk), var(--font-inter), sans-serif;
+}
+
+/* Numbers are the emotional core — stakes, countdowns, thresholds. Give them a
+   consistent ticker-like identity so the product feels financially serious. */
 .tnum {
-  font-family: var(--font-mono), ui-monospace, monospace;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -69,4 +98,18 @@ body::before {
 }
 .pulse {
   animation: pulse-live 1.4s ease-in-out infinite;
+}
+
+/* a cosign landing: the avatar ring should feel like it snaps into place */
+@keyframes cosign-in {
+  0% { transform: scale(0.7); opacity: 0; }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.cosign-in {
+  animation: cosign-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+a {
+  -webkit-tap-highlight-color: transparent;
 }

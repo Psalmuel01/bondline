@@ -29,19 +29,19 @@ export function ProposalList({
 
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-xs font-semibold uppercase tracking-widest text-muted">
-        Withdrawal proposals
+      <h3 className="font-display text-xs font-semibold uppercase tracking-widest text-muted">
+        Payout proposals
       </h3>
       {proposals.map((p) => (
         <div
           key={p.id.toString()}
           className={`flex flex-col gap-2 rounded-lg border bg-panel p-4 ${
-            p.executed ? "border-done/30" : "border-line"
+            p.executed ? "border-confirm/30" : "border-line"
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-sm text-text">{p.memo}</span>
-            <span className="tnum text-sm font-semibold text-text">
+            <span className="text-sm text-bone">{p.memo}</span>
+            <span className="tnum text-sm font-semibold text-gold">
               {formatMon(p.amount)} MON
             </span>
           </div>
@@ -52,16 +52,16 @@ export function ProposalList({
                 href={explorerAddr(p.to)}
                 target="_blank"
                 rel="noreferrer"
-                className="hover:text-text"
+                className="hover:text-bone"
               >
                 {shortAddr(p.to)}
               </a>
             </span>
             {p.executed ? (
-              <span className="text-done">paid out</span>
+              <span className="text-confirm">paid out</span>
             ) : (
               <span>
-                {p.approvals} of {required} approvals
+                {p.approvals} of {required} cosigns
               </span>
             )}
           </div>
@@ -69,14 +69,14 @@ export function ProposalList({
             <button
               onClick={() => write.approveWithdrawal(p.id)}
               disabled={busy}
-              className="rounded-md border border-live/50 bg-live/10 px-3 py-1.5 text-sm font-medium text-live transition hover:bg-live/20 disabled:opacity-40"
+              className="rounded-md border border-confirm/50 bg-confirm/10 px-3 py-1.5 text-sm font-medium text-confirm transition hover:bg-confirm/20 disabled:opacity-40"
             >
-              {busy ? "Confirming…" : "Approve"}
+              {busy ? "Confirming…" : "Cosign the payout"}
             </button>
           )}
         </div>
       ))}
-      {write.error && <p className="text-xs text-gone">{write.error}</p>}
+      {write.error && <p className="text-xs text-forfeit">{write.error}</p>}
     </div>
   );
 }

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160">
+  <rect width="160" height="160" rx="28" fill="#14120F"/>
+
+  <g transform="translate(80,80)">
+    <!-- full track: the Line, the deadline running its course -->
+    <circle cx="0" cy="0" r="46" fill="none" stroke="#3A3733" stroke-width="8"/>
+
+    <!-- progress arc: the Bond moving toward its deadline, rounded cap, starts at 12 o'clock -->
+    <circle cx="0" cy="0" r="46" fill="none" stroke="#D9A441" stroke-width="8"
+            stroke-linecap="round" stroke-dasharray="188 289" transform="rotate(-90)"/>
+
+    <!-- start marker: the moment the Bond was created -->
+    <circle cx="0" cy="-46" r="5" fill="#F2EFE9"/>
+
+    <!-- cosign marker: sits at the arc's tip, a vote landing in real time -->
+    <circle cx="-37.2" cy="27" r="6" fill="#3FA66C"/>
+  </g>
+</svg>

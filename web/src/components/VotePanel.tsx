@@ -82,10 +82,10 @@ export function VotePanel({
   const busy = write.isPending || write.isConfirming;
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-live/30 bg-live/5 p-4">
+    <div className="flex flex-col gap-4 rounded-lg border border-gold/30 bg-gold/5 p-4">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-widest text-live">
-          Group is voting
+        <span className="font-display text-xs font-semibold uppercase tracking-widest text-gold">
+          Circle is cosigning
         </span>
         <span className="tnum text-xs text-muted">
           {yes} of {required} needed · {no} against
@@ -120,15 +120,15 @@ export function VotePanel({
         })}
       </div>
 
-      {/* evidence */}
+      {/* receipts */}
       {c.evidenceUri && (
         <a
           href={c.evidenceUri}
           target="_blank"
           rel="noreferrer"
-          className="text-xs text-live underline decoration-dotted underline-offset-2"
+          className="text-xs text-gold underline decoration-dotted underline-offset-2"
         >
-          Open the evidence ↗
+          Check the Receipts ↗
         </a>
       )}
 
@@ -138,35 +138,35 @@ export function VotePanel({
           <button
             onClick={() => write.castVote(c.id, true)}
             disabled={busy}
-            className="flex-1 rounded-md border border-done/50 bg-done/10 px-3 py-2 text-sm font-medium text-done transition hover:bg-done/20 disabled:opacity-50"
+            className="flex-1 rounded-md border border-confirm/50 bg-confirm/10 px-3 py-2 text-sm font-medium text-confirm transition hover:bg-confirm/20 disabled:opacity-50"
           >
-            {busy ? "Confirming…" : "Confirm they shipped"}
+            {busy ? "Confirming…" : "Cosign — they shipped"}
           </button>
           <button
             onClick={() => write.castVote(c.id, false)}
             disabled={busy}
-            className="flex-1 rounded-md border border-gone/50 bg-gone/10 px-3 py-2 text-sm font-medium text-gone transition hover:bg-gone/20 disabled:opacity-50"
+            className="flex-1 rounded-md border border-forfeit/50 bg-forfeit/10 px-3 py-2 text-sm font-medium text-forfeit transition hover:bg-forfeit/20 disabled:opacity-50"
           >
             {busy ? "Confirming…" : "They didn't"}
           </button>
         </div>
       )}
       {isVoter && alreadyVoted && (
-        <p className="text-xs text-faint">You&apos;ve voted. Waiting on the rest of the crew.</p>
+        <p className="text-xs text-faint">You&apos;ve cosigned. Waiting on the rest of the Circle.</p>
       )}
       {!isVoter && address?.toLowerCase() === c.creator.toLowerCase() && (
-        <p className="text-xs text-faint">Your claim is up. The crew decides from here.</p>
+        <p className="text-xs text-faint">Your Bond is up. The Circle decides from here.</p>
       )}
 
-      {write.error && <p className="text-xs text-gone">{write.error}</p>}
+      {write.error && <p className="text-xs text-forfeit">{write.error}</p>}
       {write.hash && (
         <a
           href={explorerTx(write.hash)}
           target="_blank"
           rel="noreferrer"
-          className="tnum text-xs text-live underline decoration-dotted underline-offset-2"
+          className="tnum text-xs text-gold underline decoration-dotted underline-offset-2"
         >
-          {write.isConfirming ? "vote pending ↗" : "vote confirmed ↗"}
+          {write.isConfirming ? "cosign pending ↗" : "cosign confirmed ↗"}
         </a>
       )}
     </div>

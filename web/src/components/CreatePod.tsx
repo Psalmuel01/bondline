@@ -62,44 +62,44 @@ export function CreatePod({ onCreated }: { onCreated: () => void }) {
   return (
     <div className="flex flex-col gap-5 rounded-xl border border-line bg-panel p-6">
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted">
-          Start a pod
+        <h2 className="font-display text-lg font-semibold tracking-tight text-bone">
+          Start a Circle
         </h2>
         <p className="mt-1 text-xs text-faint">
-          A pod is your crew and your shared vault. Forfeited stakes pile up here;
-          the group votes to spend them.
+          A Circle is your crew and your shared Pot. Crossed Bonds pile up here;
+          the group cosigns to spend them.
         </p>
       </div>
 
       {!address && (
-        <p className="rounded-md border border-live/30 bg-live/5 p-3 text-xs text-live">
+        <p className="rounded-md border border-gold/30 bg-gold/5 p-3 text-xs text-gold">
           Connect your wallet — you&apos;ll be the first member.
         </p>
       )}
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-xs uppercase tracking-widest text-faint">Pod name</span>
+        <span className="text-xs uppercase tracking-widest text-faint">Circle name</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Cabo 2026 · Marathon crew · Q1 shippers"
-          className="rounded-md border border-line bg-bg px-3 py-2 text-sm text-text outline-none focus:border-live/50"
+          className="rounded-md border border-line bg-bg px-3 py-2 text-sm text-bone outline-none focus:border-gold/50"
         />
       </label>
 
       <label className="flex flex-col gap-1.5">
         <span className="text-xs uppercase tracking-widest text-faint">
-          Other members — one address per line
+          The crew — one address per line
         </span>
         <textarea
           value={raw}
           onChange={(e) => setRaw(e.target.value)}
           rows={4}
           placeholder={"0xabc…\n0xdef…"}
-          className="tnum rounded-md border border-line bg-bg px-3 py-2 text-sm text-text outline-none focus:border-live/50"
+          className="tnum rounded-md border border-line bg-bg px-3 py-2 text-sm text-bone outline-none focus:border-gold/50"
         />
         {parsed.invalid.length > 0 && (
-          <span className="text-xs text-gone">
+          <span className="text-xs text-forfeit">
             Not valid addresses: {parsed.invalid.map((s) => `"${s.slice(0, 10)}…"`).join(", ")}
           </span>
         )}
@@ -124,9 +124,9 @@ export function CreatePod({ onCreated }: { onCreated: () => void }) {
       <label className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <span className="text-xs uppercase tracking-widest text-faint">
-            Approval threshold
+            Cosign threshold
           </span>
-          <span className="tnum text-sm font-semibold text-live">{bpsToPct(bps)}%</span>
+          <span className="tnum text-sm font-semibold text-gold">{bpsToPct(bps)}%</span>
         </div>
         <input
           type="range"
@@ -135,7 +135,7 @@ export function CreatePod({ onCreated }: { onCreated: () => void }) {
           step={500}
           value={bps}
           onChange={(e) => setBps(Number(e.target.value))}
-          className="accent-live"
+          className="accent-gold"
         />
         <span className="text-xs text-muted">{thresholdSentence(memberCount, bps)}</span>
       </label>
@@ -143,20 +143,20 @@ export function CreatePod({ onCreated }: { onCreated: () => void }) {
       <button
         onClick={submit}
         disabled={!canSubmit || busy}
-        className="w-full rounded-md border border-live/50 bg-live/10 px-3 py-2.5 text-sm font-semibold text-live transition hover:bg-live/20 disabled:opacity-40"
+        className="w-full rounded-lg bg-gold px-3 py-2.5 text-sm font-semibold text-ink transition hover:brightness-108 disabled:opacity-40"
       >
-        {busy ? "Deploying your pod on-chain…" : "Deploy pod"}
+        {busy ? "Deploying your Circle on-chain…" : "Deploy Circle"}
       </button>
 
-      {write.error && <p className="text-xs text-gone">{write.error}</p>}
+      {write.error && <p className="text-xs text-forfeit">{write.error}</p>}
       {write.hash && (
         <a
           href={explorerTx(write.hash)}
           target="_blank"
           rel="noreferrer"
-          className="tnum text-xs text-live underline decoration-dotted underline-offset-2"
+          className="tnum text-xs text-gold underline decoration-dotted underline-offset-2"
         >
-          {write.isConfirming ? "deploy pending ↗" : "pod deployed ↗"}
+          {write.isConfirming ? "deploy pending ↗" : "Circle deployed ↗"}
         </a>
       )}
     </div>
