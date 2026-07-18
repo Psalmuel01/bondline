@@ -40,7 +40,7 @@ Every action shows its transaction on the Monad explorer. Nothing is faked, noth
 cd contracts
 forge test -vv
 ```
-Expected: **23 passing** — both resolution paths, every revert, reentrancy on both fund-out paths, and a fuzz test on forfeit.
+Expected: **42 passing** — both resolution paths, every revert, reentrancy on every fund-out path (external, pod payout), a fuzz test on forfeit, and the full pod lifecycle (create → forfeit-into-pod → unanimous withdrawal).
 
 ### Run the frontend locally
 ```bash
@@ -57,16 +57,20 @@ pnpm dev                     # http://localhost:3000
 One contract. The entire trust surface fits on one screen.
 
 ```
-contracts/src/ShipstakeVault.sol   ~145 lines, ReentrancyGuard + checks-effects-interactions
-contracts/test/ShipstakeVault.t.sol  23 tests incl. reentrancy attackers + fuzz
+contracts/src/ShipstakeVault.sol   the commitment protocol, ReentrancyGuard + checks-effects-interactions
+contracts/src/PodFund.sol           shared-treasury forfeit target for friend groups
+contracts/test/*.t.sol               42 tests incl. reentrancy attackers + fuzz
 web/                                 Next.js + wagmi/viem, dark "countdowns" UI
 ```
 
 **`ShipstakeVault`** is a single vault holding all stakes under internal accounting (`mapping(id => Commitment)`), rather than deploying a contract per commitment — far cheaper on gas, and Monad's throughput makes it the obvious default.
 
-- `createCommitment(description, deadline, witness, beneficiary)` payable — escrows MON.
+- `createCommitment(description, deadline, witness, beneficiary)` payable — escrows MON, forfeits to an external address.
+- `createPodCommitment(description, deadline, witness, podId)` payable — same, but forfeits into a friend group's shared treasury (creator must be a pod member).
 - `markComplete(id)` — witness-only, before deadline → refunds the creator.
-- `claimForfeit(id)` — permissionless, after deadline, if unconfirmed → sends stake to the beneficiary.
+- `claimForfeit(id)` — permissionless, after deadline, if unconfirmed → sends stake to the beneficiary, or into the pod fund.
+
+**`PodFund`** is a shared treasury for a fixed group of friends. Missed-deadline stakes pool here instead of going to an outside address; the group withdraws together (proposal + unanimous approval) once they hit a milestone — the group's individual misses fund the group's next trip.
 
 ### Design decisions worth noting
 - **No self-dealing is enforced on creation:** witness ≠ creator (you can't vouch for yourself), beneficiary ≠ creator (missing the deadline can't just refund you), and witness ≠ beneficiary (a witness who's also the beneficiary would profit from staying silent — turning "vouch for me" into a coin-flip on stealing the stake).
@@ -74,6 +78,12 @@ web/                                 Next.js + wagmi/viem, dark "countdowns" UI
 - **Forfeit funds always go to the beneficiary, never the caller.** `claimForfeit` is permissionless by design, so there's no MEV race to win — only the promise being kept or not.
 - **Stake is retained as the historical record** after resolution; the `status` enum is the sole state machine, and the `NotActive` guard makes any second payout impossible. This keeps the resolved-history feed honest ("0.5 MON — FORFEITED") instead of showing zeros.
 - **Description is stored on-chain as plain text**, not an IPFS hash. At this scale, legibility beats an off-chain dependency that could fail during a 3-minute judge run.
+- **Pod mode drops the self-dealing checks on purpose.** A pod creator is always a member of the pod they stake into — that's the point. The self-benefit is diluted to ~1/N and locked behind a group vote (you can't unilaterally claw it back), so the incentive stays honest without the external-beneficiary guards. Members witnessing each other is desired: that *is* the friend-group-holds-each-other-accountable mechanic.
+- **Two contracts with a mutual reference can't both be `immutable`.** The vault holds `PodFund` immutably; `PodFund` learns the vault via a write-once `initVault` (reverts if already set). Deploy order: PodFund → Vault(podFund) → `podFund.initVault(vault)`.
+
+**Known v1 limitations (worth saying out loud):**
+- **Pod withdrawals are unanimous.** One permanently unresponsive member freezes the fund with no escape hatch. Fine for a small, trusted friend pod; a later version could add a time-locked fallback threshold (unanimous within 30 days, then drops to a majority).
+- **The financial sting shrinks as the pod grows.** In a pod of N, forfeiting costs you stake × (1 − 1/N) — a pod of 2 is closer to forced savings than a penalty. Pods of 3–6 are the sweet spot; past that the real deterrent is social (being *the one* who keeps funding the trip by never shipping), not the money.
 
 ---
 
