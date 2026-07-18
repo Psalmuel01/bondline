@@ -18,18 +18,26 @@ export default function DocsPage() {
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 py-6 sm:px-8">
       <Header />
 
-      <article className="py-12 sm:py-16">
-        <p className="tnum text-xs uppercase tracking-widest text-gold">How it works</p>
-        <h1 className="font-display mt-3 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl">
-          Put your money where
-          <br />
-          your deadline is.
-        </h1>
-        <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted">
-          Missing your own deadline costs exactly zero. Bondline makes it cost
-          something, and hands the decision to your crew. Here&apos;s the whole
-          thing, no fine print.
-        </p>
+      <article className="py-10 sm:py-14">
+        <div className="relative overflow-hidden rounded-2xl border border-line bg-panel px-6 py-10 sm:px-10 sm:py-14">
+          <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-gold/10 blur-3xl" />
+          <p className="tnum relative text-xs uppercase tracking-widest text-gold">The Bondline field guide</p>
+          <h1 className="font-display relative mt-3 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
+            Put your money where
+            <br />
+            your deadline is.
+          </h1>
+          <p className="relative mt-5 max-w-xl text-[15px] leading-relaxed text-muted">
+            Missing your own deadline costs exactly zero. Bondline makes it cost
+            something, then hands the decision to your crew. The whole mechanic,
+            in a minute.
+          </p>
+          <div className="relative mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
+            <QuickFact label="You stake" value="MON on a deadline" />
+            <QuickFact label="They decide" value="with a cosign" />
+            <QuickFact label="The outcome" value="refund or Pot" />
+          </div>
+        </div>
 
         <Section title="The one-minute version">
           <p>
@@ -45,7 +53,7 @@ export default function DocsPage() {
         </Section>
 
         <Section title="The flow, step by step">
-          <ol className="flex flex-col gap-4">
+          <ol className="grid gap-4 md:grid-cols-2">
             <Step n={1} title="Form a Circle">
               Add your crew by wallet address and set one rule: the cosign
               threshold. Maybe half the Circle has to agree, maybe less. Every
@@ -168,7 +176,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function Step({ n, title, children }: { n: number; title: string; children: ReactNode }) {
   return (
-    <li className="flex gap-4">
+    <li className="flex gap-4 rounded-xl border border-line bg-panel p-4">
       <span className="tnum flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-sm font-semibold text-gold">
         {n}
       </span>
@@ -178,6 +186,10 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
       </div>
     </li>
   );
+}
+
+function QuickFact({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-lg border border-line bg-bg/40 px-4 py-3"><p className="tnum text-[10px] uppercase tracking-widest text-faint">{label}</p><p className="mt-1 text-sm font-medium text-bone">{value}</p></div>;
 }
 
 function Define({ term, desc }: { term: string; desc: string }) {

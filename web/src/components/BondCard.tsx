@@ -25,11 +25,13 @@ export function BondCard({
   circle,
   now,
   onResolved,
+  creatorName,
 }: {
   b: Bond;
   circle: Circle;
   now: number;
   onResolved: () => void;
+  creatorName?: string;
 }) {
   const { address } = useAccount();
   const write = useBondlineWrite(onResolved);
@@ -110,7 +112,7 @@ export function BondCard({
         <span>
           <span className="text-faint">by </span>
           <a href={explorerAddr(b.creator)} target="_blank" rel="noreferrer" className="hover:text-bone">
-            {shortAddr(b.creator)}
+            {creatorName || shortAddr(b.creator)}
           </a>
           {isCreator && <span className="text-faint"> (you)</span>}
         </span>

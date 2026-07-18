@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useAccount } from "wagmi";
+import { useEffect } from "react";
 import { useCircle, useBonds, usePayouts, useNow } from "@/lib/hooks";
 import { Status } from "@/lib/contracts";
 import { bpsPct, formatMon, shortAddr } from "@/lib/format";
@@ -13,6 +14,9 @@ import { BondCard } from "./BondCard";
 import { OpenBond } from "./OpenBond";
 import { PayoutPanel } from "./PayoutPanel";
 import { PayoutList } from "./PayoutList";
+import { CircleChat } from "./CircleChat";
+import { ProfileName } from "./ProfileName";
+import { useProfiles } from "@/lib/useProfiles";
 
 /// Full detail for one Circle: pooled balance, member roster, the shared-fund
 /// controls, and every Bond tied to this Circle, live-sorted so the ones
@@ -23,12 +27,26 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
   const { circle, isLoading, refresh } = useCircle(circleAddress);
   const { bonds, refresh: refreshBonds } = useBonds();
   const { payouts, refresh: refreshPayouts } = usePayouts();
+  const profileAddresses = [
+    ...(circle?.members ?? []),
+    ...bonds.map((bond) => bond.creator),
+    ...payouts.map((payout) => payout.to),
+  ];
+  const { names, rename, enabled: profilesEnabled } = useProfiles(profileAddresses);
 
   function refreshAll() {
     refresh();
     refreshBonds();
     refreshPayouts();
   }
+
+  useEffect(() => {
+    const timer = window.setInterval(refreshAll, 10_000);
+    return () => window.clearInterval(timer);
+  // The reads are intentionally refreshed as a group: a new Bond can alter
+  // both the Circle's Pot and its activity list between wallet interactions.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const circleBonds = bonds
     .filter((b) => b.circle.toLowerCase() === circleAddress.toLowerCase())
@@ -63,7 +81,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
       ) : (
         <>
           {/* circle header */}
-          <section className="mt-4 flex flex-col gap-5 border-b border-line pb-8">
+          <section className="mt-4 flex flex-col gap-5 rounded-2xl border border-line bg-panel/80 p-5 sm:p-7">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h1 className="font-display text-3xl font-semibold tracking-tight text-bone">
@@ -78,15 +96,16 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                   {shortAddr(circle.address)} ↗
                 </a>
               </div>
-              <div className="text-right">
+                <div className="text-right">
                 <div className="text-[10px] uppercase tracking-widest text-faint">
                   The Pot
                 </div>
                 <div className="tnum text-3xl font-semibold text-gold">
                   {formatMon(circle.balance)}
                   <span className="ml-1 text-base text-muted">MON</span>
+                  </div>
+                  <p className="mt-1 text-xs text-faint">earned one crossed deadline at a time</p>
                 </div>
-              </div>
             </div>
 
             {/* roster */}
@@ -102,8 +121,13 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                       size={30}
                       you={m.toLowerCase() === address?.toLowerCase()}
                     />
-                    <span className="tnum text-xs text-muted">
-                      {shortAddr(m)}
+                    <span className="text-xs text-muted">
+                      <ProfileName
+                        address={m}
+                        name={names[m.toLowerCase()]}
+                        editable={profilesEnabled && m.toLowerCase() === address?.toLowerCase()}
+                        onSave={(displayName) => rename(m, displayName)}
+                      />
                       {m.toLowerCase() === address?.toLowerCase() && " (you)"}
                     </span>
                   </div>
@@ -112,7 +136,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
             </div>
           </section>
 
-          <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
+          <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
             {/* bonds */}
             <div className="flex flex-col gap-4">
               <h2 className="font-display text-lg font-semibold tracking-tight text-bone">
@@ -130,6 +154,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                     circle={circle}
                     now={now}
                     onResolved={refreshAll}
+                    creatorName={names[b.creator.toLowerCase()]}
                   />
                 ))
               )}
@@ -146,6 +171,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
               )}
               <PayoutPanel circle={circle} onDone={refreshAll} />
               <PayoutList circle={circle} payouts={circlePayouts} onChange={refreshAll} />
+              <CircleChat circle={circle} names={names} />
             </div>
           </div>
         </>

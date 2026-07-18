@@ -3,14 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { isConfigured, Status } from "@/lib/contracts";
-import { formatMon } from "@/lib/format";
+import { formatMon, shortAddr } from "@/lib/format";
+import type { Bond } from "@/lib/contracts";
 import { useBonds, useCircles } from "@/lib/hooks";
-
-const activity = [
-  { initials: "P", color: "bg-[#514332] text-gold", text: "Priya cleared her Bond", note: "50 MON refunded", tone: "text-confirm" },
-  { initials: "D", color: "bg-[#3e2b27] text-[#e08b7b]", text: "Dele crossed the Line", note: "50 MON into the Pot", tone: "text-forfeit" },
-  { initials: "S", color: "bg-[#263a35] text-[#87d5aa]", text: "Sam declared a new Bond", note: "30 MON staked", tone: "text-gold" },
-];
+import { useProfiles } from "@/lib/useProfiles";
 
 function ChatDrama() {
   return (
@@ -82,6 +78,7 @@ function CosignDemo() {
 function GlobalTicker() {
   const { circles, refresh: refreshCircles } = useCircles();
   const { bonds, refresh: refreshBonds } = useBonds();
+  const { names } = useProfiles(bonds.map((bond) => bond.creator));
   const staked = bonds.reduce((total, bond) =>
     bond.status === Status.Active || bond.status === Status.PendingCosign ? total + bond.stake : total, 0n);
   const pots = circles.reduce((total, circle) => total + circle.balance, 0n);
@@ -102,11 +99,19 @@ function GlobalTicker() {
         <span className="hidden text-faint sm:inline">·</span>
         <span><span className="tnum text-bone">{formatMon(pots)} MON</span> sitting in Circle Pots</span>
       </div>
+      <div className="mt-4"><ActivityFeed bonds={bonds} names={names} /></div>
     </section>
   );
 }
 
-function ActivityFeed() {
+function ActivityFeed({ bonds, names }: { bonds: Bond[]; names: Record<string, string> }) {
+  const items = [...bonds].reverse().slice(0, 3).map((bond) => {
+    const person = names[bond.creator.toLowerCase()] || shortAddr(bond.creator);
+    if (bond.status === Status.Met) return { text: `${person} cleared a Bond`, note: `${formatMon(bond.stake)} MON refunded`, tone: "text-confirm" };
+    if (bond.status === Status.Crossed) return { text: `${person} crossed the Line`, note: `${formatMon(bond.stake)} MON into the Pot`, tone: "text-forfeit" };
+    if (bond.status === Status.PendingCosign) return { text: `${person} asked the Circle`, note: "Bond is cosigning now", tone: "text-gold" };
+    return { text: `${person} opened a Bond`, note: `${formatMon(bond.stake)} MON on the Line`, tone: "text-gold" };
+  });
   return (
     <section className="overflow-hidden rounded-xl border border-line bg-panel">
       <div className="flex items-center gap-2 border-b border-line px-4 py-3">
@@ -114,9 +119,9 @@ function ActivityFeed() {
         <p className="tnum text-[10px] font-semibold uppercase tracking-[0.18em] text-faint">Circle activity</p>
       </div>
       <div className="grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-        {activity.map((item) => (
-          <div key={item.text} className="flex items-center gap-3 px-4 py-3.5">
-            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${item.color}`}>{item.initials}</div>
+        {items.length === 0 ? <div className="px-4 py-4 text-xs text-faint sm:col-span-3">The first Bond opened by a Circle will show up here.</div> : items.map((item) => (
+          <div key={`${item.text}-${item.note}`} className="flex items-center gap-3 px-4 py-3.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-panel-hi text-xs font-semibold text-gold">↗</div>
             <p className="text-xs leading-relaxed text-muted"><span className="text-bone">{item.text}</span><br /><span className={item.tone}>{item.note}</span></p>
           </div>
         ))}
@@ -143,7 +148,6 @@ export function LandingExperience() {
 
       <CosignDemo />
       <div className="mt-10"><GlobalTicker /></div>
-      <div className="mt-5"><ActivityFeed /></div>
 
       <section className="grid gap-4 py-14 sm:grid-cols-3">
         {[
