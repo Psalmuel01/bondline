@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAccount } from "wagmi";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useCircle, useBonds, usePayouts, useNow } from "@/lib/hooks";
 import { Status } from "@/lib/contracts";
 import { bpsPct, formatMon, shortAddr } from "@/lib/format";
@@ -17,6 +17,9 @@ import { PayoutList } from "./PayoutList";
 import { CircleChat } from "./CircleChat";
 import { ProfileName } from "./ProfileName";
 import { useProfiles } from "@/lib/useProfiles";
+import { CircleSettings } from "./CircleSettings";
+import { ActivityTimeline } from "./ActivityTimeline";
+import type { CircleMetadata } from "@/lib/supabase";
 
 /// Full detail for one Circle: pooled balance, member roster, the shared-fund
 /// controls, and every Bond tied to this Circle, live-sorted so the ones
@@ -27,12 +30,14 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
   const { circle, isLoading, refresh } = useCircle(circleAddress);
   const { bonds, refresh: refreshBonds } = useBonds();
   const { payouts, refresh: refreshPayouts } = usePayouts();
+  const [metadata, setMetadata] = useState<CircleMetadata | undefined>();
+  const setCircleMetadata = useCallback((next: CircleMetadata | undefined) => setMetadata(next), []);
   const profileAddresses = [
     ...(circle?.members ?? []),
     ...bonds.map((bond) => bond.creator),
     ...payouts.map((payout) => payout.to),
   ];
-  const { names, rename, enabled: profilesEnabled } = useProfiles(profileAddresses);
+  const { names, profiles, save: saveProfile, enabled: profilesEnabled } = useProfiles(profileAddresses);
 
   function refreshAll() {
     refresh();
@@ -81,9 +86,11 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
       ) : (
         <>
           {/* circle header */}
-          <section className="mt-4 flex flex-col gap-5 rounded-2xl border border-line bg-panel/80 p-5 sm:p-7">
+          <section className="relative mt-4 flex flex-col gap-5 overflow-hidden rounded-2xl border border-line bg-panel/80 p-5 sm:p-7">
+            {metadata?.banner_url && <img src={metadata.banner_url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-20" />}
+            <div className="absolute inset-0 bg-gradient-to-r from-panel via-panel/90 to-panel/55" />
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
+              <div className="relative">
                 <h1 className="font-display text-3xl font-semibold tracking-tight text-bone">
                   {circle.name || "Untitled Circle"}
                 </h1>
@@ -95,8 +102,9 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                 >
                   {shortAddr(circle.address)} ↗
                 </a>
+                {metadata?.mission && <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">{metadata.mission}</p>}
               </div>
-                <div className="text-right">
+                <div className="relative text-right">
                 <div className="text-[10px] uppercase tracking-widest text-faint">
                   The Pot
                 </div>
@@ -105,33 +113,37 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                   <span className="ml-1 text-base text-muted">MON</span>
                   </div>
                   <p className="mt-1 text-xs text-faint">earned one crossed deadline at a time</p>
+                  {metadata?.pot_goal && <p className="tnum mt-2 text-xs text-gold">goal · {metadata.pot_goal} MON</p>}
                 </div>
             </div>
 
             {/* roster */}
-            <div className="flex flex-col gap-2">
+            <div className="relative flex flex-col gap-2">
               <span className="text-[10px] uppercase tracking-widest text-faint">
                 {circle.members.length} members · {bpsPct(circle.cosignThresholdBps)} to cosign
               </span>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 {circle.members.map((m) => (
                   <div key={m} className="flex items-center gap-1.5">
                     <Avatar
                       addr={m}
                       size={30}
                       you={m.toLowerCase() === address?.toLowerCase()}
+                      imageUrl={profiles[m.toLowerCase()]?.avatar_url}
+                      color={profiles[m.toLowerCase()]?.avatar_color}
                     />
                     <span className="text-xs text-muted">
                       <ProfileName
                         address={m}
-                        name={names[m.toLowerCase()]}
+                        profile={profiles[m.toLowerCase()]}
                         editable={profilesEnabled && m.toLowerCase() === address?.toLowerCase()}
-                        onSave={(displayName) => rename(m, displayName)}
+                        onSave={(profile) => saveProfile(m, profile)}
                       />
                       {m.toLowerCase() === address?.toLowerCase() && " (you)"}
                     </span>
                   </div>
                 ))}
+                <CircleSettings circle={circle} onMetadata={setCircleMetadata} />
               </div>
             </div>
           </section>
@@ -158,6 +170,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                   />
                 ))
               )}
+              <ActivityTimeline circle={circle} bonds={circleBonds} names={names} />
             </div>
 
             {/* right rail: create + spend */}

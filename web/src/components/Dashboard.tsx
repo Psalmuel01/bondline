@@ -58,11 +58,18 @@ export function Dashboard() {
         </button>
       </div>
 
-      {creating && <CreateCircle onCreated={refreshAll} />}
+      {creating && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-bg/65 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-label="Create a Circle">
+          <div className="relative w-full max-w-3xl rounded-2xl border border-panel-hi bg-panel shadow-2xl shadow-black/30">
+            <button onClick={() => setCreating(false)} className="absolute right-5 top-4 z-10 text-xl text-muted transition hover:text-bone" aria-label="Close">×</button>
+            <CreateCircle onCreated={refreshAll} />
+          </div>
+        </div>
+      )}
 
       {isLoading && circles.length === 0 ? (
         <p className="text-sm text-faint">Loading Circles…</p>
-      ) : mine.length === 0 && !creating ? (
+      ) : mine.length === 0 ? (
         <div className="rounded-xl border border-line bg-panel p-6">
           <p className="text-sm text-muted">
             You&apos;re not in a Circle yet. Start one with your crew and put a

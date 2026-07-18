@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ConnectButton } from "./ConnectButton";
 import { Wordmark } from "./Logo";
+import { NotificationCenter } from "./NotificationCenter";
 
 export function Header() {
   return (
@@ -20,6 +21,7 @@ export function Header() {
         >
           How it works
         </Link>
+        <NotificationCenter />
         <ConnectButton />
       </div>
     </header>

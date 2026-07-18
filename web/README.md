@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bondline web
 
-## Getting Started
+Bondline is a group commitment app on Monad testnet. A Circle stakes MON against
+personal deadlines: meet the Line and the Circle cosigns a refund; miss it and
+the stake funds the shared Pot.
 
-First, run the development server:
+## What is on-chain
+
+- Circle membership, cosign threshold, and Pot balance
+- Bonds, deadlines, stakes, receipts hashes, cosigns, and resolutions
+- Payout proposals and their cosigns
+
+## What is off-chain
+
+Supabase makes the UI human without changing custody or contract rules:
+
+- Display names, avatar image URLs, and avatar colors
+- Circle mission, Pot goal, and banner image URL
+- Circle chat and activity rows recorded by the UI
+
+This social layer is optional. The core app still works with only the contract
+addresses configured; chat, profile editing, and Circle customization show
+setup states until Supabase is enabled.
+
+## Local setup
 
 ```bash
+cd web
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Set the deployed Monad testnet contract addresses:
 
-## Learn More
+```env
+NEXT_PUBLIC_CORE_ADDRESS=0xyour_deployed_core_address
+NEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS=0xyour_deployed_factory_address
+```
 
-To learn more about Next.js, take a look at the following resources:
+To enable profiles, Circle metadata, chat, and app-recorded activity, create a
+Supabase project, run [`../supabase/schema.sql`](../supabase/schema.sql) in its
+SQL Editor, then add:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Restart `npm run dev` after changing `.env.local`.
 
-## Deploy on Vercel
+## Product walkthrough
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Connect an injected wallet on Monad testnet.
+2. Click **New Circle** and add at least one other member wallet.
+3. Open the Circle and click your own name to add a profile name, avatar URL,
+   or avatar color.
+4. Circle members can select **Customize Circle** to set a mission, Pot goal,
+   and optional banner image URL.
+5. Open a Bond, declare it complete with a receipt URL, and let the crew
+   cosign it. Images, GitHub links, Loom links, and YouTube links receive a
+   lightweight receipt preview.
+6. Use the header notification center for urgent deadlines and pending cosigns.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Activity and notifications
+
+The landing feed and Circle workspace read live contract state. Bonds and
+payout proposals submitted through this frontend are also saved to Supabase
+with an exact app timestamp and explorer transaction link.
+
+Existing chain history is shown as a state-derived fallback. For a canonical,
+historical feed of every contract event, deploy an Envio/HyperIndex indexer once
+the contracts are deployed and verified. The contracts already emit the needed
+Bond and payout events.
+
+Notifications are currently in-app. Browser/mobile push needs a VAPID-enabled
+service worker or a notification provider and should be added only with a
+wallet-authenticated backend.
+
+## Security note
+
+`supabase/schema.sql` uses permissive anonymous policies for this testnet demo.
+Do not use those policies on mainnet. Before production, send profile, chat,
+metadata, and activity writes through a wallet-signature-verifying Supabase Edge
+Function that confirms on-chain Circle membership.
+
+## Verification
+
+```bash
+npm run build
+```
+
+The app targets Monad testnet and test MON only. It is not audited.

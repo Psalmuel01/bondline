@@ -8,6 +8,7 @@ import { countdownParts, formatMon, shortAddr } from "@/lib/format";
 import { explorerAddr, explorerTx } from "@/lib/chain";
 import { useBondlineWrite } from "@/lib/useBondlineWrite";
 import { CosignPanel } from "./CosignPanel";
+import { ReceiptPreview } from "./ReceiptPreview";
 
 const STATUS_META: Record<Status, { label: string; cls: string; dot: string }> = {
   [Status.Active]: { label: "ON THE LINE", cls: "text-gold border-gold/40 bg-gold/10", dot: "bg-gold" },
@@ -122,6 +123,8 @@ export function BondCard({
 
       {/* live voting */}
       {pending && !voteCd.expired && <CosignPanel b={b} circle={circle} onResolved={onResolved} />}
+
+      {b.receiptsUri && <ReceiptPreview uri={b.receiptsUri} />}
 
       {/* creator: declare complete */}
       {canDeclare && !declaring && (

@@ -2,18 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { parseEther } from "viem";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import {
   CIRCLE_FACTORY_ADDRESS,
   CORE_ADDRESS,
   circleFactoryAbi,
   coreAbi,
 } from "./contracts";
+import { recordActivity } from "./supabase";
 
 /// Wraps every Bondline write with pending/confirming/tx-hash state so the UI
 /// can show each step happening on-chain (no fake optimistic updates). One hook
 /// instance per action surface; pass a callback to refresh reads on confirm.
 export function useBondlineWrite(onConfirmed?: () => void) {
+  const { address } = useAccount();
   const { writeContractAsync, isPending } = useWriteContract();
   const [hash, setHash] = useState<`0x${string}` | undefined>();
   const [error, setError] = useState<string | undefined>();
@@ -38,11 +40,13 @@ export function useBondlineWrite(onConfirmed?: () => void) {
 
   async function run(
     fn: () => Promise<`0x${string}`>,
+    activity?: { circle: `0x${string}`; kind: string; body: string },
   ): Promise<`0x${string}` | undefined> {
     setError(undefined);
     try {
       const h = await fn();
       setHash(h);
+      if (activity) recordActivity({ circleAddress: activity.circle, actorAddress: address, kind: activity.kind, body: activity.body, txHash: h }).catch(() => undefined);
       return h;
     } catch (e) {
       setError(friendly(e));
@@ -72,7 +76,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
         functionName: "openBond",
         args: [circle, description, deadlineSec],
         value: parseEther(stakeMon),
-      }),
+      }), { circle, kind: "bond_opened", body: `Opened a Bond: ${description}` },
     );
 
   const declareDone = (
@@ -141,7 +145,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
         abi: coreAbi,
         functionName: "proposePayout",
         args: [circle, to, parseEther(amountMon), memo],
-      }),
+      }), { circle, kind: "payout_proposed", body: `Proposed a payout: ${memo}` },
     );
 
   const cosignPayout = (payoutId: bigint) =>

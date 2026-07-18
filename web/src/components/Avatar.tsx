@@ -12,12 +12,16 @@ export function Avatar({
   vote = "pending",
   you = false,
   title,
+  imageUrl,
+  color,
 }: {
   addr: `0x${string}`;
   size?: number;
   vote?: Vote;
   you?: boolean;
   title?: string;
+  imageUrl?: string | null;
+  color?: string;
 }) {
   const hue = addrHue(addr);
   const cosigned = vote === "yes" || vote === "no";
@@ -39,9 +43,9 @@ export function Avatar({
         width: size,
         height: size,
         fontSize: size * 0.34,
-        background: cosigned
+        background: imageUrl ? undefined : cosigned
           ? undefined
-          : `hsl(${hue} 30% 20%)`,
+          : color ?? `hsl(${hue} 30% 20%)`,
         backgroundColor: cosigned
           ? `hsl(${hue} 22% 16%)`
           : undefined,
@@ -50,7 +54,7 @@ export function Avatar({
       }}
       title={title ?? `${shortAddr(addr)}${you ? " (you)" : ""}`}
     >
-      {addrInitials(addr)}
+      {imageUrl ? <img src={imageUrl} alt="" className="h-full w-full rounded-full object-cover" /> : addrInitials(addr)}
     </div>
   );
 }

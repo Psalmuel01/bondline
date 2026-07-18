@@ -131,12 +131,48 @@ export default function DocsPage() {
           </ul>
         </Section>
 
+        <Section title="Make a Circle feel like yours">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-line bg-panel p-5">
+              <h3 className="font-display font-semibold text-bone">Profiles &amp; Circle identity</h3>
+              <p className="mt-2 text-sm text-muted">
+                Click your own name in a Circle to set a display name, avatar,
+                and color. Circle members can also add a mission, a Pot goal,
+                and a banner image. These are display details only — funds and
+                membership remain on-chain.
+              </p>
+            </div>
+            <div className="rounded-xl border border-line bg-panel p-5">
+              <h3 className="font-display font-semibold text-bone">Chat, activity &amp; receipts</h3>
+              <p className="mt-2 text-sm text-muted">
+                Each Circle has its own chat and activity timeline. Add a GitHub
+                PR, Loom, YouTube link, or image as a receipt when declaring a
+                Bond done; Bondline gives it a compact preview for the crew.
+              </p>
+            </div>
+          </div>
+        </Section>
+
+        <Section title="Things that need you">
+          <p>
+            The notification button in the header surfaces two high-signal
+            moments: a Circle asking for your cosign, and one of your own Bonds
+            with less than 24 hours left. These notifications are in-app, so
+            they work immediately without asking for browser permissions.
+          </p>
+        </Section>
+
         <div className="mt-6 rounded-xl border border-gold/25 bg-gold/5 p-5 text-sm text-muted">
           <p className="text-bone">A note on the build.</p>
           <p className="mt-1.5">
             Bondline runs on Monad testnet with test MON. It hasn&apos;t been
             audited — treat it as a hackathon build, not a place for money you
             can&apos;t afford to lose to a bug.
+          </p>
+          <p className="mt-3">
+            Profiles, chat, Circle missions, banners, and app-recorded activity
+            are optional testnet metadata stored separately from the contracts.
+            They never control the Pot or change Circle membership.
           </p>
         </div>
 
