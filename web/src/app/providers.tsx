@@ -13,9 +13,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
           queries: {
             // Keep the chain and social layers from independently flashing
             // back to loading as users move around a Circle.
-            staleTime: 10_000,
-            gcTime: 5 * 60_000,
+            staleTime: 60_000,
+            gcTime: 30 * 60_000,
             refetchOnWindowFocus: false,
+            refetchOnMount: false,
             retry: 1,
           },
         },

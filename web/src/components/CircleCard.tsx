@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useAccount } from "wagmi";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Bond, Circle } from "@/lib/contracts";
 import { Status } from "@/lib/contracts";
 import { bpsPct, formatMon } from "@/lib/format";
+import { getActivity, getCircleMetadata, getMessages, getProfiles, isSupabaseConfigured } from "@/lib/supabase";
 import { Avatar } from "./Avatar";
 
 /// One Circle tile on the dashboard. Surfaces the numbers that matter at a
@@ -18,6 +20,7 @@ export function CircleCard({
   bonds: Bond[];
 }) {
   const { address } = useAccount();
+  const queryClient = useQueryClient();
   const mine = bonds.filter(
     (b) => b.circle.toLowerCase() === circle.address.toLowerCase(),
   );
@@ -31,10 +34,23 @@ export function CircleCard({
         b.creator.toLowerCase() !== address.toLowerCase() &&
         circle.members.some((m) => m.toLowerCase() === address.toLowerCase()),
     );
+  const isMember = !!address && circle.members.some((member) => member.toLowerCase() === address.toLowerCase());
+
+  function prefetchCircle() {
+    if (!isSupabaseConfigured) return;
+    const circleKey = circle.address.toLowerCase();
+    const profileKey = [...circle.members].map((member) => member.toLowerCase()).sort().join(",");
+    void queryClient.prefetchQuery({ queryKey: ["circle-metadata", circleKey], queryFn: () => getCircleMetadata(circle.address) });
+    void queryClient.prefetchQuery({ queryKey: ["circle-activity", circleKey], queryFn: () => getActivity(circle.address) });
+    if (profileKey) void queryClient.prefetchQuery({ queryKey: ["profiles", profileKey], queryFn: () => getProfiles(profileKey.split(",")) });
+    if (isMember) void queryClient.prefetchQuery({ queryKey: ["circle-messages", circleKey], queryFn: () => getMessages(circle.address) });
+  }
 
   return (
     <Link
       href={`/circle/${circle.address}`}
+      onMouseEnter={prefetchCircle}
+      onFocus={prefetchCircle}
       className="group flex flex-col gap-4 rounded-xl border border-line bg-panel p-5 transition hover:border-panel-hi"
     >
       <div className="flex items-start justify-between">

@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCircles, useBonds } from "@/lib/hooks";
 import { isConfigured } from "@/lib/contracts";
+import { getActivity, getCircleMetadata, getMessages, getProfiles, isSupabaseConfigured } from "@/lib/supabase";
 import { CircleCard } from "./CircleCard";
 import { CreateCircle } from "./CreateCircle";
 
@@ -12,8 +14,10 @@ import { CreateCircle } from "./CreateCircle";
 /// the registry is visible without cluttering your crews.
 export function Dashboard() {
   const { address } = useAccount();
-  const { circles, isLoading, refresh } = useCircles();
-  const { bonds, refresh: refreshBonds } = useBonds();
+  const queryClient = useQueryClient();
+  const { circles, isLoading: circlesLoading, error, refresh } = useCircles();
+  const { bonds, isLoading: bondsLoading, refresh: refreshBonds } = useBonds();
+  const isLoading = circlesLoading || bondsLoading;
   const [creating, setCreating] = useState(false);
 
   const { mine, others } = useMemo(() => {
@@ -34,6 +38,22 @@ export function Dashboard() {
     refreshBonds();
     setCreating(false);
   }
+
+  // Warm every detail route while the dashboard is open. Navigation then reads
+  // from memory instead of starting a new chain/Supabase waterfall.
+  useEffect(() => {
+    if (!isSupabaseConfigured || isLoading) return;
+    for (const circle of circles) {
+      const circleKey = circle.address.toLowerCase();
+      const profileKey = [...circle.members].map((member) => member.toLowerCase()).sort().join(",");
+      void queryClient.prefetchQuery({ queryKey: ["circle-metadata", circleKey], queryFn: () => getCircleMetadata(circle.address) });
+      void queryClient.prefetchQuery({ queryKey: ["circle-activity", circleKey], queryFn: () => getActivity(circle.address) });
+      if (profileKey) void queryClient.prefetchQuery({ queryKey: ["profiles", profileKey], queryFn: () => getProfiles(profileKey.split(",")) });
+      if (address && circle.members.some((member) => member.toLowerCase() === address.toLowerCase())) {
+        void queryClient.prefetchQuery({ queryKey: ["circle-messages", circleKey], queryFn: () => getMessages(circle.address) });
+      }
+    }
+  }, [address, circles, isLoading, queryClient]);
 
   if (!isConfigured) {
     return (
@@ -69,6 +89,10 @@ export function Dashboard() {
 
       {isLoading && circles.length === 0 ? (
         <p className="text-sm text-faint">Loading Circles…</p>
+      ) : error ? (
+        <div className="rounded-xl border border-forfeit/30 bg-forfeit/5 p-6 text-sm text-forfeit">
+          Couldn&apos;t load Circles right now. Please refresh and try again.
+        </div>
       ) : mine.length === 0 ? (
         <div className="rounded-xl border border-line bg-panel p-6">
           <p className="text-sm text-muted">

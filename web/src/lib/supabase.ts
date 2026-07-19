@@ -43,6 +43,20 @@ export async function uploadCircleImage(file: File, objectPath: string) {
   return `${url}/storage/v1/object/public/${CIRCLE_MEDIA_BUCKET}/${objectPath}`;
 }
 
+/** Removes a previously saved Circle-media object. External image URLs are left alone. */
+export async function deleteCircleImage(mediaUrl: string) {
+  if (!url || !key) return;
+  const prefix = `${url}/storage/v1/object/public/${CIRCLE_MEDIA_BUCKET}/`;
+  if (!mediaUrl.startsWith(prefix)) return;
+  const response = await fetch(`${url}/storage/v1/object/${CIRCLE_MEDIA_BUCKET}/${mediaUrl.slice(prefix.length)}`, {
+    method: "DELETE",
+    headers: { apikey: key, Authorization: `Bearer ${key}` },
+  });
+  // The image may already have been deleted in Storage. Clearing its saved URL
+  // is still the important part, so treat that state as successfully removed.
+  if (!response.ok && response.status !== 404) throw new Error("Couldn’t remove this image from storage.");
+}
+
 export async function getProfiles(addresses: readonly string[]) {
   if (!addresses.length || !isSupabaseConfigured) return [] as ProfileRow[];
   const list = addresses.map((address) => address.toLowerCase()).join(",");

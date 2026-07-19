@@ -24,189 +24,48 @@ export function useNow() {
   return now;
 }
 
-/// All Circles from the factory registry, with each clone's name/threshold/
-/// members/balance batched in a single multicall. No indexer needed.
 export function useCircles() {
-  const { data: circleAddrs, isLoading: addressesLoading, refetch: refetchAddrs } = useReadContract({
+  const { data: circleAddrs, isLoading: addressesLoading, error: addressesError, refetch: refetchAddrs } = useReadContract({
     address: CIRCLE_FACTORY_ADDRESS,
     abi: circleFactoryAbi,
     functionName: "allCircles",
   });
-
   const addrs = (circleAddrs ?? []) as `0x${string}`[];
-
   const calls = addrs.flatMap((address) => [
     { address, abi: circleAbi, functionName: "name" as const },
     { address, abi: circleAbi, functionName: "cosignThresholdBps" as const },
     { address, abi: circleAbi, functionName: "members" as const },
     { address, abi: circleAbi, functionName: "balance" as const },
   ]);
-
-  const { data, isLoading, refetch } = useReadContracts({
-    contracts: calls,
-    query: { enabled: addrs.length > 0 },
-  });
-
-  const circles: Circle[] = addrs.map((address, i) => {
+  const { data, isLoading, error, refetch } = useReadContracts({ contracts: calls, query: { enabled: addrs.length > 0, staleTime: 60_000, gcTime: 30 * 60_000 } });
+  const circles = addrs.map((address, i) => {
     const base = i * 4;
-    return {
-      address,
-      name: (data?.[base]?.result as string) ?? "",
-      cosignThresholdBps: Number(data?.[base + 1]?.result ?? 0),
-      members: ((data?.[base + 2]?.result as `0x${string}`[]) ?? []),
-      balance: (data?.[base + 3]?.result as bigint) ?? 0n,
-    };
+    return { address, name: (data?.[base]?.result as string) ?? "", cosignThresholdBps: Number(data?.[base + 1]?.result ?? 0), members: (data?.[base + 2]?.result as `0x${string}`[]) ?? [], balance: (data?.[base + 3]?.result as bigint) ?? 0n } satisfies Circle;
   });
-
-  const refresh = () => {
-    refetchAddrs();
-    refetch();
-  };
-
-  return { circles, isLoading: addressesLoading || isLoading, refresh };
+  return { circles, isLoading: addressesLoading || isLoading, error: addressesError ?? error, refresh: () => { refetchAddrs(); refetch(); } };
 }
 
-/// A single Circle's full detail (used by the Circle page).
 export function useCircle(address?: `0x${string}`) {
-  const enabled = !!address;
   const { data, isLoading, refetch } = useReadContracts({
-    contracts: enabled
-      ? [
-          { address, abi: circleAbi, functionName: "name" },
-          { address, abi: circleAbi, functionName: "cosignThresholdBps" },
-          { address, abi: circleAbi, functionName: "members" },
-          { address, abi: circleAbi, functionName: "balance" },
-        ]
-      : [],
-    query: { enabled },
+    contracts: address ? [{ address, abi: circleAbi, functionName: "name" }, { address, abi: circleAbi, functionName: "cosignThresholdBps" }, { address, abi: circleAbi, functionName: "members" }, { address, abi: circleAbi, functionName: "balance" }] : [],
+    query: { enabled: !!address, staleTime: 60_000, gcTime: 30 * 60_000 },
   });
-
-  const circle: Circle | undefined =
-    enabled && data
-      ? {
-          address,
-          name: (data[0]?.result as string) ?? "",
-          cosignThresholdBps: Number(data[1]?.result ?? 0),
-          members: ((data[2]?.result as `0x${string}`[]) ?? []),
-          balance: (data[3]?.result as bigint) ?? 0n,
-        }
-      : undefined;
-
+  const circle = address && data ? { address, name: (data[0]?.result as string) ?? "", cosignThresholdBps: Number(data[1]?.result ?? 0), members: (data[2]?.result as `0x${string}`[]) ?? [], balance: (data[3]?.result as bigint) ?? 0n } satisfies Circle : undefined;
   return { circle, isLoading, refresh: refetch };
 }
 
-/// All Pot payouts across all Circles. Same fan-out pattern as Bonds; callers
-/// filter by Circle.
 export function usePayouts() {
-  const { data: count, isLoading: countLoading, refetch: refetchCount } = useReadContract({
-    address: CORE_ADDRESS,
-    abi: coreAbi,
-    functionName: "payoutCount",
-  });
-
-  const n = count ? Number(count) : 0;
-  const contracts = Array.from({ length: n }, (_, i) => ({
-    address: CORE_ADDRESS,
-    abi: coreAbi,
-    functionName: "payouts" as const,
-    args: [BigInt(i)] as const,
-  }));
-
-  const { data, isLoading, refetch } = useReadContracts({
-    contracts,
-    query: { enabled: n > 0 },
-  });
-
-  const payouts: Payout[] = (data ?? [])
-    .map((r, i) => {
-      if (r.status !== "success" || !r.result) return null;
-      const t = r.result as unknown as [
-        `0x${string}`,
-        `0x${string}`,
-        bigint,
-        boolean,
-        number,
-        string,
-      ];
-      return {
-        id: BigInt(i),
-        circle: t[0],
-        to: t[1],
-        amount: t[2],
-        executed: t[3],
-        cosigns: Number(t[4]),
-        memo: t[5],
-      } satisfies Payout;
-    })
-    .filter((p): p is Payout => p !== null);
-
-  const refresh = () => {
-    refetchCount();
-    refetch();
-  };
-
-  return { payouts, isLoading: countLoading || isLoading, refresh };
+  const { data: count, isLoading: countLoading, refetch: refetchCount } = useReadContract({ address: CORE_ADDRESS, abi: coreAbi, functionName: "payoutCount" });
+  const calls = Array.from({ length: Number(count ?? 0) }, (_, i) => ({ address: CORE_ADDRESS, abi: coreAbi, functionName: "payouts" as const, args: [BigInt(i)] as const }));
+  const { data, isLoading, refetch } = useReadContracts({ contracts: calls, query: { enabled: calls.length > 0, staleTime: 60_000, gcTime: 30 * 60_000 } });
+  const payouts = (data ?? []).flatMap((entry, i) => { if (entry.status !== "success" || !entry.result) return []; const t = entry.result as unknown as [`0x${string}`, `0x${string}`, bigint, boolean, number, string]; return [{ id: BigInt(i), circle: t[0], to: t[1], amount: t[2], executed: t[3], cosigns: Number(t[4]), memo: t[5] } satisfies Payout]; });
+  return { payouts, isLoading: countLoading || isLoading, refresh: () => { refetchCount(); refetch(); } };
 }
 
-/// All Bonds across all Circles. Reads bondCount then fans out one read per id.
-/// Callers filter by Circle client-side.
 export function useBonds() {
-  const { data: count, isLoading: countLoading, refetch: refetchCount } = useReadContract({
-    address: CORE_ADDRESS,
-    abi: coreAbi,
-    functionName: "bondCount",
-  });
-
-  const n = count ? Number(count) : 0;
-  const contracts = Array.from({ length: n }, (_, i) => ({
-    address: CORE_ADDRESS,
-    abi: coreAbi,
-    functionName: "bonds" as const,
-    args: [BigInt(i)] as const,
-  }));
-
-  const { data, isLoading, refetch } = useReadContracts({
-    contracts,
-    query: { enabled: n > 0 },
-  });
-
-  const bonds: Bond[] = (data ?? [])
-    .map((r, i) => {
-      if (r.status !== "success" || !r.result) return null;
-      const t = r.result as unknown as [
-        `0x${string}`,
-        `0x${string}`,
-        bigint,
-        bigint,
-        bigint,
-        number,
-        number,
-        number,
-        string,
-        `0x${string}`,
-        string,
-      ];
-      return {
-        id: BigInt(i),
-        creator: t[0],
-        circle: t[1],
-        stake: t[2],
-        deadline: t[3],
-        cosignClosesAt: t[4],
-        status: t[5] as Status,
-        cosigns: Number(t[6]),
-        objections: Number(t[7]),
-        description: t[8],
-        receiptsHash: t[9],
-        receiptsUri: t[10],
-      } satisfies Bond;
-    })
-    .filter((b): b is Bond => b !== null);
-
-  const refresh = () => {
-    refetchCount();
-    refetch();
-  };
-
-  return { bonds, count: n, isLoading: countLoading || isLoading, refresh };
+  const { data: count, isLoading: countLoading, refetch: refetchCount } = useReadContract({ address: CORE_ADDRESS, abi: coreAbi, functionName: "bondCount" });
+  const calls = Array.from({ length: Number(count ?? 0) }, (_, i) => ({ address: CORE_ADDRESS, abi: coreAbi, functionName: "bonds" as const, args: [BigInt(i)] as const }));
+  const { data, isLoading, refetch } = useReadContracts({ contracts: calls, query: { enabled: calls.length > 0, staleTime: 60_000, gcTime: 30 * 60_000 } });
+  const bonds = (data ?? []).flatMap((entry, i) => { if (entry.status !== "success" || !entry.result) return []; const t = entry.result as unknown as [`0x${string}`, `0x${string}`, bigint, bigint, bigint, number, number, number, string, `0x${string}`, string]; return [{ id: BigInt(i), creator: t[0], circle: t[1], stake: t[2], deadline: t[3], cosignClosesAt: t[4], status: t[5] as Status, cosigns: Number(t[6]), objections: Number(t[7]), description: t[8], receiptsHash: t[9], receiptsUri: t[10] } satisfies Bond]; });
+  return { bonds, count: Number(count ?? 0), isLoading: countLoading || isLoading, refresh: () => { refetchCount(); refetch(); } };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { addrHue, addrInitials, shortAddr } from "@/lib/format";
 
 type Vote = "yes" | "no" | "pending";
@@ -23,6 +24,8 @@ export function Avatar({
   imageUrl?: string | null;
   color?: string;
 }) {
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+  const showImage = Boolean(imageUrl && failedImageUrl !== imageUrl);
   const hue = addrHue(addr);
   const cosigned = vote === "yes" || vote === "no";
   const ring =
@@ -43,7 +46,7 @@ export function Avatar({
         width: size,
         height: size,
         fontSize: size * 0.34,
-        background: imageUrl ? undefined : cosigned
+        background: showImage ? undefined : cosigned
           ? undefined
           : color ?? `hsl(${hue} 30% 20%)`,
         backgroundColor: cosigned
@@ -54,7 +57,7 @@ export function Avatar({
       }}
       title={title ?? `${shortAddr(addr)}${you ? " (you)" : ""}`}
     >
-      {imageUrl ? <img src={imageUrl} alt="" className="h-full w-full rounded-full object-cover" /> : addrInitials(addr)}
+      {showImage ? <img src={imageUrl ?? undefined} alt="" onError={() => setFailedImageUrl(imageUrl ?? null)} className="h-full w-full rounded-full object-cover" /> : addrInitials(addr)}
     </div>
   );
 }

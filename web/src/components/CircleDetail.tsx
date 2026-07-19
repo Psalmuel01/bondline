@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAccount } from "wagmi";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCircle, useBonds, usePayouts, useNow } from "@/lib/hooks";
 import { Status } from "@/lib/contracts";
@@ -41,11 +41,10 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
   const setCircleMetadata = useCallback((next: CircleMetadata | undefined) => {
     queryClient.setQueryData(["circle-metadata", circleAddress.toLowerCase()], next);
   }, [circleAddress, queryClient]);
-  const profileAddresses = [
-    ...(circle?.members ?? []),
-    ...bonds.map((bond) => bond.creator),
-    ...payouts.map((payout) => payout.to),
-  ];
+  // Profile data is preloaded from the dashboard for this exact member list.
+  // Bond authors are members, so this keeps the detail route cacheable without
+  // pulling unrelated Circles' profiles into the request.
+  const profileAddresses = circle?.members ?? [];
   const { names, profiles, save: saveProfile, enabled: profilesEnabled, isLoading: profilesLoading } = useProfiles(profileAddresses);
   const isPageLoading = isLoading || bondsLoading || payoutsLoading || profilesLoading || metadataLoading;
 
@@ -54,14 +53,6 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
     refreshBonds();
     refreshPayouts();
   }
-
-  useEffect(() => {
-    const timer = window.setInterval(refreshAll, 10_000);
-    return () => window.clearInterval(timer);
-  // The reads are intentionally refreshed as a group: a new Bond can alter
-  // both the Circle's Pot and its activity list between wallet interactions.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const circleBonds = bonds
     .filter((b) => b.circle.toLowerCase() === circleAddress.toLowerCase())
@@ -98,7 +89,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
         <>
           {/* circle header */}
           <section className="relative mt-4 flex flex-col gap-5 overflow-hidden rounded-2xl border border-line bg-panel/80 p-5 sm:p-7">
-            {metadata?.banner_url && <img src={metadata.banner_url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-20" />}
+            {metadata?.banner_url && <img src={metadata.banner_url} alt="" onError={(event) => { event.currentTarget.style.display = "none"; }} className="absolute inset-0 h-full w-full object-cover opacity-20" />}
             <div className="absolute inset-0 bg-gradient-to-r from-panel via-panel/90 to-panel/55" />
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="relative">
@@ -115,8 +106,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                 </a>
                 {metadata?.mission && <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">{metadata.mission}</p>}
               </div>
-                <div className="relative flex items-start gap-3 text-right">
-                  <CircleShare circle={circle} />
+                <div className="relative text-right">
                   <div>
                     <div className="text-[10px] uppercase tracking-widest text-faint">
                       The Pot
@@ -137,6 +127,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                 {circle.members.length} members · {bpsPct(circle.cosignThresholdBps)} to cosign
               </span>
               <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                 {circle.members.map((m) => (
                   <div key={m} className="flex items-center gap-1.5">
                     <Avatar
@@ -158,6 +149,10 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                   </div>
                 ))}
                 <CircleSettings circle={circle} metadata={metadata} onMetadata={setCircleMetadata} />
+                </div>
+                <div className="ml-auto flex items-center">
+                  <CircleShare circle={circle} />
+                </div>
               </div>
             </div>
           </section>

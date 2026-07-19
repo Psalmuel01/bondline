@@ -76,8 +76,10 @@ create policy "public Circle activity write" on public.circle_activity for inser
 
 drop policy if exists "public Circle media read" on storage.objects;
 drop policy if exists "public Circle media upload" on storage.objects;
+drop policy if exists "public Circle media delete" on storage.objects;
 create policy "public Circle media read" on storage.objects for select using (bucket_id = 'circle-media');
 create policy "public Circle media upload" on storage.objects for insert with check (bucket_id = 'circle-media');
+create policy "public Circle media delete" on storage.objects for delete using (bucket_id = 'circle-media');
 
 alter table public.circle_messages replica identity full;
 do $$
