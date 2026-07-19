@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useAccount } from "wagmi";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCircle, useBonds, usePayouts, useNow } from "@/lib/hooks";
 import { Status } from "@/lib/contracts";
 import { bpsPct, formatMon, shortAddr } from "@/lib/format";
@@ -18,8 +19,9 @@ import { CircleChat } from "./CircleChat";
 import { ProfileName } from "./ProfileName";
 import { useProfiles } from "@/lib/useProfiles";
 import { CircleSettings } from "./CircleSettings";
+import { CircleShare } from "./CircleShare";
 import { ActivityTimeline } from "./ActivityTimeline";
-import type { CircleMetadata } from "@/lib/supabase";
+import { getCircleMetadata, isSupabaseConfigured, type CircleMetadata } from "@/lib/supabase";
 
 /// Full detail for one Circle: pooled balance, member roster, the shared-fund
 /// controls, and every Bond tied to this Circle, live-sorted so the ones
@@ -28,16 +30,24 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
   const { address } = useAccount();
   const now = useNow();
   const { circle, isLoading, refresh } = useCircle(circleAddress);
-  const { bonds, refresh: refreshBonds } = useBonds();
-  const { payouts, refresh: refreshPayouts } = usePayouts();
-  const [metadata, setMetadata] = useState<CircleMetadata | undefined>();
-  const setCircleMetadata = useCallback((next: CircleMetadata | undefined) => setMetadata(next), []);
+  const { bonds, isLoading: bondsLoading, refresh: refreshBonds } = useBonds();
+  const { payouts, isLoading: payoutsLoading, refresh: refreshPayouts } = usePayouts();
+  const queryClient = useQueryClient();
+  const { data: metadata, isLoading: metadataLoading } = useQuery({
+    queryKey: ["circle-metadata", circleAddress.toLowerCase()],
+    queryFn: () => getCircleMetadata(circleAddress),
+    enabled: isSupabaseConfigured,
+  });
+  const setCircleMetadata = useCallback((next: CircleMetadata | undefined) => {
+    queryClient.setQueryData(["circle-metadata", circleAddress.toLowerCase()], next);
+  }, [circleAddress, queryClient]);
   const profileAddresses = [
     ...(circle?.members ?? []),
     ...bonds.map((bond) => bond.creator),
     ...payouts.map((payout) => payout.to),
   ];
-  const { names, profiles, save: saveProfile, enabled: profilesEnabled } = useProfiles(profileAddresses);
+  const { names, profiles, save: saveProfile, enabled: profilesEnabled, isLoading: profilesLoading } = useProfiles(profileAddresses);
+  const isPageLoading = isLoading || bondsLoading || payoutsLoading || profilesLoading || metadataLoading;
 
   function refreshAll() {
     refresh();
@@ -79,11 +89,12 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
         ← all Circles
       </Link>
 
-      {isLoading && !circle ? (
-        <p className="mt-8 text-sm text-faint">Loading Circle…</p>
-      ) : !circle ? (
+      {isPageLoading && (
+        <CircleDetailSkeleton />
+      )}
+      {!isPageLoading && !circle ? (
         <p className="mt-8 text-sm text-forfeit">Circle not found.</p>
-      ) : (
+      ) : !isPageLoading && circle ? (
         <>
           {/* circle header */}
           <section className="relative mt-4 flex flex-col gap-5 overflow-hidden rounded-2xl border border-line bg-panel/80 p-5 sm:p-7">
@@ -104,16 +115,19 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                 </a>
                 {metadata?.mission && <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">{metadata.mission}</p>}
               </div>
-                <div className="relative text-right">
-                <div className="text-[10px] uppercase tracking-widest text-faint">
-                  The Pot
-                </div>
-                <div className="tnum text-3xl font-semibold text-gold">
-                  {formatMon(circle.balance)}
-                  <span className="ml-1 text-base text-muted">MON</span>
+                <div className="relative flex items-start gap-3 text-right">
+                  <CircleShare circle={circle} />
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-faint">
+                      The Pot
+                    </div>
+                    <div className="tnum text-3xl font-semibold text-gold">
+                      {formatMon(circle.balance)}
+                      <span className="ml-1 text-base text-muted">MON</span>
+                    </div>
+                    <p className="mt-1 text-xs text-faint">earned one crossed deadline at a time</p>
+                    {metadata?.pot_goal && <p className="tnum mt-2 text-xs text-gold">goal · {metadata.pot_goal} MON</p>}
                   </div>
-                  <p className="mt-1 text-xs text-faint">earned one crossed deadline at a time</p>
-                  {metadata?.pot_goal && <p className="tnum mt-2 text-xs text-gold">goal · {metadata.pot_goal} MON</p>}
                 </div>
             </div>
 
@@ -143,7 +157,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                     </span>
                   </div>
                 ))}
-                <CircleSettings circle={circle} onMetadata={setCircleMetadata} />
+                <CircleSettings circle={circle} metadata={metadata} onMetadata={setCircleMetadata} />
               </div>
             </div>
           </section>
@@ -188,9 +202,21 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
             </div>
           </div>
         </>
-      )}
+      ) : null}
 
       <Footer />
+    </div>
+  );
+}
+
+function CircleDetailSkeleton() {
+  return (
+    <div className="mt-4 animate-pulse" aria-label="Loading Circle">
+      <section className="rounded-2xl border border-line bg-panel/80 p-5 sm:p-7">
+        <div className="flex items-start justify-between gap-6"><div className="space-y-3"><div className="h-9 w-56 rounded bg-panel-hi" /><div className="h-3 w-24 rounded bg-panel-hi" /></div><div className="h-16 w-32 rounded bg-panel-hi" /></div>
+        <div className="mt-7 h-4 w-48 rounded bg-panel-hi" /><div className="mt-3 flex gap-3"><div className="h-8 w-24 rounded bg-panel-hi" /><div className="h-8 w-24 rounded bg-panel-hi" /></div>
+      </section>
+      <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]"><div className="space-y-4"><div className="h-6 w-40 rounded bg-panel-hi" /><div className="h-44 rounded-xl border border-line bg-panel" /><div className="h-44 rounded-xl border border-line bg-panel" /></div><div className="space-y-6"><div className="h-40 rounded-xl border border-line bg-panel" /><div className="h-40 rounded-xl border border-line bg-panel" /></div></div>
     </div>
   );
 }

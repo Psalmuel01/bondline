@@ -315,6 +315,19 @@ contract BondlineCoreTest is Test {
         core.declareDone(id, bytes32(0), "");
     }
 
+    function test_declare_requiresReceipt() public {
+        address circle = _four(5000);
+        uint256 id = _openBond(circle, alice, 1 ether);
+
+        vm.prank(alice);
+        vm.expectRevert(BondlineCore.ReceiptRequired.selector);
+        core.declareDone(id, bytes32(0), "https://example.com/receipt");
+
+        vm.prank(alice);
+        vm.expectRevert(BondlineCore.ReceiptRequired.selector);
+        core.declareDone(id, keccak256("receipt"), "");
+    }
+
     // --- 2-member and 100% edge Circles ---
 
     function test_twoMemberCircle_50pct() public {
@@ -462,7 +475,7 @@ contract BondlineCoreTest is Test {
 
         uint256 id = attacker.open{value: 2 ether}(circle);
         vm.prank(address(attacker));
-        core.declareDone(id, bytes32(0), "");
+        core.declareDone(id, keccak256("receipt"), "ipfs://receipt");
         attacker.arm(id);
 
         // bob confirms -> refund fires to attacker, which re-enters on receive.

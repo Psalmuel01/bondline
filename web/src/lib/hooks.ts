@@ -27,7 +27,7 @@ export function useNow() {
 /// All Circles from the factory registry, with each clone's name/threshold/
 /// members/balance batched in a single multicall. No indexer needed.
 export function useCircles() {
-  const { data: circleAddrs, refetch: refetchAddrs } = useReadContract({
+  const { data: circleAddrs, isLoading: addressesLoading, refetch: refetchAddrs } = useReadContract({
     address: CIRCLE_FACTORY_ADDRESS,
     abi: circleFactoryAbi,
     functionName: "allCircles",
@@ -63,7 +63,7 @@ export function useCircles() {
     refetch();
   };
 
-  return { circles, isLoading, refresh };
+  return { circles, isLoading: addressesLoading || isLoading, refresh };
 }
 
 /// A single Circle's full detail (used by the Circle page).
@@ -98,7 +98,7 @@ export function useCircle(address?: `0x${string}`) {
 /// All Pot payouts across all Circles. Same fan-out pattern as Bonds; callers
 /// filter by Circle.
 export function usePayouts() {
-  const { data: count, refetch: refetchCount } = useReadContract({
+  const { data: count, isLoading: countLoading, refetch: refetchCount } = useReadContract({
     address: CORE_ADDRESS,
     abi: coreAbi,
     functionName: "payoutCount",
@@ -145,13 +145,13 @@ export function usePayouts() {
     refetch();
   };
 
-  return { payouts, isLoading, refresh };
+  return { payouts, isLoading: countLoading || isLoading, refresh };
 }
 
 /// All Bonds across all Circles. Reads bondCount then fans out one read per id.
 /// Callers filter by Circle client-side.
 export function useBonds() {
-  const { data: count, refetch: refetchCount } = useReadContract({
+  const { data: count, isLoading: countLoading, refetch: refetchCount } = useReadContract({
     address: CORE_ADDRESS,
     abi: coreAbi,
     functionName: "bondCount",
@@ -208,5 +208,5 @@ export function useBonds() {
     refetch();
   };
 
-  return { bonds, count: n, isLoading, refresh };
+  return { bonds, count: n, isLoading: countLoading || isLoading, refresh };
 }

@@ -39,6 +39,12 @@ create table if not exists public.circle_messages (
 );
 create index if not exists circle_messages_circle_created_at on public.circle_messages (circle_address, created_at desc);
 
+-- Public display media for profile avatars and Circle banners. The app stores
+-- the resulting public URL in profiles.avatar_url / circle_metadata.banner_url.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('circle-media', 'circle-media', true, 5242880, array['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+on conflict (id) do update set public = true, file_size_limit = 5242880, allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
 alter table public.profiles enable row level security;
 alter table public.circle_messages enable row level security;
 alter table public.circle_metadata enable row level security;
@@ -67,6 +73,11 @@ create policy "public Circle metadata write" on public.circle_metadata for inser
 create policy "public Circle metadata update" on public.circle_metadata for update using (true) with check (true);
 create policy "public Circle activity read" on public.circle_activity for select using (true);
 create policy "public Circle activity write" on public.circle_activity for insert with check (true);
+
+drop policy if exists "public Circle media read" on storage.objects;
+drop policy if exists "public Circle media upload" on storage.objects;
+create policy "public Circle media read" on storage.objects for select using (bucket_id = 'circle-media');
+create policy "public Circle media upload" on storage.objects for insert with check (bucket_id = 'circle-media');
 
 alter table public.circle_messages replica identity full;
 do $$

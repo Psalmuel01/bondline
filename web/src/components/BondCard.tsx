@@ -52,10 +52,13 @@ export function BondCard({
   const canResolveExpired = pending && voteCd.expired;
 
   const busy = write.isPending || write.isConfirming;
+  const receipt = evidenceUri.trim();
+  const canOpenCosign = receipt.length > 0;
 
   async function submitDeclare() {
-    const hash = evidenceUri ? keccak256(toBytes(evidenceUri)) : ("0x" + "0".repeat(64) as `0x${string}`);
-    await write.declareDone(b.id, hash, evidenceUri.trim());
+    if (!canOpenCosign) return;
+    const hash = keccak256(toBytes(receipt));
+    await write.declareDone(b.id, hash, receipt);
     setDeclaring(false);
   }
 
@@ -137,7 +140,7 @@ export function BondCard({
       )}
       {canDeclare && declaring && (
         <div className="flex flex-col gap-2 rounded-lg border border-line bg-bg p-3">
-          <span className="text-xs uppercase tracking-widest text-faint">Receipts</span>
+          <span className="text-xs uppercase tracking-widest text-faint">Receipt required</span>
           <input
             value={evidenceUri}
             onChange={(e) => setEvidenceUri(e.target.value)}
@@ -145,12 +148,12 @@ export function BondCard({
             className="rounded-md border border-line bg-panel px-3 py-2 text-sm text-bone outline-none focus:border-gold/50"
           />
           <span className="text-xs text-faint">
-            Hashed on-chain so it can&apos;t be swapped after the fact. Your Circle opens it to cosign.
+            Add a link before opening the cosign. It is hashed on-chain so it can&apos;t be swapped after the fact.
           </span>
           <div className="flex gap-2">
             <button
               onClick={submitDeclare}
-              disabled={busy}
+              disabled={busy || !canOpenCosign}
               className="flex-1 rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-ink transition hover:brightness-108 disabled:opacity-50"
             >
               {busy ? "Confirming…" : "Open the cosign"}

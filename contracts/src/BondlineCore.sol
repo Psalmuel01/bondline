@@ -85,6 +85,7 @@ contract BondlineCore is ReentrancyGuard {
     error NotCreator();
     error NotActive();
     error DeadlinePassed();
+    error ReceiptRequired();
     error DeadlineNotReached();
     error NotPending();
     error CreatorCannotCosign();
@@ -177,6 +178,7 @@ contract BondlineCore is ReentrancyGuard {
         if (msg.sender != b.creator) revert NotCreator();
         if (b.status != Status.Active) revert NotActive();
         if (block.timestamp >= b.deadline) revert DeadlinePassed();
+        if (receiptsHash == bytes32(0) || bytes(receiptsUri).length == 0) revert ReceiptRequired();
 
         b.status = Status.PendingCosign;
         b.cosignClosesAt = uint64(block.timestamp) + COSIGN_WINDOW;

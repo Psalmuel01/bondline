@@ -4,6 +4,9 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(url && key);
+const CIRCLE_MEDIA_BUCKET = "circle-media";
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 export type ProfileRow = { address: string; display_name: string; avatar_url: string | null; avatar_color: string; updated_at: string };
 export type ChatMessage = { id: string; circle_address: string; sender_address: string; body: string; created_at: string };
@@ -18,6 +21,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!response.ok) throw new Error("Couldn’t reach the Circle social layer.");
   return response.json() as Promise<T>;
+}
+
+/** Uploads a display image to the public Circle media bucket. */
+export async function uploadCircleImage(file: File, objectPath: string) {
+  if (!url || !key) throw new Error("Supabase is not configured.");
+  if (!IMAGE_TYPES.has(file.type)) throw new Error("Choose a JPEG, PNG, WebP, or GIF image.");
+  if (file.size > MAX_IMAGE_BYTES) throw new Error("Images must be 5 MB or smaller.");
+
+  const response = await fetch(`${url}/storage/v1/object/${CIRCLE_MEDIA_BUCKET}/${objectPath}`, {
+    method: "POST",
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      "Content-Type": file.type,
+      "x-upsert": "true",
+    },
+    body: file,
+  });
+  if (!response.ok) throw new Error("Couldn’t upload this image.");
+  return `${url}/storage/v1/object/public/${CIRCLE_MEDIA_BUCKET}/${objectPath}`;
 }
 
 export async function getProfiles(addresses: readonly string[]) {
