@@ -8,13 +8,13 @@ Built for the **Spark** hackathon on **Monad** (mainnet, chain `143`).
 
 ---
 
-<!-- ## Demo
+-- ## Demo
 
-📹 **Demo video:** _add link — YouTube/Loom, ≤3 min, public_
+📹 **Demo video:** https://youtu.be/4dWGt0zatQI
 
-🔗 **Live app:** _add hosted URL_
+🔗 **Live app:** https://bondline-circle.vercel.app/
 
---- -->
+---
 
 ## Deployed contracts (Monad mainnet, chain `143`)
 
