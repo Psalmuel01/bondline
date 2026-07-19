@@ -4,7 +4,27 @@
 
 Bondline turns a personal deadline into an on-chain object your friends enforce. You start a *Circle* with your crew, stake MON against your own deadline, and declare when you've shipped. Enough of the Circle confirms it and your stake refunds. Miss the deadline, or fail the vote, and the stake pools into the Circle's shared Pot — money your own misses hand to the group.
 
-Built for the **Spark** hackathon on **Monad** (testnet, chain `10143`).
+Built for the **Spark** hackathon on **Monad** (mainnet, chain `143`).
+
+---
+
+<!-- ## Demo
+
+📹 **Demo video:** _add link — YouTube/Loom, ≤3 min, public_
+
+🔗 **Live app:** _add hosted URL_
+
+--- -->
+
+## Deployed contracts (Monad mainnet, chain `143`)
+
+Explorer: [monadscan.com](https://monadscan.com)
+
+| Contract | Address |
+| --- | --- |
+| `BondlineCore` | [`0x111004038f8e918a02cd760e2e2630e0c9e789d6`](https://monadscan.com/address/0x111004038f8e918a02cd760e2e2630e0c9e789d6) |
+| `CircleFactory` | [`0xb337fc04b8a146c93bcc7b57229cc8cb18c03fd6`](https://monadscan.com/address/0xb337fc04b8a146c93bcc7b57229cc8cb18c03fd6) |
+| `Circle` (implementation) | [`0x8beafbe2da703a8ff869c8ab57863bdea5ad82bf`](https://monadscan.com/address/0x8beafbe2da703a8ff869c8ab57863bdea5ad82bf) |
 
 ---
 
@@ -76,7 +96,7 @@ For a **Bond**, eligible voters are everyone *but* the creator (you can't vote o
 - **Per-circle Pot isolation is enforced, not conventional.** `Circle` clones only accept calls from the core, and the core credits forfeits to the owning Circle only. Tests assert one Circle's balance is untouched when another resolves.
 - **The financial sting shrinks as the Circle grows.** In a Circle of N, forfeiting costs you stake × (1 − 1/N). Circles of 3–6 are the sweet spot; past that the real deterrent is social (being *the one* who keeps funding the trip by never shipping), not the money.
 
-**Known v1 limitations (worth saying out loud):**
+**Known v1 limitations:**
 - **No member add/remove after creation.** The Circle's roster is fixed at deploy. A departing member's share of the Pot stays in the Pot. A later version could add governance for roster changes.
 - **Payout proposals have no expiry.** A stale proposal sits open until it clears the bar or is ignored. Fine at this scale; a real version would time them out.
 
@@ -86,16 +106,12 @@ For a **Bond**, eligible voters are everyone *but* the creator (you can't vote o
 
 ```bash
 cd contracts
-cp .env.example .env          # set PRIVATE_KEY (testnet key only)
-source .env
-forge script script/Deploy.s.sol \
-  --rpc-url monad_testnet --broadcast \
-  --verify --verifier sourcify \
-  --verifier-url https://sourcify-api-monad.blockvision.org/
+cp .env.example .env          # set PRIVATE_KEY (funded mainnet deployer)
+make deploy-verify-mainnet    # deploys to Monad mainnet, then verifies via sourcify
 ```
 
-The script prints the exact `web/.env.local` lines to paste (`NEXT_PUBLIC_CORE_ADDRESS`, `NEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS`).
+`deploy-verify-mainnet` deploys against `monad_mainnet` (chain `143`), verifies all three contracts on [monadscan.com](https://monadscan.com), and writes the deployed addresses straight into `web/.env.local` (`NEXT_PUBLIC_CORE_ADDRESS`, `NEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS`). This spends real MON — make sure the deployer is funded.
 
 ## Security
 
-It's an escrow contract, so it's written like one: ReentrancyGuard on every fund-moving path, checks-effects-interactions ordering (status finalized before any transfer), per-circle Pot isolation, and reentrancy attacker contracts in the test suite proving a double-payout reverts. Core logic is immutable — no upgradeable proxy over user funds. This is a hackathon build and has not been formally audited; it runs on testnet with test MON.
+It's an escrow contract, so it's written like one: ReentrancyGuard on every fund-moving path, checks-effects-interactions ordering (status finalized before any transfer), per-circle Pot isolation, and reentrancy attacker contracts in the test suite proving a double-payout reverts. Core logic is immutable — no upgradeable proxy over user funds. This is a hackathon build and has not been formally audited; it runs on Monad mainnet with real MON, so treat it as such.

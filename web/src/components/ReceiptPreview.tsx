@@ -10,6 +10,27 @@ export function ReceiptPreview({ uri }: { uri: string }) {
   if (image) return <a href={uri} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-line"><img src={uri} alt="Receipt preview" className="max-h-64 w-full object-cover transition hover:scale-[1.02]" /></a>;
   if (youtubeId) return <div className="overflow-hidden rounded-lg border border-line"><iframe className="aspect-video w-full" src={`https://www.youtube-nocookie.com/embed/${youtubeId}`} title="YouTube receipt" allowFullScreen /></div>;
   if (loomId) return <div className="overflow-hidden rounded-lg border border-line"><iframe className="aspect-video w-full" src={`https://www.loom.com/embed/${loomId}`} title="Loom receipt" allowFullScreen /></div>;
-  const label = host.includes("github.com") ? "GitHub receipt" : "Open receipt";
-  return <a href={uri} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg border border-line bg-bg px-3 py-2.5 text-xs text-muted transition hover:border-gold/40 hover:text-bone"><span>{label} · {host}</span><span className="text-gold">Open ↗</span></a>;
+
+  // GitHub links are a natural "I shipped it" receipt for devs — parse the URL
+  // into repo + what it points at so it reads as proof, not a bare link.
+  const gh = host === "github.com" ? parseGitHub(url) : null;
+  if (gh) return <a href={uri} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-lg border border-line bg-bg px-3.5 py-3 transition hover:border-gold/40"><svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 shrink-0 fill-bone"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49l-.01-1.71c-2.78.62-3.37-1.37-3.37-1.37-.46-1.18-1.11-1.5-1.11-1.5-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.36-2.22-.26-4.55-1.14-4.55-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.34 9.34 0 0 1 2.5-.34c.85 0 1.71.12 2.5.34 1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9l-.01 2.81c0 .27.18.6.69.49A10.03 10.03 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z" /></svg><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-bone">{gh.title}</p><p className="tnum truncate text-xs text-faint">{gh.repo}</p></div><span className="shrink-0 text-xs text-gold">Open ↗</span></a>;
+
+  return <a href={uri} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg border border-line bg-bg px-3 py-2.5 text-xs text-muted transition hover:border-gold/40 hover:text-bone"><span>Open receipt · {host}</span><span className="text-gold">Open ↗</span></a>;
+}
+
+/// Turns a github.com URL into { repo, title } describing what it points at —
+/// a PR, commit, issue, release, branch, or the repo itself. Returns null if
+/// the path isn't a recognizable owner/repo shape.
+function parseGitHub(url: URL): { repo: string; title: string } | null {
+  const parts = url.pathname.split("/").filter(Boolean);
+  if (parts.length < 2) return null;
+  const [owner, repo, kind, ref] = parts;
+  const slug = `${owner}/${repo}`;
+  if (kind === "pull" && ref) return { repo: slug, title: `Pull request #${ref}` };
+  if (kind === "issues" && ref) return { repo: slug, title: `Issue #${ref}` };
+  if (kind === "commit" && ref) return { repo: slug, title: `Commit ${ref.slice(0, 7)}` };
+  if (kind === "releases" && ref) return { repo: slug, title: `Release ${parts[parts.length - 1]}` };
+  if (kind === "tree" && ref) return { repo: slug, title: `Branch ${parts.slice(3).join("/")}` };
+  return { repo: slug, title: repo };
 }
