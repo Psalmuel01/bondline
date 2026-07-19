@@ -23,43 +23,51 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm sm:grid-cols-3">
           <div className="flex flex-col gap-2">
             <span className="text-[11px] uppercase tracking-widest text-faint">Product</span>
-            <Link href="/" className="text-muted transition-colors hover:text-bone">
+            <Link href="/" className="text-muted transition-colors hover:text-gold">
               Your Circles
             </Link>
-            <Link href="/docs" className="text-muted transition-colors hover:text-bone">
+            <Link href="/docs" className="text-muted transition-colors hover:text-gold">
               How it works
             </Link>
+            <a
+              href="https://github.com/Psalmuel01/bondline"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted transition-colors hover:text-gold"
+            >
+              GitHub ↗
+            </a>
           </div>
           <div className="flex flex-col gap-2">
             <span className="text-[11px] uppercase tracking-widest text-faint">Chain</span>
             <a
-              href="https://testnet.monadexplorer.com"
+              href="https://monadscan.com"
               target="_blank"
               rel="noreferrer"
-              className="text-muted transition-colors hover:text-bone"
+              className="text-muted transition-colors hover:text-gold"
             >
               Explorer ↗
             </a>
-            <a
-              href="https://faucet.monad.xyz"
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted transition-colors hover:text-bone"
-            >
-              Testnet faucet ↗
-            </a>
+            <span className="tnum text-faint">chain 143</span>
+
           </div>
           <div className="flex flex-col gap-2">
             <span className="text-[11px] uppercase tracking-widest text-faint">Built for</span>
-            <span className="text-muted">Spark on Monad</span>
-            <span className="tnum text-faint">chain 10143</span>
+            <a
+              href="https://buildanything.so/hackathons/spark"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted transition-colors hover:text-gold"
+            >
+              Spark on Monad ↗
+            </a>
           </div>
         </div>
       </div>
 
       <p className="tnum mt-8 text-[11px] text-faint">
-        Bondline · every Circle its own vault, isolated on-chain · testnet build,
-        test MON only, not audited
+        Bondline · every Circle its own vault, isolated on-chain · Monad mainnet,
+        real MON, not audited
       </p>
     </footer>
   );

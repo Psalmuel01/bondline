@@ -29,6 +29,7 @@ export function useCircles() {
     address: CIRCLE_FACTORY_ADDRESS,
     abi: circleFactoryAbi,
     functionName: "allCircles",
+    query: { refetchInterval: 30_000 },
   });
   const addrs = (circleAddrs ?? []) as `0x${string}`[];
   const calls = addrs.flatMap((address) => [
@@ -37,7 +38,7 @@ export function useCircles() {
     { address, abi: circleAbi, functionName: "members" as const },
     { address, abi: circleAbi, functionName: "balance" as const },
   ]);
-  const { data, isLoading, error, refetch } = useReadContracts({ contracts: calls, query: { enabled: addrs.length > 0, staleTime: 60_000, gcTime: 30 * 60_000 } });
+  const { data, isLoading, error, refetch } = useReadContracts({ contracts: calls, query: { enabled: addrs.length > 0, staleTime: 60_000, gcTime: 30 * 60_000, refetchInterval: 30_000 } });
   const circles = addrs.map((address, i) => {
     const base = i * 4;
     return { address, name: (data?.[base]?.result as string) ?? "", cosignThresholdBps: Number(data?.[base + 1]?.result ?? 0), members: (data?.[base + 2]?.result as `0x${string}`[]) ?? [], balance: (data?.[base + 3]?.result as bigint) ?? 0n } satisfies Circle;
@@ -63,9 +64,9 @@ export function usePayouts() {
 }
 
 export function useBonds() {
-  const { data: count, isLoading: countLoading, refetch: refetchCount } = useReadContract({ address: CORE_ADDRESS, abi: coreAbi, functionName: "bondCount" });
+  const { data: count, isLoading: countLoading, refetch: refetchCount } = useReadContract({ address: CORE_ADDRESS, abi: coreAbi, functionName: "bondCount", query: { refetchInterval: 30_000 } });
   const calls = Array.from({ length: Number(count ?? 0) }, (_, i) => ({ address: CORE_ADDRESS, abi: coreAbi, functionName: "bonds" as const, args: [BigInt(i)] as const }));
-  const { data, isLoading, refetch } = useReadContracts({ contracts: calls, query: { enabled: calls.length > 0, staleTime: 60_000, gcTime: 30 * 60_000 } });
+  const { data, isLoading, refetch } = useReadContracts({ contracts: calls, query: { enabled: calls.length > 0, staleTime: 60_000, gcTime: 30 * 60_000, refetchInterval: 30_000 } });
   const bonds = (data ?? []).flatMap((entry, i) => { if (entry.status !== "success" || !entry.result) return []; const t = entry.result as unknown as [`0x${string}`, `0x${string}`, bigint, bigint, bigint, number, number, number, string, `0x${string}`, string]; return [{ id: BigInt(i), creator: t[0], circle: t[1], stake: t[2], deadline: t[3], cosignClosesAt: t[4], status: t[5] as Status, cosigns: Number(t[6]), objections: Number(t[7]), description: t[8], receiptsHash: t[9], receiptsUri: t[10] } satisfies Bond]; });
   return { bonds, count: Number(count ?? 0), isLoading: countLoading || isLoading, refresh: () => { refetchCount(); refetch(); } };
 }

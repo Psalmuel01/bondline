@@ -1,12 +1,12 @@
 import { createConfig, http } from "wagmi";
 import { injected } from "wagmi/connectors";
-import { monadTestnet } from "./chain";
+import { monadMainnet } from "./chain";
 
 export const wagmiConfig = createConfig({
-  chains: [monadTestnet],
+  chains: [monadMainnet],
   connectors: [injected()],
   transports: {
-    [monadTestnet.id]: http(),
+    [monadMainnet.id]: http(),
   },
   ssr: true,
 });

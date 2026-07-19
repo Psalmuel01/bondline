@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     "A group commitment protocol on Monad. Stake MON against your own deadline. Beat the Line and your Circle cosigns the refund; cross it and your stake drops into the shared Pot.",
   icons: { icon: "/logo.svg" },
   openGraph: {
-    title: "Bondline — ship together, or fund together",
+    title: "Bondline - ship together, or fund the group chat",
     description:
       "Put your money where your deadline is. Form a Circle, stake against your own deadline, and let your crew cosign the outcome on-chain.",
     type: "website",
