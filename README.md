@@ -6,17 +6,13 @@ Bondline turns a personal deadline into an on-chain object your friends enforce.
 
 Built for the **Spark** hackathon on **Monad** (mainnet, chain `143`).
 
----
-
--- ## Demo
-
 📹 **Demo video:** https://youtu.be/4dWGt0zatQI
 
 🔗 **Live app:** https://bondline-circle.vercel.app/
 
 ---
 
-## Deployed contracts (Monad mainnet, chain `143`)
+## Deployed contracts (Monad mainnet)
 
 Explorer: [monadscan.com](https://monadscan.com)
 
