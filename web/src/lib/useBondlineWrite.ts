@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { parseEther } from "viem";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from "wagmi";
 import {
   CIRCLE_FACTORY_ADDRESS,
   CORE_ADDRESS,
   circleFactoryAbi,
   coreAbi,
 } from "./contracts";
+import { monadMainnet } from "./chain";
 import { recordActivity } from "./supabase";
 
 /// Wraps every Bondline write with pending/confirming/tx-hash state so the UI
@@ -16,6 +17,8 @@ import { recordActivity } from "./supabase";
 /// instance per action surface; pass a callback to refresh reads on confirm.
 export function useBondlineWrite(onConfirmed?: () => void) {
   const { address } = useAccount();
+  const chainId = useChainId();
+  const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync, isPending } = useWriteContract();
   const [hash, setHash] = useState<`0x${string}` | undefined>();
   const [error, setError] = useState<string | undefined>();
@@ -44,6 +47,12 @@ export function useBondlineWrite(onConfirmed?: () => void) {
   ): Promise<`0x${string}` | undefined> {
     setError(undefined);
     try {
+      // Make sure the wallet is on Monad before firing. Otherwise the tx goes
+      // to whatever chain the wallet is on and fails with a cryptic error the
+      // user can't connect to "wrong network".
+      if (chainId !== monadMainnet.id) {
+        await switchChainAsync({ chainId: monadMainnet.id });
+      }
       const h = await fn();
       setHash(h);
       if (activity) recordActivity({ circleAddress: activity.circle, actorAddress: address, kind: activity.kind, body: activity.body, txHash: h }).catch(() => undefined);
