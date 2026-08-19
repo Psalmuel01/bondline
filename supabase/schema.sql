@@ -50,9 +50,9 @@ alter table public.circle_messages enable row level security;
 alter table public.circle_metadata enable row level security;
 alter table public.circle_activity enable row level security;
 
--- This is intentionally permissive for a testnet demo with an anon key.
--- Before mainnet, replace the insert policies with wallet-signature verification
--- in a Supabase Edge Function and check on-chain Circle membership there.
+-- Public identity metadata remains readable. Private Circle chat has no anon or
+-- authenticated PostgREST policy: it is accessed only through Bondline's
+-- wallet-authenticated server route, whose service role verifies membership.
 drop policy if exists "public profile read" on public.profiles;
 drop policy if exists "public profile upsert" on public.profiles;
 drop policy if exists "public profile update" on public.profiles;
@@ -64,13 +64,7 @@ drop policy if exists "public Circle metadata update" on public.circle_metadata;
 drop policy if exists "public Circle activity read" on public.circle_activity;
 drop policy if exists "public Circle activity write" on public.circle_activity;
 create policy "public profile read" on public.profiles for select using (true);
-create policy "public profile upsert" on public.profiles for insert with check (true);
-create policy "public profile update" on public.profiles for update using (true) with check (true);
-create policy "public Circle chat read" on public.circle_messages for select using (true);
-create policy "public Circle chat send" on public.circle_messages for insert with check (true);
 create policy "public Circle metadata read" on public.circle_metadata for select using (true);
-create policy "public Circle metadata write" on public.circle_metadata for insert with check (true);
-create policy "public Circle metadata update" on public.circle_metadata for update using (true) with check (true);
 create policy "public Circle activity read" on public.circle_activity for select using (true);
 create policy "public Circle activity write" on public.circle_activity for insert with check (true);
 
@@ -78,8 +72,6 @@ drop policy if exists "public Circle media read" on storage.objects;
 drop policy if exists "public Circle media upload" on storage.objects;
 drop policy if exists "public Circle media delete" on storage.objects;
 create policy "public Circle media read" on storage.objects for select using (bucket_id = 'circle-media');
-create policy "public Circle media upload" on storage.objects for insert with check (bucket_id = 'circle-media');
-create policy "public Circle media delete" on storage.objects for delete using (bucket_id = 'circle-media');
 
 alter table public.circle_messages replica identity full;
 do $$

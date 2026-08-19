@@ -49,6 +49,11 @@ SQL Editor, then add:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+
+# Server-only values used by wallet-authenticated private features
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+BONDLINE_SESSION_SECRET=replace-with-at-least-32-random-characters
+MONAD_RPC_URL=https://rpc.monad.xyz
 ```
 
 Restart `npm run dev` after changing `.env.local`.
@@ -83,10 +88,11 @@ wallet-authenticated backend.
 
 ## Security note
 
-`supabase/schema.sql` uses permissive anonymous policies for this testnet demo.
-Do not use those policies on mainnet. Before production, send profile, chat,
-metadata, and activity writes through a wallet-signature-verifying Supabase Edge
-Function that confirms on-chain Circle membership.
+Circle chat is served only through wallet-authenticated API routes that verify
+current on-chain membership. The browser never receives the Supabase service
+role key. Profile, metadata, activity, and media hardening are tracked in
+`../docs/production-roadmap.md`; treat those remaining anonymous writes as beta
+until their migration is complete.
 
 ## Verification
 
