@@ -23,34 +23,33 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-/** Uploads a display image to the public Circle media bucket. */
-export async function uploadCircleImage(file: File, objectPath: string) {
-  if (!url || !key) throw new Error("Supabase is not configured.");
+/** Uploads display media through the wallet-authenticated server boundary. */
+export async function uploadCircleImage(file: File, kind: "avatar" | "banner", owner: string) {
   if (!IMAGE_TYPES.has(file.type)) throw new Error("Choose a JPEG, PNG, WebP, or GIF image.");
   if (file.size > MAX_IMAGE_BYTES) throw new Error("Images must be 5 MB or smaller.");
-
-  const response = await fetch(`${url}/storage/v1/object/${CIRCLE_MEDIA_BUCKET}/${objectPath}`, {
+  const form = new FormData();
+  form.set("file", file);
+  form.set("kind", kind);
+  form.set("owner", owner);
+  const response = await fetch("/api/media", {
     method: "POST",
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      "Content-Type": file.type,
-      "x-upsert": "true",
-    },
-    body: file,
+    credentials: "same-origin",
+    body: form,
   });
-  if (!response.ok) throw new Error("Couldn’t upload this image.");
-  return `${url}/storage/v1/object/public/${CIRCLE_MEDIA_BUCKET}/${objectPath}`;
+  const value = await response.json().catch(() => ({})) as { url?: string; error?: string };
+  if (!response.ok || !value.url) throw new Error(value.error ?? "Couldn’t upload this image.");
+  return value.url;
 }
 
 /** Removes a previously saved Circle-media object. External image URLs are left alone. */
 export async function deleteCircleImage(mediaUrl: string) {
-  if (!url || !key) return;
-  const prefix = `${url}/storage/v1/object/public/${CIRCLE_MEDIA_BUCKET}/`;
-  if (!mediaUrl.startsWith(prefix)) return;
-  const response = await fetch(`${url}/storage/v1/object/${CIRCLE_MEDIA_BUCKET}/${mediaUrl.slice(prefix.length)}`, {
+  const prefix = url ? `${url}/storage/v1/object/public/${CIRCLE_MEDIA_BUCKET}/` : "";
+  if (!prefix || !mediaUrl.startsWith(prefix)) return;
+  const response = await fetch("/api/media", {
     method: "DELETE",
-    headers: { apikey: key, Authorization: `Bearer ${key}` },
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: mediaUrl }),
   });
   // The image may already have been deleted in Storage. Clearing its saved URL
   // is still the important part, so treat that state as successfully removed.
@@ -64,11 +63,13 @@ export async function getProfiles(addresses: readonly string[]) {
 }
 
 export async function saveProfile(address: string, profile: { displayName: string; avatarUrl?: string; avatarColor: string }) {
-  await request<ProfileRow[]>("profiles", {
-    method: "POST",
-    headers: { Prefer: "resolution=merge-duplicates,return=representation" },
-    body: JSON.stringify({ address: address.toLowerCase(), display_name: profile.displayName.trim(), avatar_url: profile.avatarUrl?.trim() || null, avatar_color: profile.avatarColor }),
+  const response = await fetch(`/api/profiles/${address}`, {
+    method: "PATCH",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(profile),
   });
+  if (!response.ok) { const value = await response.json().catch(() => ({})) as { error?: string }; throw new Error(value.error ?? "Couldn’t save your profile."); }
 }
 
 export async function getCircleMetadata(circleAddress: string) {
@@ -77,7 +78,8 @@ export async function getCircleMetadata(circleAddress: string) {
 }
 
 export async function saveCircleMetadata(circleAddress: string, metadata: { mission: string; potGoal: string; bannerUrl: string }) {
-  await request<CircleMetadata[]>("circle_metadata", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=representation" }, body: JSON.stringify({ circle_address: circleAddress.toLowerCase(), mission: metadata.mission.trim() || null, pot_goal: metadata.potGoal ? Number(metadata.potGoal) : null, banner_url: metadata.bannerUrl.trim() || null }) });
+  const response = await fetch(`/api/circles/${circleAddress}/metadata`, { method: "PATCH", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(metadata) });
+  if (!response.ok) { const value = await response.json().catch(() => ({})) as { error?: string }; throw new Error(value.error ?? "Couldn’t save Circle details."); }
 }
 
 export async function getActivity(circleAddress: string) {
@@ -90,13 +92,20 @@ export async function recordActivity(activity: { circleAddress: string; actorAdd
 }
 
 export async function getMessages(circleAddress: string) {
-  return request<ChatMessage[]>(`circle_messages?select=*&circle_address=eq.${circleAddress.toLowerCase()}&order=created_at.desc&limit=50`);
+  const response = await fetch(`/api/circles/${circleAddress}/messages`, { credentials: "same-origin" });
+  if (!response.ok) throw new Error(response.status === 401 ? "Wallet sign-in required." : "Chat is temporarily unavailable.");
+  return response.json() as Promise<ChatMessage[]>;
 }
 
-export async function sendMessage(circleAddress: string, senderAddress: string, body: string) {
-  await request<ChatMessage[]>("circle_messages", {
+export async function sendMessage(circleAddress: string, _senderAddress: string, body: string) {
+  const response = await fetch(`/api/circles/${circleAddress}/messages`, {
     method: "POST",
-    headers: { Prefer: "return=representation" },
-    body: JSON.stringify({ circle_address: circleAddress.toLowerCase(), sender_address: senderAddress.toLowerCase(), body: body.trim() }),
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ body: body.trim() }),
   });
+  if (!response.ok) {
+    const value = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(value.error ?? "Couldn’t send message.");
+  }
 }

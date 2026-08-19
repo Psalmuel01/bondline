@@ -8,6 +8,7 @@ import { Status } from "@/lib/contracts";
 import { bpsPct, formatMon } from "@/lib/format";
 import { getActivity, getCircleMetadata, getMessages, getProfiles, isSupabaseConfigured } from "@/lib/supabase";
 import { Avatar } from "./Avatar";
+import { useWalletSession } from "@/lib/useWalletSession";
 
 /// One Circle tile on the dashboard. Surfaces the numbers that matter at a
 /// glance: the Pot balance, live/cosigning count, and whether it's your turn to
@@ -21,6 +22,7 @@ export function CircleCard({
 }) {
   const { address } = useAccount();
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useWalletSession();
   const mine = bonds.filter(
     (b) => b.circle.toLowerCase() === circle.address.toLowerCase(),
   );
@@ -43,7 +45,7 @@ export function CircleCard({
     void queryClient.prefetchQuery({ queryKey: ["circle-metadata", circleKey], queryFn: () => getCircleMetadata(circle.address) });
     void queryClient.prefetchQuery({ queryKey: ["circle-activity", circleKey], queryFn: () => getActivity(circle.address) });
     if (profileKey) void queryClient.prefetchQuery({ queryKey: ["profiles", profileKey], queryFn: () => getProfiles(profileKey.split(",")) });
-    if (isMember) void queryClient.prefetchQuery({ queryKey: ["circle-messages", circleKey], queryFn: () => getMessages(circle.address) });
+    if (isMember && isAuthenticated) void queryClient.prefetchQuery({ queryKey: ["circle-messages", circleKey], queryFn: () => getMessages(circle.address) });
   }
 
   return (

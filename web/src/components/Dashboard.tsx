@@ -8,6 +8,7 @@ import { isConfigured } from "@/lib/contracts";
 import { getActivity, getCircleMetadata, getMessages, getProfiles, isSupabaseConfigured } from "@/lib/supabase";
 import { CircleCard } from "./CircleCard";
 import { CreateCircle } from "./CreateCircle";
+import { useWalletSession } from "@/lib/useWalletSession";
 
 /// Multi-group dashboard: every Circle you're in, plus a toggle to spin up a new
 /// one. Circles you're not a member of are shown dimmed under "other Circles" so
@@ -15,6 +16,7 @@ import { CreateCircle } from "./CreateCircle";
 export function Dashboard() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useWalletSession();
   const { circles, isLoading: circlesLoading, error, refresh } = useCircles();
   const { bonds, isLoading: bondsLoading, refresh: refreshBonds } = useBonds();
   const isLoading = circlesLoading || bondsLoading;
@@ -49,11 +51,11 @@ export function Dashboard() {
       void queryClient.prefetchQuery({ queryKey: ["circle-metadata", circleKey], queryFn: () => getCircleMetadata(circle.address) });
       void queryClient.prefetchQuery({ queryKey: ["circle-activity", circleKey], queryFn: () => getActivity(circle.address) });
       if (profileKey) void queryClient.prefetchQuery({ queryKey: ["profiles", profileKey], queryFn: () => getProfiles(profileKey.split(",")) });
-      if (address && circle.members.some((member) => member.toLowerCase() === address.toLowerCase())) {
+      if (isAuthenticated && address && circle.members.some((member) => member.toLowerCase() === address.toLowerCase())) {
         void queryClient.prefetchQuery({ queryKey: ["circle-messages", circleKey], queryFn: () => getMessages(circle.address) });
       }
     }
-  }, [address, circles, isLoading, queryClient]);
+  }, [address, circles, isAuthenticated, isLoading, queryClient]);
 
   if (!isConfigured) {
     return (
