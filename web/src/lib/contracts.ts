@@ -270,7 +270,7 @@ export const coreAbi = [
   },
   {
     type: "function",
-    name: "hasCosigned",
+    name: "hasResponded",
     stateMutability: "view",
     inputs: [
       { name: "", type: "uint256" },
@@ -330,6 +330,17 @@ export const coreAbi = [
   },
   {
     type: "event",
+    name: "BondDeclared",
+    inputs: [
+      { name: "id", type: "uint256", indexed: true },
+      { name: "creator", type: "address", indexed: true },
+      { name: "cosignClosesAt", type: "uint64", indexed: false },
+      { name: "receiptsHash", type: "bytes32", indexed: false },
+      { name: "receiptsUri", type: "string", indexed: false },
+    ],
+  },
+  {
+    type: "event",
     name: "Cosigned",
     inputs: [
       { name: "id", type: "uint256", indexed: true },
@@ -353,6 +364,36 @@ export const coreAbi = [
       { name: "id", type: "uint256", indexed: true },
       { name: "status", type: "uint8", indexed: false },
       { name: "stake", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "PayoutProposed",
+    inputs: [
+      { name: "payoutId", type: "uint256", indexed: true },
+      { name: "circle", type: "address", indexed: true },
+      { name: "to", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+      { name: "memo", type: "string", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "PayoutCosigned",
+    inputs: [
+      { name: "payoutId", type: "uint256", indexed: true },
+      { name: "member", type: "address", indexed: true },
+      { name: "cosigns", type: "uint32", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "PayoutExecuted",
+    inputs: [
+      { name: "payoutId", type: "uint256", indexed: true },
+      { name: "circle", type: "address", indexed: true },
+      { name: "to", type: "address", indexed: false },
+      { name: "amount", type: "uint256", indexed: false },
     ],
   },
 ] as const;

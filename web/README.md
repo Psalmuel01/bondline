@@ -1,6 +1,6 @@
 # Bondline web
 
-Bondline is a group commitment app on Monad testnet. A Circle stakes MON against
+Bondline is a group commitment app on Monad mainnet. A Circle stakes MON against
 personal deadlines: meet the Line and the Circle cosigns a refund; miss it and
 the stake funds the shared Pot.
 
@@ -54,6 +54,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 BONDLINE_SESSION_SECRET=replace-with-at-least-32-random-characters
 MONAD_RPC_URL=https://rpc.monad.xyz
+BONDLINE_INDEXER_SECRET=replace-with-another-32-random-characters
+HYPERSYNC_BEARER_TOKEN=your-envio-hypersync-token
 ```
 
 Restart `npm run dev` after changing `.env.local`.
@@ -71,16 +73,52 @@ Restart `npm run dev` after changing `.env.local`.
    lightweight receipt preview.
 6. Use the header notification center for urgent deadlines and pending cosigns.
 
+## Canonical chain indexer
+
+The built-in indexer reads finalized `CircleFactory` and `BondlineCore` events,
+replays them into queryable projections, and commits the raw events, projections,
+and sync cursor to Supabase in one database transaction.
+It is safe to retry: batches must be contiguous, duplicate logs are ignored,
+and an older concurrent worker cannot overwrite a newer projection.
+
+After migration `202608130003_indexed_circle_snapshots.sql`, run
+`202608190001_atomic_indexer_ingestion.sql`. Deploy the web app with the indexer
+environment variables above, plus the optional defaults in `.env.example`.
+
+For the initial backfill, put the deployed URL in local `.env.local`:
+
+```env
+BONDLINE_APP_URL=https://your-deployment.example
+BONDLINE_INDEXER_SECRET=the-same-secret-used-by-the-deployment
+```
+
+Then run:
+
+```bash
+pnpm indexer:backfill
+```
+
+After backfill, schedule an authenticated `GET` or `POST` request to `/api/indexer/run`
+every minute with the header `Authorization: Bearer <BONDLINE_INDEXER_SECRET>`.
+Each call advances one configurable block range.
+Vercel Cron may instead use its standard server-only `CRON_SECRET`; the route
+accepts either secret.
+The default deployment block is `88718941`, finality lag is 20 blocks, and each
+database batch covers 2,000 blocks. RPC log reads are automatically split into
+100-block requests to respect Monad's public endpoint limit. A server-side Envio
+HyperSync token is strongly recommended for the initial backfill: it advances up
+to 2,000,000 blocks per database batch, skips empty blocks, and returns only
+matching contract events. Without a token, the same backfill remains correct but
+will be substantially slower. No historical contract-state access is required.
+
+The frontend deliberately stays on its established contract reads until the
+backfill is reconciled. Only then should React Query be hydrated from
+`/api/circles/[address]/snapshot`.
+
 ## Activity and notifications
 
-The landing feed and Circle workspace read live contract state. Bonds and
-payout proposals submitted through this frontend are also saved to Supabase
-with an exact app timestamp and explorer transaction link.
-
-Existing chain history is shown as a state-derived fallback. For a canonical,
-historical feed of every contract event, deploy an Envio/HyperIndex indexer once
-the contracts are deployed and verified. The contracts already emit the needed
-Bond and payout events.
+The landing feed and Circle workspace still use the established live read path.
+Indexed snapshots expose canonical event activity once enabled.
 
 Notifications are currently in-app. Browser/mobile push needs a VAPID-enabled
 service worker or a notification provider and should be added only with a
@@ -90,9 +128,9 @@ wallet-authenticated backend.
 
 Circle chat is served only through wallet-authenticated API routes that verify
 current on-chain membership. The browser never receives the Supabase service
-role key. Profile, metadata, activity, and media hardening are tracked in
-`../docs/production-roadmap.md`; treat those remaining anonymous writes as beta
-until their migration is complete.
+role key. Profile, metadata, and media mutations use authenticated server
+routes. The legacy browser-authored activity table remains beta; indexed
+snapshots use canonical chain events instead.
 
 ## Verification
 
@@ -100,4 +138,4 @@ until their migration is complete.
 npm run build
 ```
 
-The app targets Monad testnet and test MON only. It is not audited.
+The app targets Monad mainnet and is not audited.

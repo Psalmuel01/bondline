@@ -73,7 +73,14 @@ contracts/src/BondlineCore.sol     all escrow, voting, and resolution state
 contracts/src/Circle.sol           per-circle clone: membership, threshold, shared Pot
 contracts/src/CircleFactory.sol    EIP-1167 clone deployer + circle registry
 web/                               Next.js + wagmi/viem, dark "countdowns" UI
+supabase/migrations/               social schema + canonical event projections
 ```
+
+The Next.js server also contains a resumable event indexer. It copies finalized
+contract events and verified historical state into Supabase so a Circle can
+eventually load as one consistent snapshot. Supabase remains the database and
+the chain remains the authority; this is a fast, queryable copy rather than a
+second source of truth.
 
 - **`BondlineCore`** holds every Bond and payout proposal under internal accounting (`mapping(id => Bond)`), rather than a contract per Bond — cheaper gas, and Monad's throughput makes it the obvious default. It's the *only* address allowed to move a Circle's money.
 - **`Circle`** is deployed once as an implementation template, then cloned per Circle. Each clone owns its membership set, approval threshold, and forfeited-stake balance (the Pot). Funds are physically isolated: a bug or drain against one Circle can't reach another's balance, and only the core can call `executeWithdrawal` / `depositForfeit`.

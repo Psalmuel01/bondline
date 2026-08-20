@@ -11,11 +11,11 @@ export function NotificationCenter() {
   const { address } = useAccount(); const { circles } = useCircles(); const { bonds } = useBonds(); const now = useNow(); const [open, setOpen] = useState(false);
 
   // Bonds where the connected wallet is a non-creator member and cosign is
-  // still open. We read hasCosigned for each so a member who already signed
+  // still open. We read hasResponded for each so a member who already voted
   // stops being nudged (the panel hides its buttons the same way).
   const cosignCandidates = useMemo(() => { if (!address) return []; return bonds.filter((bond) => { if (bond.status !== Status.PendingCosign) return false; const circle = circles.find((item) => item.address.toLowerCase() === bond.circle.toLowerCase()); if (!circle) return false; if (bond.creator.toLowerCase() === address.toLowerCase()) return false; return circle.members.some((item) => item.toLowerCase() === address.toLowerCase()); }); }, [address, bonds, circles]);
 
-  const { data: cosignedFlags } = useReadContracts({ contracts: cosignCandidates.map((bond) => ({ address: CORE_ADDRESS, abi: coreAbi, functionName: "hasCosigned" as const, args: [bond.id, address!] as const })), query: { enabled: !!address && cosignCandidates.length > 0, staleTime: 30_000 } });
+  const { data: cosignedFlags } = useReadContracts({ contracts: cosignCandidates.map((bond) => ({ address: CORE_ADDRESS, abi: coreAbi, functionName: "hasResponded" as const, args: [bond.id, address!] as const })), query: { enabled: !!address && cosignCandidates.length > 0, staleTime: 30_000 } });
   const alreadyCosigned = useMemo(() => { const set = new Set<string>(); cosignCandidates.forEach((bond, i) => { if (cosignedFlags?.[i]?.result === true) set.add(bond.id.toString()); }); return set; }, [cosignCandidates, cosignedFlags]);
 
   const notifications = useMemo(() => { if (!address) return []; return bonds.flatMap((bond) => { const circle = circles.find((item) => item.address.toLowerCase() === bond.circle.toLowerCase()); if (!circle) return []; const mine = bond.creator.toLowerCase() === address.toLowerCase(); const member = circle.members.some((item) => item.toLowerCase() === address.toLowerCase()); if (bond.status === Status.PendingCosign && member && !mine && !alreadyCosigned.has(bond.id.toString())) return [{ circle, title: "Your cosign is needed", body: bond.description, tone: "text-gold" }]; if (bond.status === Status.Active && mine) { const countdown = countdownParts(bond.deadline, now); if (!countdown.expired && Number(bond.deadline) * 1000 - now < 86_400_000) return [{ circle, title: `Deadline in ${countdown.text}`, body: bond.description, tone: "text-forfeit" }]; } return []; }); }, [address, bonds, circles, now, alreadyCosigned]);
