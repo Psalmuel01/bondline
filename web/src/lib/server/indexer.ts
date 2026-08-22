@@ -48,9 +48,10 @@ type DecodedLog = {
 
 type HyperSyncResponse = {
   data: Array<{
-    block?: { number?: number; hash?: Hash };
     logs?: Array<{
       address: Address;
+      block_hash: Hash;
+      block_number: number;
       data: `0x${string}`;
       log_index: number;
       transaction_hash: Hash;
@@ -149,8 +150,7 @@ async function getLogsFromHyperSync(fromBlock: bigint, toBlock: bigint) {
         to_block: Number(toBlock + 1n),
         logs: [{ address: [CIRCLE_FACTORY_ADDRESS, CORE_ADDRESS] }],
         field_selection: {
-          block: ["number", "hash"],
-          log: ["log_index", "transaction_hash", "address", "data", "topic0", "topic1", "topic2", "topic3"],
+          log: ["block_number", "block_hash", "log_index", "transaction_hash", "address", "data", "topic0", "topic1", "topic2", "topic3"],
         },
       }),
       cache: "no-store",
@@ -158,19 +158,22 @@ async function getLogsFromHyperSync(fromBlock: bigint, toBlock: bigint) {
     if (!response.ok) throw new Error(`HyperSync log query failed (${response.status}).`);
     const page = await response.json() as HyperSyncResponse;
     for (const entry of page.data) {
-      if ((entry.logs?.length ?? 0) > 0 && (entry.block?.number === undefined || !entry.block.hash)) {
-        throw new Error("HyperSync returned logs without complete block metadata.");
-      }
-      if (entry.block?.number === undefined || !entry.block.hash) continue;
       for (const log of entry.logs ?? []) {
-        if (!log.topic0 || log.log_index === undefined || !log.transaction_hash || !log.address) {
+        if (
+          log.block_number === undefined ||
+          !log.block_hash ||
+          !log.topic0 ||
+          log.log_index === undefined ||
+          !log.transaction_hash ||
+          !log.address
+        ) {
           throw new Error("HyperSync returned an incomplete contract log.");
         }
         const topics = [log.topic0, log.topic1, log.topic2, log.topic3].filter(Boolean) as [Hash, ...Hash[]];
         logs.push({
           address: log.address,
-          blockHash: entry.block.hash,
-          blockNumber: BigInt(entry.block.number),
+          blockHash: log.block_hash,
+          blockNumber: BigInt(log.block_number),
           data: log.data,
           logIndex: log.log_index,
           removed: false,
