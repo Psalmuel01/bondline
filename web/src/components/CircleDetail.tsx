@@ -5,6 +5,8 @@ import { useAccount } from "wagmi";
 import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCircle, useBonds, usePayouts, useNow } from "@/lib/hooks";
+import { useCircleSnapshot } from "@/lib/useSnapshots";
+import { circleSnapshotKey, type CircleSnapshot } from "@/lib/snapshots";
 import { Status } from "@/lib/contracts";
 import { bpsPct, formatMon, shortAddr } from "@/lib/format";
 import { explorerAddr } from "@/lib/chain";
@@ -29,32 +31,40 @@ import { getCircleMetadata, isSupabaseConfigured, type CircleMetadata } from "@/
 export function CircleDetail({ address: circleAddress }: { address: `0x${string}` }) {
   const { address } = useAccount();
   const now = useNow();
+  const snapshot = useCircleSnapshot(circleAddress);
   const { circle, isLoading, refresh } = useCircle(circleAddress);
   const { bonds, isLoading: bondsLoading, refresh: refreshBonds } = useBonds();
   const { payouts, isLoading: payoutsLoading, refresh: refreshPayouts } = usePayouts();
   const queryClient = useQueryClient();
-  const { data: metadata, isLoading: metadataLoading } = useQuery({
+  const metadataQuery = useQuery({
     queryKey: ["circle-metadata", circleAddress.toLowerCase()],
     queryFn: () => getCircleMetadata(circleAddress),
     enabled: isSupabaseConfigured,
+    initialData: snapshot.data?.metadata,
   });
+  const metadata = metadataQuery.data ?? snapshot.data?.metadata;
+  const metadataLoading = metadataQuery.isLoading && !snapshot.data;
   const setCircleMetadata = useCallback((next: CircleMetadata | undefined) => {
     queryClient.setQueryData(["circle-metadata", circleAddress.toLowerCase()], next);
+    queryClient.setQueryData<CircleSnapshot>(circleSnapshotKey(circleAddress), (current) => current ? { ...current, metadata: next } : current);
   }, [circleAddress, queryClient]);
   // Profile data is preloaded from the dashboard for this exact member list.
   // Bond authors are members, so this keeps the detail route cacheable without
   // pulling unrelated Circles' profiles into the request.
   const profileAddresses = circle?.members ?? [];
-  const { names, profiles, save: saveProfile, enabled: profilesEnabled, isLoading: profilesLoading } = useProfiles(profileAddresses);
-  const isPageLoading = isLoading || bondsLoading || payoutsLoading || profilesLoading || metadataLoading;
+  const { names, profiles, save: saveProfile, enabled: profilesEnabled, isLoading: profilesLoading } = useProfiles(profileAddresses, snapshot.data?.profiles);
+  const snapshotReady = Boolean(snapshot.data);
+  const isPageLoading = snapshot.isLoading || isLoading || (bondsLoading && !snapshotReady) || (payoutsLoading && !snapshotReady) || profilesLoading || metadataLoading;
 
   function refreshAll() {
     refresh();
     refreshBonds();
     refreshPayouts();
+    void queryClient.invalidateQueries({ queryKey: ["circle-activity", circleAddress.toLowerCase()] });
+    void queryClient.invalidateQueries({ queryKey: circleSnapshotKey(circleAddress) });
   }
 
-  const circleBonds = bonds
+  const circleBonds = (bondsLoading && snapshot.data ? snapshot.data.bonds : bonds)
     .filter((b) => b.circle.toLowerCase() === circleAddress.toLowerCase())
     .sort((a, b) => {
       // voting first, then active by soonest deadline, then resolved
@@ -65,7 +75,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
       return Number(a.deadline - b.deadline);
     });
 
-  const circlePayouts = payouts.filter(
+  const circlePayouts = (payoutsLoading && snapshot.data ? snapshot.data.payouts : payouts).filter(
     (p) => p.circle.toLowerCase() === circleAddress.toLowerCase(),
   );
 
@@ -179,7 +189,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                   />
                 ))
               )}
-              <ActivityTimeline circle={circle} bonds={circleBonds} names={names} />
+              <ActivityTimeline circle={circle} bonds={circleBonds} names={names} snapshotEvents={snapshot.data?.activity} />
             </div>
 
             {/* right rail: create + spend */}

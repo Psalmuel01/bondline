@@ -21,6 +21,31 @@ export async function supabaseAdminRequest<T>(path: string, init?: RequestInit):
   return response.json() as Promise<T>;
 }
 
+// PostgREST serializes PostgreSQL numeric columns as JSON numbers. Contract
+// uint256 values routinely exceed Number.MAX_SAFE_INTEGER, so preserve the
+// integer text at the server boundary and let the client convert it to bigint.
+export async function supabaseAdminExactJson<T>(path: string, init?: RequestInit): Promise<T> {
+  if (!url || !serviceKey) throw new Error("The secure social layer is not configured.");
+  const response = await fetch(`${url}/rest/v1/${path}`, {
+    ...init,
+    cache: "no-store",
+    headers: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!response.ok) throw new Error(`Supabase request failed (${response.status}).`);
+  if (response.status === 204) return undefined as T;
+  const text = await response.text();
+  const exact = text.replace(
+    /("(?:balance|bond_id|stake|payout_id|amount|indexedThroughBlock|last_finalized_block)"\s*:\s*)(-?\d+)(?=\s*[,}\]])/g,
+    '$1"$2"',
+  );
+  return JSON.parse(exact) as T;
+}
+
 export async function uploadMediaObject(path: string, file: File) {
   if (!url || !serviceKey) throw new Error("The secure social layer is not configured.");
   const response = await fetch(`${url}/storage/v1/object/${mediaBucket}/${path}`, {

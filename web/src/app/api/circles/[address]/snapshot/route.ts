@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAddress } from "viem";
-import { supabaseAdminRequest } from "@/lib/server/supabase-admin";
+import { supabaseAdminExactJson } from "@/lib/server/supabase-admin";
 
 export const runtime = "nodejs";
 
@@ -8,7 +8,7 @@ export async function GET(_request: Request, context: { params: Promise<{ addres
   try {
     const { address } = await context.params;
     if (!isAddress(address)) return NextResponse.json({ error: "Invalid Circle address." }, { status: 400 });
-    const value = await supabaseAdminRequest<unknown>("rpc/get_circle_snapshot", {
+    const value = await supabaseAdminExactJson<unknown>("rpc/get_circle_snapshot", {
       method: "POST",
       body: JSON.stringify({ p_circle_address: address.toLowerCase() }),
     });

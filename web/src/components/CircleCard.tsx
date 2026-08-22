@@ -6,7 +6,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Bond, Circle } from "@/lib/contracts";
 import { Status } from "@/lib/contracts";
 import { bpsPct, formatMon } from "@/lib/format";
-import { getActivity, getCircleMetadata, getMessages, getProfiles, isSupabaseConfigured } from "@/lib/supabase";
+import { getMessages, isSupabaseConfigured } from "@/lib/supabase";
+import { circleSnapshotKey, getCircleSnapshot } from "@/lib/snapshots";
 import { Avatar } from "./Avatar";
 import { useWalletSession } from "@/lib/useWalletSession";
 
@@ -41,10 +42,7 @@ export function CircleCard({
   function prefetchCircle() {
     if (!isSupabaseConfigured) return;
     const circleKey = circle.address.toLowerCase();
-    const profileKey = [...circle.members].map((member) => member.toLowerCase()).sort().join(",");
-    void queryClient.prefetchQuery({ queryKey: ["circle-metadata", circleKey], queryFn: () => getCircleMetadata(circle.address) });
-    void queryClient.prefetchQuery({ queryKey: ["circle-activity", circleKey], queryFn: () => getActivity(circle.address) });
-    if (profileKey) void queryClient.prefetchQuery({ queryKey: ["profiles", profileKey], queryFn: () => getProfiles(profileKey.split(",")) });
+    void queryClient.prefetchQuery({ queryKey: circleSnapshotKey(circle.address), queryFn: () => getCircleSnapshot(circle.address) });
     if (isMember && isAuthenticated) void queryClient.prefetchQuery({ queryKey: ["circle-messages", circleKey], queryFn: () => getMessages(circle.address) });
   }
 
