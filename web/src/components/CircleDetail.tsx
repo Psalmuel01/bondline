@@ -189,7 +189,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                   />
                 ))
               )}
-              <ActivityTimeline circle={circle} bonds={circleBonds} names={names} snapshotEvents={snapshot.data?.activity} />
+              <ActivityTimeline bonds={circleBonds} names={names} snapshotEvents={snapshot.data?.activity} />
             </div>
 
             {/* right rail: create + spend */}

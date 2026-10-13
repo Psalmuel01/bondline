@@ -19,6 +19,10 @@ create table if not exists public.circle_metadata (
   updated_at timestamptz not null default now()
 );
 
+-- Legacy compatibility only. This table intentionally has no browser policy;
+-- finalized chain_events become the sole activity source after migrations run.
+-- Keeping the definition here lets the historical snapshot migration apply
+-- cleanly before 202608220001_remove_browser_activity.sql drops it.
 create table if not exists public.circle_activity (
   id uuid primary key default gen_random_uuid(),
   circle_address text not null check (circle_address ~ '^0x[0-9a-f]{40}$'),
@@ -65,8 +69,6 @@ drop policy if exists "public Circle activity read" on public.circle_activity;
 drop policy if exists "public Circle activity write" on public.circle_activity;
 create policy "public profile read" on public.profiles for select using (true);
 create policy "public Circle metadata read" on public.circle_metadata for select using (true);
-create policy "public Circle activity read" on public.circle_activity for select using (true);
-create policy "public Circle activity write" on public.circle_activity for insert with check (true);
 
 drop policy if exists "public Circle media read" on storage.objects;
 drop policy if exists "public Circle media upload" on storage.objects;

@@ -16,7 +16,7 @@ Supabase makes the UI human without changing custody or contract rules:
 
 - Display names, avatar image URLs, and avatar colors
 - Circle mission, Pot goal, and banner image URL
-- Circle chat and activity rows recorded by the UI
+- Private Circle chat; activity itself comes from indexed contract events
 
 This social layer is optional. The core app still works with only the contract
 addresses configured; chat, profile editing, and Circle customization show
@@ -42,7 +42,7 @@ NEXT_PUBLIC_CORE_ADDRESS=0xyour_deployed_core_address
 NEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS=0xyour_deployed_factory_address
 ```
 
-To enable profiles, Circle metadata, chat, and app-recorded activity, create a
+To enable profiles, Circle metadata, and chat, create a
 Supabase project, run [`../supabase/schema.sql`](../supabase/schema.sql) in its
 SQL Editor, then add:
 
@@ -82,7 +82,8 @@ It is safe to retry: batches must be contiguous, duplicate logs are ignored,
 and an older concurrent worker cannot overwrite a newer projection.
 
 After migration `202608130003_indexed_circle_snapshots.sql`, run
-`202608190001_atomic_indexer_ingestion.sql`. Deploy the web app with the indexer
+`202608190001_atomic_indexer_ingestion.sql` and
+`202608220001_remove_browser_activity.sql`. Deploy the web app with the indexer
 environment variables above, plus the optional defaults in `.env.example`.
 
 For the initial backfill, put the deployed URL in local `.env.local`:
@@ -127,10 +128,10 @@ wallet-authenticated backend.
 ## Security note
 
 Circle chat is served only through wallet-authenticated API routes that verify
-current on-chain membership. The browser never receives the Supabase service
-role key. Profile, metadata, and media mutations use authenticated server
-routes. The legacy browser-authored activity table remains beta; indexed
-snapshots use canonical chain events instead.
+both factory registration and current on-chain membership. The browser never
+receives the Supabase service role key. Profile, metadata, and media mutations
+use authenticated server routes. Activity is sourced only from the finalized
+chain-event indexer.
 
 ## Verification
 
