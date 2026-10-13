@@ -19,6 +19,7 @@ import {
   circleAbi,
   isConfigured,
 } from "@/lib/contracts";
+import { selectAbiEventLogs } from "@/lib/event-filter";
 import { supabaseAdminRequest } from "@/lib/server/supabase-admin";
 
 const DEFAULT_DEPLOYMENT_BLOCK = 88_718_941n;
@@ -271,7 +272,7 @@ export async function runIndexerBatch(): Promise<IndexerRunResult> {
   const decoded = [
     ...decodeLogs(factoryLogs, circleFactoryAbi),
     ...decodeLogs(coreLogs, coreAbi),
-    ...decodeLogs(circleLogs, membershipAbi),
+    ...decodeLogs(selectAbiEventLogs(circleLogs, membershipAbi), membershipAbi),
   ].sort((a, b) => Number(a.log.blockNumber - b.log.blockNumber) || Number((a.log.logIndex ?? 0) - (b.log.logIndex ?? 0)));
 
   const [indexedBonds, indexedPayouts] = await Promise.all([
@@ -329,6 +330,7 @@ export async function runIndexerBatch(): Promise<IndexerRunResult> {
 
   const result = await supabaseAdminRequest<{
     applied: boolean;
+    lastFinalizedBlock?: string | number;
     circleCount?: number;
     bondCount?: number;
     payoutCount?: number;
@@ -344,13 +346,14 @@ export async function runIndexerBatch(): Promise<IndexerRunResult> {
     }),
   });
 
+  const appliedThrough = result.applied ? throughBlock : BigInt(result.lastFinalizedBlock ?? (fromBlock - 1n));
   return {
     applied: result.applied,
-    caughtUp: throughBlock === safeHead,
+    caughtUp: appliedThrough >= safeHead,
     fromBlock: fromBlock.toString(),
-    throughBlock: throughBlock.toString(),
+    throughBlock: appliedThrough.toString(),
     safeHeadBlock: safeHead.toString(),
-    events: events.length,
+    events: result.applied ? events.length : 0,
     circles: result.circleCount ?? 0,
     bonds: result.bondCount ?? 0,
     payouts: result.payoutCount ?? 0,

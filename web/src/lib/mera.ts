@@ -1,12 +1,13 @@
 "use client";
 
 import { createConnector } from "wagmi";
-import { createPublicClient, createWalletClient, http, type Address, type Hex } from "viem";
+import { createPublicClient, http, type Address, type Hex } from "viem";
 import { createPasskeyWithPrfOutput, getPasskeyPrfOutput, createSecp256k1SigningSession } from "@category-labs/mera";
 import { toViemAccount } from "@category-labs/mera/viem";
 import { HDKey } from "@scure/bip32";
 import { entropyToMnemonic, mnemonicToSeedSync } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
+import { prepareMeraTransaction, sendMeraTransaction } from "./mera-transaction";
 import { monadMainnet } from "./chain";
 
 const credentialKey = "bondline.mera.credential.v1";
@@ -56,13 +57,16 @@ export function meraConnector() {
           if (account.address.toLowerCase() !== address?.toLowerCase()) throw new Error("Please sign in with the same passkey.");
           return account.signMessage({ message: { raw: params[0] as Hex } });
         });
-        if (method === "eth_sendTransaction") return withAccount(async (account) => {
-          if (account.address.toLowerCase() !== address?.toLowerCase()) throw new Error("Please sign in with the same passkey.");
-          const tx = params[0] as Record<string, Hex>;
-          if (tx.from && tx.from.toLowerCase() !== account.address.toLowerCase()) throw new Error("Account does not match.");
-          const wallet = createWalletClient({ account, chain: monadMainnet, transport: http(process.env.NEXT_PUBLIC_MONAD_RPC_URL) });
-          return wallet.sendTransaction({ to: tx.to, data: tx.data, value: tx.value ? BigInt(tx.value) : 0n, gas: tx.gas ? BigInt(tx.gas) : undefined, maxFeePerGas: tx.maxFeePerGas ? BigInt(tx.maxFeePerGas) : undefined, maxPriorityFeePerGas: tx.maxPriorityFeePerGas ? BigInt(tx.maxPriorityFeePerGas) : undefined });
-        });
+        if (method === "eth_sendTransaction" || method === "wallet_sendTransaction") {
+          if (!address) throw new Error("Sign in to confirm this action.");
+          const tx = params[0] as Record<string, Hex> | undefined;
+          if (!tx) throw new Error("The transaction request is missing.");
+          const transaction = await prepareMeraTransaction(publicClient, monadMainnet, address, tx);
+          return withAccount(async (account) => {
+            if (account.address.toLowerCase() !== address?.toLowerCase()) throw new Error("Please sign in with the same passkey.");
+            return sendMeraTransaction(account, monadMainnet, process.env.NEXT_PUBLIC_MONAD_RPC_URL, transaction);
+          });
+        }
         if (method.startsWith("eth_sign") || method.startsWith("wallet_")) throw new Error("This signing action is not supported by Bondline.");
         return publicClient.request({ method, params } as Parameters<typeof publicClient.request>[0]);
       },

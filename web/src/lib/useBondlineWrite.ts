@@ -29,10 +29,13 @@ export function useBondlineWrite(onConfirmed?: () => void) {
   const [hash, setHash] = useState<`0x${string}` | undefined>();
   const [error, setError] = useState<string | undefined>();
 
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+  const { data: receipt, isLoading: isConfirming, isSuccess: receiptLoaded } = useWaitForTransactionReceipt({
     hash,
     query: { enabled: !!hash },
   });
+
+  const isSuccess = receiptLoaded && receipt?.status === "success";
+  useEffect(() => { if (receipt?.status === "reverted") setError("This action did not complete. Your funds were not committed; refresh and retry."); }, [receipt]);
 
   const firedFor = useRef<`0x${string}` | undefined>(undefined);
   useEffect(() => {
@@ -202,6 +205,8 @@ export function useBondlineWrite(onConfirmed?: () => void) {
 
 function friendly(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e);
+  if (/needs more|wrong network|request is missing|destination is missing|same passkey/i.test(msg)) return msg.split("\n")[0];
+  if (/insufficient funds|insufficient balance/i.test(msg)) return "Your account needs more MON to cover this action. Add funds and retry.";
   if (/user rejected|denied/i.test(msg)) return "Confirmation cancelled. Your commitment was not changed.";
   const m = msg.match(
     /(StakeRequired|StakeTooLarge|DeadlineInPast|UnknownCircle|NotCircleMember|NotCreator|NotActive|DeadlinePassed|NotPending|CreatorCannotCosign|AlreadyCosigned|CosignClosed|CosignStillOpen|TransferFailed|InsufficientPotBalance|AlreadyExecuted|CircleTooSmall|ZeroMember|DuplicateMember|ThresholdOutOfRange|NoSuch\w+)/,
