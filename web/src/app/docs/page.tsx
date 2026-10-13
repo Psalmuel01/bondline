@@ -1,242 +1,123 @@
 import Link from "next/link";
-import type { Metadata } from "next";
-import type { ReactNode } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-
-export const metadata: Metadata = {
+import { hasV2 } from "@/lib/contracts";
+import { monadMainnet } from "@/lib/chain";
+export const metadata = {
   title: "How Bondline works",
   description:
-    "The mechanic, the vocabulary, and the on-chain guarantees behind Bondline — a group commitment protocol on Monad.",
+    "Make commitments, support friends, and follow through together.",
 };
-
-/// Static docs page. Plain, a little wry, matches the brand voice. Explains the
-/// mechanic and defines the product vocabulary so the words on the buttons make
-/// sense the first time someone lands here.
 export default function DocsPage() {
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 py-6 sm:px-8">
+    <main className="mx-auto w-full max-w-6xl px-5 py-6 sm:px-8">
       <Header />
-
-      <article className="py-10 sm:py-14">
-        <div className="relative overflow-hidden rounded-2xl border border-line bg-panel px-6 py-10 sm:px-10 sm:py-14">
-          <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-gold/10 blur-3xl" />
-          <p className="tnum relative text-xs uppercase tracking-widest text-gold">The Bondline field guide</p>
-          <h1 className="font-display relative mt-3 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
-            Put your money where
-            <br />
-            your deadline is.
+      <article className="mx-auto max-w-3xl space-y-10 py-12">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-gold">
+            How it works
+          </p>
+          <h1 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
+            A promise, with your people.
           </h1>
-          <p className="relative mt-5 max-w-xl text-[15px] leading-relaxed text-muted">
-            Missing your own deadline costs exactly zero. Bondline makes it cost
-            something, then hands the decision to your crew. The whole mechanic,
-            in a minute.
-          </p>
-          <div className="relative mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
-            <QuickFact label="You stake" value="MON on a deadline" />
-            <QuickFact label="They decide" value="with a cosign" />
-            <QuickFact label="The outcome" value="refund or Pot" />
-          </div>
-        </div>
-
-        <Section title="The one-minute version">
-          <p>
-            You and your friends form a <Term>Circle</Term>. Each of you stakes
-            MON against a personal deadline — that&apos;s a <Term>Bond</Term>.
-            When you&apos;re done, you declare it and drop your{" "}
-            <Term>Receipts</Term>. Your Circle gets a window to{" "}
-            <Term>cosign</Term> whether it actually happened. Clear the bar your
-            group set and you&apos;re refunded. Miss your deadline, or fail the
-            cosign, and your stake drops into the <Term>Pot</Term> — the shared
-            fund your Circle spends together.
-          </p>
-        </Section>
-
-        <Section title="The flow, step by step">
-          <ol className="grid gap-4 md:grid-cols-2">
-            <Step n={1} title="Form a Circle">
-              Add your crew by wallet address and set one rule: the cosign
-              threshold. Maybe half the Circle has to agree, maybe less. Every
-              Circle deploys its own fund contract at its own address — this
-              Circle&apos;s money, for this Circle only, never pooled with anyone
-              else&apos;s.
-            </Step>
-            <Step n={2} title="Stake a Bond">
-              Put MON on a deadline you care about — ship the feature, run the
-              10k, send the invoices. The stake is escrowed on-chain the moment
-              you sign. The clock is now public.
-            </Step>
-            <Step n={3} title="Beat the Line">
-              Any time before your deadline — even ten minutes before — hit
-              declare and attach your Receipts (a PR, a demo, a screenshot). That
-              freezes your clock instantly and opens the cosign.
-            </Step>
-            <Step n={4} title="Your Circle cosigns">
-              Members vote on-chain. Avatars light up green as each cosign lands,
-              in real time, no refresh. The second the threshold clears, it
-              resolves live and your stake is back in your wallet.
-            </Step>
-            <Step n={5} title="Or cross the Line">
-              Miss the deadline with no Receipts, or fail the cosign, and the
-              stake moves straight into the Pot. Nobody has to chase you. The
-              window just closes.
-            </Step>
-            <Step n={6} title="Spend the Pot together">
-              Forfeited stakes collect in the Circle&apos;s fund. Anyone can
-              propose a payout — a group dinner, a trip, a refund — and it pays
-              out once enough of the Circle cosigns it.
-            </Step>
-          </ol>
-        </Section>
-
-        <Section title="The vocabulary">
-          <dl className="flex flex-col divide-y divide-line">
-            <Define term="Circle" desc="Your friend group, and your shared fund." />
-            <Define term="Bond" desc="One staked commitment against your own deadline." />
-            <Define
-              term="The Line"
-              desc="Your deadline. Beat the Line, or cross it — there's no middle."
-            />
-            <Define
-              term="Cosign"
-              desc="A Circle member's on-chain vote confirming a Bond was met. Carries the weight of a friend vouching for you."
-            />
-            <Define
-              term="The Pot"
-              desc="The shared fund built from crossed Bonds. The money your misses hand back to the group."
-            />
-            <Define
-              term="Receipts"
-              desc="The evidence you attach when you declare a Bond done. Hashed on-chain so it can't be swapped later."
-            />
-          </dl>
-        </Section>
-
-        <Section title="What the chain guarantees">
-          <ul className="flex list-disc flex-col gap-2 pl-5 marker:text-gold">
-            <li>Your deadline is on-chain. Nobody can move the Line after the fact.</li>
-            <li>
-              Every cosign is a transaction. The tally is public and can&apos;t be
-              faked.
-            </li>
-            <li>
-              The Pot is a contract at its own address — anyone can watch the
-              balance, nobody can quietly drain it. Payouts need a cosigned
-              proposal.
-            </li>
-            <li>
-              Your Receipts are hashed at declaration, so the evidence your Circle
-              votes on is the evidence you submitted.
-            </li>
-          </ul>
-        </Section>
-
-        <Section title="Make a Circle feel like yours">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-line bg-panel p-5">
-              <h3 className="font-display font-semibold text-bone">Profiles &amp; Circle identity</h3>
-              <p className="mt-2 text-sm text-muted">
-                Click your own name in a Circle to set a display name, avatar,
-                and color. Circle members can also add a mission, a Pot goal,
-                and a banner image. These are display details only — funds and
-                membership remain on-chain.
-              </p>
-            </div>
-            <div className="rounded-xl border border-line bg-panel p-5">
-              <h3 className="font-display font-semibold text-bone">Chat, activity &amp; receipts</h3>
-              <p className="mt-2 text-sm text-muted">
-                Each Circle has its own chat and activity timeline. Add a GitHub
-                PR, Loom, YouTube link, or image as a receipt when declaring a
-                Bond done; Bondline gives it a compact preview for the crew.
-              </p>
-            </div>
-          </div>
-        </Section>
-
-        <Section title="Things that need you">
-          <p>
-            The notification button in the header surfaces two high-signal
-            moments: a Circle asking for your cosign, and one of your own Bonds
-            with less than 24 hours left. These notifications are in-app, so
-            they work immediately without asking for browser permissions.
-          </p>
-        </Section>
-
-        <div className="mt-6 rounded-xl border border-gold/25 bg-gold/5 p-5 text-sm text-muted">
-          <p className="text-bone">A note on the build.</p>
-          <p className="mt-1.5">
-            Bondline runs on Monad testnet with test MON. It hasn&apos;t been
-            audited — treat it as a hackathon build, not a place for money you
-            can&apos;t afford to lose to a bug.
-          </p>
-          <p className="mt-3">
-            Profiles, chat, Circle missions, banners, and app-recorded activity
-            are optional testnet metadata stored separately from the contracts.
-            They never control the Pot or change Circle membership.
+          <p className="mt-5 text-lg leading-relaxed text-muted">
+            Bondline brings your group’s conversation and commitments into one
+            place. A little money on the line makes the goal tangible.
           </p>
         </div>
-
-        <div className="mt-10 flex flex-wrap gap-3">
-          <Link
-            href="/"
-            className="rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-ink transition hover:brightness-108"
-          >
-            Start a Circle
-          </Link>
-          <a
-            href="https://faucet.monad.xyz"
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-lg border border-line px-5 py-2.5 text-sm font-medium text-bone transition hover:border-panel-hi"
-          >
-            Grab testnet MON ↗
-          </a>
-        </div>
+        <ol className="space-y-4">
+          {[
+            [
+              "Find your Circle",
+              "Create a Circle with at least one friend, or accept a member’s invitation. Your Circle’s chat is private to members.",
+            ],
+            [
+              "Make a commitment",
+              "Write a clear goal, choose a deadline, and put a stake in MON on the line. Review the details before confirming with your account.",
+            ],
+            [
+              "Back each other",
+              "Chat, share progress, and encourage a friend. ‘Back them’ records your support. It does not approve evidence or decide whether their stake returns.",
+            ],
+            [
+              "Show you followed through",
+              "For Circle-reviewed commitments, submit evidence before the deadline. Eligible members then have 24 hours to review it. ‘Approve evidence’ and ‘Dispute’ are recorded separately from earlier backing.",
+            ],
+          ].map(([title, body], i) => (
+            <li
+              key={title}
+              className="flex gap-5 rounded-2xl border border-line bg-panel p-6"
+            >
+              <span className="tnum text-sm text-gold">0{i + 1}</span>
+              <div>
+                <h2 className="font-display text-lg font-semibold">{title}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  {body}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <section className="rounded-2xl border border-gold/25 bg-gold/5 p-6">
+          <h2 className="font-display text-xl font-semibold">
+            Where does the money go?
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            Verified completion releases your stake back to you. Miss the
+            deadline and your stake goes into the Circle’s shared Pot. Some
+            outcomes require a settlement transaction after the review window
+            closes.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            {hasV2
+              ? "After a deadline week ends and its commitments settle, completed commitments earn equal shares of that week’s reward pool. Members can claim their earned rewards from Pot & rewards. Weeks without completions roll forward; members cannot withdraw this reserved money by a vote."
+              : "Members can propose and vote on spending from the Circle’s Pot."}
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            If a direct stake refund cannot be delivered, find the returned
+            stake in your profile and receive it from there.
+          </p>
+        </section>
+        <section>
+          <h2 className="font-display text-xl font-semibold">
+            Your account, without the wallet headache.
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            A Mera passkey derives your signing account when you authenticate.
+            Bondline does not store your private key. Use the same passkey to
+            return to the same account. Your account menu shows your full
+            address, available balance, and network.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            Sign-in also establishes your private app session. Confirmations
+            that change on-chain state still need your approval and a gas fee.
+            You can also use a supported browser wallet.
+          </p>
+        </section>
+        {hasV2 && (
+          <section>
+            <h2 className="font-display text-xl font-semibold">
+              Other ways to verify
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted">
+              An account balance goal checks available MON after your stake is
+              set aside; it does not measure long-term saving. When configured,
+              GitHub verification checks an author’s public commits in a
+              repository’s default branch. It does not prove ownership of that
+              GitHub account.
+            </p>
+          </section>
+        )}
+        <p className="text-sm text-muted">
+          {monadMainnet.testnet
+            ? "This build runs on Monad testnet. Test MON has no cash value."
+            : "This build runs on Monad mainnet and uses real MON."}
+        </p>
+        <Link className="primary-button" href="/">
+          Find your Circle →
+        </Link>
       </article>
-
       <Footer />
-    </div>
+    </main>
   );
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="mt-12 border-t border-line pt-8">
-      <h2 className="font-display text-xl font-semibold tracking-tight text-bone">
-        {title}
-      </h2>
-      <div className="mt-4 text-[15px] leading-relaxed text-muted">{children}</div>
-    </section>
-  );
-}
-
-function Step({ n, title, children }: { n: number; title: string; children: ReactNode }) {
-  return (
-    <li className="flex gap-4 rounded-xl border border-line bg-panel p-4">
-      <span className="tnum flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-sm font-semibold text-gold">
-        {n}
-      </span>
-      <div>
-        <h3 className="font-display font-semibold text-bone">{title}</h3>
-        <p className="mt-1 text-muted">{children}</p>
-      </div>
-    </li>
-  );
-}
-
-function QuickFact({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-lg border border-line bg-bg/40 px-4 py-3"><p className="tnum text-[10px] uppercase tracking-widest text-faint">{label}</p><p className="mt-1 text-sm font-medium text-bone">{value}</p></div>;
-}
-
-function Define({ term, desc }: { term: string; desc: string }) {
-  return (
-    <div className="flex flex-col gap-1 py-3 sm:flex-row sm:gap-6">
-      <dt className="font-display w-32 shrink-0 font-semibold text-gold">{term}</dt>
-      <dd className="text-muted">{desc}</dd>
-    </div>
-  );
-}
-
-function Term({ children }: { children: ReactNode }) {
-  return <span className="font-medium text-bone">{children}</span>;
 }

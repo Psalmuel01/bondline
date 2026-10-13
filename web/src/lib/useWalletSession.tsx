@@ -3,13 +3,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useAccount, useSignMessage } from "wagmi";
 
+import { authenticateWallet } from "./wallet-auth";
+
 type WalletSessionState = {
   authenticatedAddress?: `0x${string}`;
   isAuthenticated: boolean;
   isChecking: boolean;
   isSigningIn: boolean;
   error?: string;
-  signIn: () => Promise<void>;
+  signIn: (account?: `0x${string}`) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -50,30 +52,17 @@ export function WalletSessionProvider({ children }: { children: React.ReactNode 
     return () => { active = false; };
   }, [address, signOut]);
 
-  const signIn = useCallback(async () => {
-    if (!address) throw new Error("Connect your wallet first.");
+  const signIn = useCallback(async (account = address) => {
+    if (!account) throw new Error("Connect your account first.");
     setIsSigningIn(true);
     setError(undefined);
     try {
-      const challenge = await json<{ message: string }>(await fetch("/api/auth/challenge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address }),
-      }));
-      const signature = await signMessageAsync({ message: challenge.message });
-      const session = await json<{ address: `0x${string}` }>(await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, message: challenge.message, signature }),
-      }));
-      setAuthenticatedAddress(session.address);
+      const authenticated = await authenticateWallet(account, (message) => signMessageAsync({ account, message }));
+      setAuthenticatedAddress(authenticated);
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Couldn’t sign in.";
-      setError(message);
+      setError(cause instanceof Error ? cause.message : "Couldn’t sign in.");
       throw cause;
-    } finally {
-      setIsSigningIn(false);
-    }
+    } finally { setIsSigningIn(false); }
   }, [address, signMessageAsync]);
 
   const value = useMemo<WalletSessionState>(() => ({

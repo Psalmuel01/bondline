@@ -7,25 +7,25 @@
  * charge. See docs/brand guide.
  */
 :root {
-  font-size: 17px;
-  --ink: #14120f; /* warm near-black charcoal — primary background */
+  font-size: 16px;
+  --ink: #111210; /* warm near-black charcoal — primary background */
   --bone: #f2efe9; /* warm off-white — primary text on dark */
-  --gold: #d9a441; /* the color of money on the line — stakes, countdowns */
-  --confirm: #3fa66c; /* a landed "yes" cosign, nowhere else */
-  --forfeit: #c1503f; /* a landed "no" cosign or a resolved forfeit */
-  --linegrey: #6b675f; /* muted — resolved/inactive states, secondary text */
+  --gold: #e3b65d; /* the color of money on the line — stakes, countdowns */
+  --confirm: #75c394; /* a landed "yes" cosign, nowhere else */
+  --forfeit: #e58170; /* a landed "no" cosign or a resolved forfeit */
+  --linegrey: #969087; /* muted — resolved/inactive states, secondary text */
 
   /* derived surfaces, warmed toward the ink so nothing reads as flat black */
-  --panel: #1c1a16;
-  --panel-hi: #262319;
-  --line: #34302a;
-  --faint: #565048;
+  --panel: #1a1c18;
+  --panel-hi: #242721;
+  --line: #34382f;
+  --faint: #92958a;
 
   /* semantic aliases kept from the original build so component classNames
      (text-live / text-done / text-gone) map onto the brand without a rename */
   --bg: var(--ink);
   --text: var(--bone);
-  --muted: #9a9488;
+  --muted: #aaa99f;
   --live: var(--gold);
   --done: var(--confirm);
   --gone: var(--forfeit);
@@ -63,12 +63,11 @@ body {
   font-family: var(--font-inter), system-ui, sans-serif;
   /* a faint warm halo + hairline grid so the ink plane has texture, not
      flat black. the grid ticks like a ledger without reading as a spreadsheet */
-  background-image:
-    radial-gradient(circle at 50% -5%, rgba(217, 164, 65, 0.07), transparent 45%),
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 100% 100%, 46px 46px, 46px 46px;
-  background-position: 0 0, -1px -1px, -1px -1px;
+  background-image: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(217, 164, 65, 0.065),
+    transparent 55%
+  );
   background-attachment: fixed;
 }
 
@@ -94,8 +93,13 @@ body::before {
 }
 
 @keyframes pulse-live {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 .pulse {
   animation: pulse-live 1.4s ease-in-out infinite;
@@ -103,9 +107,17 @@ body::before {
 
 /* a cosign landing: the avatar ring should feel like it snaps into place */
 @keyframes cosign-in {
-  0% { transform: scale(0.7); opacity: 0; }
-  60% { transform: scale(1.12); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 .cosign-in {
   animation: cosign-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -114,27 +126,203 @@ body::before {
 /* The hero relives the familiar promise → silence → awkward follow-up arc.
    It intentionally loops slowly so it reads as a moment, not a carousel. */
 @keyframes chat-arrive {
-  0%, 8% { opacity: 0; transform: translateY(8px); }
-  14%, 66% { opacity: 1; transform: translateY(0); }
-  77%, 100% { opacity: 0.26; transform: translateY(-2px); }
+  0%,
+  8% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  14%,
+  66% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  77%,
+  100% {
+    opacity: 0.26;
+    transform: translateY(-2px);
+  }
 }
 
 @keyframes chat-follow-up {
-  0%, 65% { opacity: 0; transform: translateY(8px); }
-  75%, 91% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-2px); }
+  0%,
+  65% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  75%,
+  91% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
 }
 
-.chat-bubble { animation: chat-arrive 8s ease-in-out infinite; }
-.chat-two { animation-delay: 0.35s; }
-.chat-three { animation-delay: 0.7s; }
-.chat-four { animation-name: chat-follow-up; }
+.chat-bubble {
+  animation: chat-arrive 8s ease-in-out infinite;
+}
+.chat-two {
+  animation-delay: 0.35s;
+}
+.chat-three {
+  animation-delay: 0.7s;
+}
+.chat-four {
+  animation-name: chat-follow-up;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .chat-bubble { animation: none; }
-  .chat-four { opacity: 1; }
+  .chat-bubble {
+    animation: none;
+  }
+  .chat-four {
+    opacity: 1;
+  }
 }
 
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+button,
+summary,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+button:not(:disabled),
+summary {
+  cursor: pointer;
+}
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Shared product controls: consistent hierarchy and generous touch targets. */
+
+.primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  border-radius: 12px;
+  background: var(--gold);
+  color: var(--ink);
+  padding: 0.7rem 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 650;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+}
+.primary-button:hover {
+  filter: brightness(1.08);
+}
+.primary-button:disabled,
+.secondary-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  color: var(--bone);
+  background: var(--panel);
+}
+.secondary-button:hover {
+  border-color: var(--gold);
+}
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  width: 40px;
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 1.5rem;
+}
+.icon-button:hover {
+  background: var(--panel-hi);
+  color: var(--bone);
+}
+.product-modal {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(680px, calc(100% - 24px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  border-radius: 24px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--bone);
+  box-shadow: 0 24px 100px #0008;
+}
+.product-modal::backdrop {
+  background: #050705b8;
+  backdrop-filter: blur(8px);
+}
+.workspace-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.workspace-tab[aria-pressed="true"],
+.workspace-tab[aria-current="page"] {
+  background: var(--panel-hi);
+  color: var(--bone);
+  font-weight: 600;
+}
+.workspace-tab:hover {
+  color: var(--bone);
+}
+.product-field {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  font-size: 0.875rem;
+  color: var(--bone);
+}
+.product-field:focus {
+  border-color: var(--gold);
+  outline: none;
+  box-shadow: 0 0 0 3px #e3b65d15;
+}
+.chat-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+@media (max-width: 639px) {
+  .product-modal {
+    border-radius: 20px;
+  }
 }

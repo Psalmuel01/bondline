@@ -13,7 +13,7 @@ export function ConnectButton() {
   const { address, isConnected, connector } = useAccount();
   const { connectAsync, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
-  const { signOut } = useWalletSession();
+  const { signOut, signIn, isSigningIn } = useWalletSession();
   const balance = useBalance({ address, chainId: monadMainnet.id, query: { enabled: !!address, refetchInterval: 15000 } });
   const dialog = useRef<HTMLDialogElement>(null);
   const [error, setError] = useState<string>();
@@ -35,7 +35,8 @@ export function ConnectButton() {
         setError("No browser wallet was detected. Open or unlock MetaMask or Brave Wallet, then try again.");
         return;
       }
-      await connectAsync({ connector: selected, chainId: monadMainnet.id });
+      const connected = await connectAsync({ connector: selected, chainId: monadMainnet.id });
+      if (wallet) await signIn(connected.accounts[0]);
       dialog.current?.close();
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "";
@@ -86,10 +87,10 @@ export function ConnectButton() {
           <button onClick={leave} className="text-sm text-muted hover:text-bone">Sign out</button>
         </> : <>
           <p className="mb-6 text-sm leading-relaxed text-muted">Put weight behind your promises. Your passkey opens your account with Face ID, Touch ID, or your device lock.</p>
-          <button disabled={isPending} onClick={() => openAccount(true)} className="w-full rounded-xl bg-gold px-4 py-3 text-sm font-semibold text-ink disabled:opacity-50">{isPending ? "Opening your account…" : "Create an account"}</button>
+          <button disabled={isPending || isSigningIn} onClick={() => openAccount(true)} className="w-full rounded-xl bg-gold px-4 py-3 text-sm font-semibold text-ink disabled:opacity-50">{isPending ? "Opening your account…" : "Create an account"}</button>
           <p className="mt-2 text-center text-xs text-muted">Creates a new passkey and a new account.</p>
-          <div className="mt-6 border-t border-line pt-4"><p className="mb-3 text-sm text-muted">Already have a Bondline passkey?</p><button disabled={isPending} onClick={() => openAccount(false)} className="w-full rounded-xl border border-line px-4 py-3 text-sm font-medium transition hover:border-gold/50 disabled:opacity-50">Sign in with your passkey</button></div>
-          {externalWalletsEnabled && <details className="mt-5 text-xs text-muted"><summary className="cursor-pointer">Use an existing wallet</summary><p className="mt-3 leading-relaxed">Choose your browser wallet. It will ask to connect to {monadMainnet.name}.</p><div className="mt-3 flex flex-col gap-2">{walletOptions.map((wallet) => <button key={wallet.uid} disabled={isPending} onClick={() => openAccount(false, wallet)} className="rounded-lg border border-line px-3 py-2 text-left text-sm text-gold disabled:opacity-50">{wallet.id === "injected" ? "Browser wallet (MetaMask / Brave)" : wallet.name}</button>)}{!walletOptions.length && <p className="text-xs text-muted">Open a browser with MetaMask or Brave Wallet enabled, then reload this page.</p>}</div></details>}
+          <div className="mt-6 border-t border-line pt-4"><p className="mb-3 text-sm text-muted">Already have a Bondline passkey?</p><button disabled={isPending || isSigningIn} onClick={() => openAccount(false)} className="w-full rounded-xl border border-line px-4 py-3 text-sm font-medium transition hover:border-gold/50 disabled:opacity-50">Sign in with your passkey</button></div>
+          {externalWalletsEnabled && <details className="mt-5 text-xs text-muted"><summary className="cursor-pointer">Use an existing wallet</summary><p className="mt-3 leading-relaxed">Choose your browser wallet. It will ask to connect to {monadMainnet.name}.</p><div className="mt-3 flex flex-col gap-2">{walletOptions.map((wallet) => <button key={wallet.uid} disabled={isPending || isSigningIn} onClick={() => openAccount(false, wallet)} className="rounded-lg border border-line px-3 py-2 text-left text-sm text-gold disabled:opacity-50">{wallet.id === "injected" ? "Browser wallet (MetaMask / Brave)" : wallet.name}</button>)}{!walletOptions.length && <p className="text-xs text-muted">Open a browser with MetaMask or Brave Wallet enabled, then reload this page.</p>}</div></details>}
         </>}
         {error && <p role="alert" className="mt-4 text-sm leading-relaxed text-forfeit">{error}</p>}
       </div>

@@ -8,6 +8,7 @@ import { HDKey } from "@scure/bip32";
 import { entropyToMnemonic, mnemonicToSeedSync } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
 import { prepareMeraTransaction, sendMeraTransaction } from "./mera-transaction";
+import { authenticateWallet } from "./wallet-auth";
 import { monadMainnet } from "./chain";
 
 const credentialKey = "bondline.mera.credential.v1";
@@ -75,7 +76,10 @@ export function meraConnector() {
     return {
       id: "mera", name: "Passkey", type: "mera",
       async connect<withCapabilities extends boolean = false>(parameters?: { chainId?: number; isReconnecting?: boolean; withCapabilities?: withCapabilities | boolean }): Promise<{ accounts: withCapabilities extends true ? readonly { address: Address; capabilities: Record<string, unknown> }[] : readonly Address[]; chainId: number }> {
-        address = await withAccount(async (account) => account.address);
+        address = await withAccount(async (account) => {
+          await authenticateWallet(account.address, (message) => account.signMessage({ message }));
+          return account.address;
+        });
         return { accounts: (parameters?.withCapabilities ? [{ address, capabilities: {} }] : [address]) as unknown as withCapabilities extends true ? readonly { address: Address; capabilities: Record<string, unknown> }[] : readonly Address[], chainId: monadMainnet.id };
       },
       async disconnect() { address = undefined; },

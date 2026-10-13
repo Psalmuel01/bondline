@@ -32,5 +32,5 @@ export function thresholdSentence(memberCount: number, bps: number): string {
   const eligible = memberCount - 1;
   const need = requiredForBond(memberCount, bps);
   const friends = memberCount - 1;
-  return `With ${friends} other ${friends === 1 ? "member" : "members"}, at least ${need} of ${eligible} must cosign a Bond for it to clear.`;
+  return `With ${friends} other ${friends === 1 ? "member" : "members"}, at least ${need} of ${eligible} must approve evidence for a commitment to complete.`;
 }

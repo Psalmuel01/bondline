@@ -1,5 +1,6 @@
 "use client";
 
+import { Avatar } from "./Avatar";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { keccak256, toBytes } from "viem";
@@ -12,16 +13,29 @@ import { CommitmentSignals, useVerification } from "./CommitmentSignals";
 import { hasV2 } from "@/lib/contracts";
 import { ReceiptPreview } from "./ReceiptPreview";
 
-const STATUS_META: Record<Status, { label: string; cls: string; dot: string }> = {
-  [Status.Active]: { label: "ACTIVE", cls: "text-gold border-gold/40 bg-gold/10", dot: "bg-gold" },
-  [Status.PendingCosign]: {
-    label: "AWAITING REVIEW",
-    cls: "text-gold border-gold/40 bg-gold/10",
-    dot: "bg-gold",
-  },
-  [Status.Met]: { label: "COMPLETED", cls: "text-confirm border-confirm/40 bg-confirm/10", dot: "bg-confirm" },
-  [Status.Crossed]: { label: "FAILED", cls: "text-forfeit border-forfeit/40 bg-forfeit/10", dot: "bg-forfeit" },
-};
+const STATUS_META: Record<Status, { label: string; cls: string; dot: string }> =
+  {
+    [Status.Active]: {
+      label: "In progress",
+      cls: "text-gold border-gold/40 bg-gold/10",
+      dot: "bg-gold",
+    },
+    [Status.PendingCosign]: {
+      label: "Evidence review",
+      cls: "text-gold border-gold/40 bg-gold/10",
+      dot: "bg-gold",
+    },
+    [Status.Met]: {
+      label: "Completed",
+      cls: "text-confirm border-confirm/40 bg-confirm/10",
+      dot: "bg-confirm",
+    },
+    [Status.Crossed]: {
+      label: "Missed",
+      cls: "text-forfeit border-forfeit/40 bg-forfeit/10",
+      dot: "bg-forfeit",
+    },
+  };
 
 export function BondCard({
   b,
@@ -51,7 +65,8 @@ export function BondCard({
   const pending = b.status === Status.PendingCosign;
   const expired = active && cd.expired;
 
-  const canDeclare = active && !cd.expired && isCreator && (!hasV2 || verification?.[0] === 0);
+  const canDeclare =
+    active && !cd.expired && isCreator && (!hasV2 || verification?.[0] === 0);
   const canResolveExpired = pending && voteCd.expired;
 
   const busy = write.isPending || write.isConfirming;
@@ -67,29 +82,48 @@ export function BondCard({
 
   return (
     <div
-      className={`group relative flex flex-col gap-4 rounded-xl border bg-panel p-5 transition ${
-        expired ? "border-gone/40" : pending ? "border-live/40" : "border-line hover:border-panel-hi"
+      className={`group relative flex flex-col gap-5 rounded-2xl border bg-panel p-5 sm:p-6 transition ${
+        expired ? "border-gone/40" : pending ? "border-live/40" : "border-line"
       }`}
     >
-      <div className="flex items-center justify-between">
-        <span
-          className={`tnum inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wider ${meta.cls}`}
-        >
-          <span className={`h-1.5 w-1.5 rounded-full ${meta.dot} ${active || pending ? "pulse" : ""}`} />
-          {expired ? "AWAITING SETTLEMENT" : meta.label}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Avatar addr={b.creator} size={36} />
+          <div>
+            <a
+              href={explorerAddr(b.creator)}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-medium hover:text-gold"
+            >
+              {creatorName || shortAddr(b.creator)}
+              {isCreator ? " · You" : ""}
+            </a>
+            <p className="mt-0.5 text-xs text-faint">
+              Commitment #{b.id.toString()}
+            </p>
+          </div>
+        </div>
+        <span className={`rounded-full border px-3 py-1 text-xs ${meta.cls}`}>
+          {expired ? "Needs settlement" : meta.label}
         </span>
-          <span className="tnum text-xs text-faint">#{b.id.toString().padStart(3, "0")}</span>
       </div>
-
-      <p className="text-[15px] leading-snug text-bone">{b.description}</p>
-
+      <h3 className="font-display break-words text-xl font-medium leading-relaxed tracking-tight">
+        {b.description}
+      </h3>
       <div className="flex items-end justify-between">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-faint">
-            {pending ? "Evidence review closes in" : active ? (expired ? "Overdue" : "Left on the Line") : "Resolved"}
+            {pending
+              ? "Evidence review closes in"
+              : active
+                ? expired
+                  ? "Overdue"
+                  : "Time remaining"
+                : "Outcome"}
           </div>
           <div
-            className={`tnum text-2xl font-semibold ${
+            className={`tnum text-xl font-semibold ${
               b.status === Status.Met
                 ? "text-confirm"
                 : b.status === Status.Crossed || expired
@@ -103,34 +137,34 @@ export function BondCard({
         <div className="text-right">
           <div className="text-[10px] uppercase tracking-widest text-faint">
             {b.status === Status.Met
-              ? "Refunded"
+              ? "Released stake"
               : b.status === Status.Crossed
                 ? "Into the Pot"
-                : "Staked"}
+                : "Stake"}
           </div>
-          <div className="tnum text-2xl font-semibold text-gold">
+          <div className="tnum text-xl font-semibold text-gold">
             {formatMon(b.stake)}
             <span className="ml-1 text-sm text-muted">MON</span>
           </div>
         </div>
       </div>
 
-      <div className="tnum flex items-center justify-between border-t border-line pt-3 text-xs text-muted">
-        <span>
-          <span className="text-faint">by </span>
-          <a href={explorerAddr(b.creator)} target="_blank" rel="noreferrer" className="hover:text-bone">
-            {creatorName || shortAddr(b.creator)}
-          </a>
-          {isCreator && <span className="text-faint"> (you)</span>}
-        </span>
-        {b.status === Status.Crossed && <span className="text-forfeit">fed the Pot</span>}
-        {b.status === Status.Met && <span className="text-confirm">shipped in time</span>}
-      </div>
+      <p className="text-xs text-muted">
+        Deadline:{" "}
+        {new Date(Number(b.deadline) * 1000).toLocaleString([], {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        })}
+      </p>
 
       <CommitmentSignals bond={b} circle={circle} onChange={onResolved} />
 
       {/* live voting */}
-      {pending && !voteCd.expired && <CosignPanel b={b} circle={circle} onResolved={onResolved} />}
+      {pending && !voteCd.expired && (
+        <CosignPanel b={b} circle={circle} onResolved={onResolved} />
+      )}
 
       {b.receiptsUri && <ReceiptPreview uri={b.receiptsUri} />}
 
@@ -138,22 +172,27 @@ export function BondCard({
       {canDeclare && !declaring && (
         <button
           onClick={() => setDeclaring(true)}
-          className="w-full rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-ink transition hover:brightness-108"
+          className="primary-button w-full"
         >
           Submit evidence
         </button>
       )}
       {canDeclare && declaring && (
         <div className="flex flex-col gap-2 rounded-lg border border-line bg-bg p-3">
-          <span className="text-xs uppercase tracking-widest text-faint">Receipt required</span>
+          <span className="text-xs uppercase tracking-widest text-faint">
+            Link to your evidence
+          </span>
           <input
+            aria-label="Evidence link"
             value={evidenceUri}
             onChange={(e) => setEvidenceUri(e.target.value)}
             placeholder="https://… (PR, demo, screenshot)"
             className="rounded-md border border-line bg-panel px-3 py-2 text-sm text-bone outline-none focus:border-gold/50"
           />
           <span className="text-xs text-faint">
-            Share evidence of completion. Your Circle has 24 hours to review it. Earlier backing is encouragement; evidence approval decides the refund.
+            Share evidence of completion. Your Circle has 24 hours to review it.
+            Earlier backing is encouragement; evidence approval decides the
+            refund.
           </span>
           <div className="flex gap-2">
             <button
@@ -189,7 +228,8 @@ export function BondCard({
       {expired && (
         <div className="flex flex-col gap-2">
           <p className="text-xs text-forfeit">
-            The Line passed with no Receipts. This stake drops into the Pot.
+            No evidence was submitted before the deadline. Settle this
+            commitment to move its stake into the Circle’s Pot.
           </p>
           <button
             onClick={() => write.crossMissed(b.id)}
@@ -209,7 +249,9 @@ export function BondCard({
           rel="noreferrer"
           className="tnum text-xs text-live underline decoration-dotted underline-offset-2"
         >
-          {write.isConfirming ? "tx pending — view on explorer ↗" : "tx confirmed — view on explorer ↗"}
+          {write.isConfirming
+            ? "tx pending — view on explorer ↗"
+            : "tx confirmed — view on explorer ↗"}
         </a>
       )}
     </div>

@@ -25,14 +25,14 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://bondline.app"),
-  title: "Bondline — ship together, or fund together",
+  title: "Bondline — small promises, shared progress",
   description:
-    "A group commitment protocol on Monad. Stake MON against your own deadline. Beat the Line and your Circle cosigns the refund; cross it and your stake drops into the shared Pot.",
+    "Make commitments, support your friends, and follow through together. Chat, stake MON, and share evidence in your Circle.",
   icons: { icon: "/logo.svg" },
   openGraph: {
-    title: "Bondline - ship together, or fund the group chat",
+    title: "Bondline — turn “I will” into “I did”",
     description:
-      "Put your money where your deadline is. Form a Circle, stake against your own deadline, and let your crew cosign the outcome on-chain.",
+      "Your people, your goals, and a little skin in the game. Make a promise, back each other, and follow through.",
     type: "website",
   },
 };

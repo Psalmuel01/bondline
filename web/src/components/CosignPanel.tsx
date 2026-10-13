@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAccount, useReadContract, useReadContracts, useWatchContractEvent } from "wagmi";
+import {
+  useAccount,
+  useReadContract,
+  useReadContracts,
+  useWatchContractEvent,
+} from "wagmi";
 import {
   CORE_ADDRESS,
   coreAbi,
@@ -29,9 +34,26 @@ export function CosignPanel({
   onResolved: () => void;
 }) {
   const { address } = useAccount();
-  const resolution = useReadContract({ address: CORE_ADDRESS, abi: coreAbi, functionName: "cosignState", args: [b.id], query: { refetchInterval: 10000 } });
-  const checks = useReadContracts({ contracts: circle.members.map((member) => ({ address: CORE_ADDRESS, abi: coreAbi, functionName: "hasResponded" as const, args: [b.id, member] as const })), query: { refetchInterval: 10000 } });
-  const write = useBondlineWrite(() => { void checks.refetch(); onResolved(); });
+  const resolution = useReadContract({
+    address: CORE_ADDRESS,
+    abi: coreAbi,
+    functionName: "cosignState",
+    args: [b.id],
+    query: { refetchInterval: 10000 },
+  });
+  const checks = useReadContracts({
+    contracts: circle.members.map((member) => ({
+      address: CORE_ADDRESS,
+      abi: coreAbi,
+      functionName: "hasResponded" as const,
+      args: [b.id, member] as const,
+    })),
+    query: { refetchInterval: 10000 },
+  });
+  const write = useBondlineWrite(() => {
+    void checks.refetch();
+    onResolved();
+  });
 
   // voter address -> how they voted, kept live via event watching
   const [votes, setVotes] = useState<Record<string, Vote>>({});
@@ -44,7 +66,10 @@ export function CosignPanel({
     setYes(b.cosigns);
     setNo(b.objections);
   }, [b.id]);
-  useEffect(() => { setYes(b.cosigns); setNo(b.objections); }, [b.cosigns, b.objections]);
+  useEffect(() => {
+    setYes(b.cosigns);
+    setNo(b.objections);
+  }, [b.cosigns, b.objections]);
 
   // watch Cosigned events (approvals only)
   useWatchContractEvent({
@@ -54,7 +79,11 @@ export function CosignPanel({
     onLogs(logs) {
       let touched = false;
       for (const log of logs) {
-        const a = log.args as { id?: bigint; cosigner?: `0x${string}`; cosigns?: number };
+        const a = log.args as {
+          id?: bigint;
+          cosigner?: `0x${string}`;
+          cosigns?: number;
+        };
         if (a.id !== b.id || !a.cosigner) continue;
         touched = true;
         setVotes((prev) => ({ ...prev, [a.cosigner!.toLowerCase()]: "yes" }));
@@ -72,7 +101,11 @@ export function CosignPanel({
     onLogs(logs) {
       let touched = false;
       for (const log of logs) {
-        const a = log.args as { id?: bigint; objector?: `0x${string}`; objections?: number };
+        const a = log.args as {
+          id?: bigint;
+          objector?: `0x${string}`;
+          objections?: number;
+        };
         if (a.id !== b.id || !a.objector) continue;
         touched = true;
         setVotes((prev) => ({ ...prev, [a.objector!.toLowerCase()]: "no" }));
@@ -82,9 +115,15 @@ export function CosignPanel({
     },
   });
 
+  const evidenceHref = /^https?:\/\//i.test(b.receiptsUri)
+    ? b.receiptsUri
+    : undefined;
   const state = resolution.data;
   const required = Number(state?.[1] ?? 1);
-  const eligibleMembers = hasV2 && state ? circle.members.slice(0, Number(state[0]) + 1) : circle.members;
+  const eligibleMembers =
+    hasV2 && state
+      ? circle.members.slice(0, Number(state[0]) + 1)
+      : circle.members;
   const voters = eligibleMembers.filter(
     (m) => m.toLowerCase() !== b.creator.toLowerCase(),
   );
@@ -92,10 +131,14 @@ export function CosignPanel({
     !!address &&
     address.toLowerCase() !== b.creator.toLowerCase() &&
     eligibleMembers.some((m) => m.toLowerCase() === address.toLowerCase());
-  const myIndex = circle.members.findIndex((m) => m.toLowerCase() === address?.toLowerCase());
-  const recordedResponse = myIndex >= 0 ? checks.data?.[myIndex]?.result : undefined;
+  const myIndex = circle.members.findIndex(
+    (m) => m.toLowerCase() === address?.toLowerCase(),
+  );
+  const recordedResponse =
+    myIndex >= 0 ? checks.data?.[myIndex]?.result : undefined;
   const myVote = address ? votes[address.toLowerCase()] : undefined;
-  const alreadyVoted = recordedResponse === true || myVote === "yes" || myVote === "no";
+  const alreadyVoted =
+    recordedResponse === true || myVote === "yes" || myVote === "no";
   const busy = write.isPending || write.isConfirming;
 
   return (
@@ -109,7 +152,10 @@ export function CosignPanel({
         </span>
       </div>
 
-      <p className="text-xs leading-relaxed text-muted">Backing expressed confidence before completion. This review checks the evidence and decides whether the stake is returned or goes to the Pot.</p>
+      <p className="text-xs leading-relaxed text-muted">
+        Backing expressed confidence before completion. This review checks the
+        evidence and decides whether the stake is returned or goes to the Pot.
+      </p>
 
       {/* tally bar */}
       <div className="flex h-2 overflow-hidden rounded-full bg-bg">
@@ -119,7 +165,9 @@ export function CosignPanel({
         />
         <div
           className="bg-gone transition-all duration-500"
-          style={{ width: `${Math.min((no / Math.max(voters.length, 1)) * 100, 100)}%` }}
+          style={{
+            width: `${Math.min((no / Math.max(voters.length, 1)) * 100, 100)}%`,
+          }}
         />
       </div>
 
@@ -127,7 +175,9 @@ export function CosignPanel({
       <div className="flex flex-wrap items-center gap-2">
         {voters.map((m) => {
           const v = votes[m.toLowerCase()] ?? "pending";
-          const index = circle.members.findIndex((member) => member.toLowerCase() === m.toLowerCase());
+          const index = circle.members.findIndex(
+            (member) => member.toLowerCase() === m.toLowerCase(),
+          );
           const reviewed = checks.data?.[index]?.result === true;
           return (
             <Avatar
@@ -142,9 +192,9 @@ export function CosignPanel({
       </div>
 
       {/* receipts */}
-      {b.receiptsUri && (
+      {evidenceHref && (
         <a
-          href={b.receiptsUri}
+          href={evidenceHref}
           target="_blank"
           rel="noreferrer"
           className="text-xs text-gold underline decoration-dotted underline-offset-2"
@@ -173,10 +223,20 @@ export function CosignPanel({
         </div>
       )}
       {isVoter && alreadyVoted && (
-        <p className="text-xs text-faint">{myVote === "yes" ? "You approved the evidence." : myVote === "no" ? "You disputed the evidence." : "You already reviewed this evidence."} Waiting for the Circle&apos;s decision.</p>
+        <p className="text-xs text-faint">
+          {myVote === "yes"
+            ? "You approved the evidence."
+            : myVote === "no"
+              ? "You disputed the evidence."
+              : "You already reviewed this evidence."}{" "}
+          Waiting for the Circle&apos;s decision.
+        </p>
       )}
       {!isVoter && address?.toLowerCase() === b.creator.toLowerCase() && (
-        <p className="text-xs text-faint">Your evidence is ready. Your Circle reviews it; you cannot approve your own commitment.</p>
+        <p className="text-xs text-faint">
+          Your evidence is ready. Your Circle reviews it; you cannot approve
+          your own commitment.
+        </p>
       )}
 
       {write.error && <p className="text-xs text-forfeit">{write.error}</p>}
