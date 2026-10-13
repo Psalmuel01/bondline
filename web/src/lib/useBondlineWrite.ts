@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { parseEther } from "viem";
-import { useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from "wagmi";
+import { parseEther, type Abi, type Address } from "viem";
+import { useWriteContract, useWaitForTransactionReceipt, useAccount, usePublicClient, useSwitchChain } from "wagmi";
 import {
   CIRCLE_FACTORY_ADDRESS,
   CORE_ADDRESS,
   circleFactoryAbi,
   coreAbi,
+  circleAbi,
 } from "./contracts";
 import { monadMainnet } from "./chain";
 
@@ -15,9 +16,16 @@ import { monadMainnet } from "./chain";
 /// can show each step happening on-chain (no fake optimistic updates). One hook
 /// instance per action surface; pass a callback to refresh reads on confirm.
 export function useBondlineWrite(onConfirmed?: () => void) {
-  const chainId = useChainId();
+  const { chainId, address: account } = useAccount();
+  const client = usePublicClient();
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync, isPending } = useWriteContract();
+  const [isPreparing, setIsPreparing] = useState(false);
+  async function writeEstimated(parameters: { address: Address; abi: Abi; functionName: string; args?: readonly unknown[]; value?: bigint }) {
+    if (!client || !account) throw new Error("Sign in to confirm this action.");
+    const gas = await client.estimateContractGas({ ...parameters, account } as Parameters<typeof client.estimateContractGas>[0]);
+    return writeContractAsync({ ...parameters, gas: gas + gas / 20n, chainId: monadMainnet.id } as Parameters<typeof writeContractAsync>[0]);
+  }
   const [hash, setHash] = useState<`0x${string}` | undefined>();
   const [error, setError] = useState<string | undefined>();
 
@@ -43,6 +51,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
     fn: () => Promise<`0x${string}`>,
   ): Promise<`0x${string}` | undefined> {
     setError(undefined);
+    setIsPreparing(true);
     try {
       // Make sure the wallet is on Monad before firing. Otherwise the tx goes
       // to whatever chain the wallet is on and fails with a cryptic error the
@@ -55,12 +64,12 @@ export function useBondlineWrite(onConfirmed?: () => void) {
       return h;
     } catch (e) {
       setError(friendly(e));
-    }
+    } finally { setIsPreparing(false); }
   }
 
   const createCircle = (name: string, members: `0x${string}`[], bps: number) =>
     run(() =>
-      writeContractAsync({
+      writeEstimated({
         address: CIRCLE_FACTORY_ADDRESS,
         abi: circleFactoryAbi,
         functionName: "createCircle",
@@ -75,7 +84,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
     stakeMon: string,
   ) =>
     run(() =>
-      writeContractAsync({
+      writeEstimated({
         address: CORE_ADDRESS,
         abi: coreAbi,
         functionName: "openBond",
@@ -90,7 +99,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
     receiptsUri: string,
   ) =>
     run(() =>
-      writeContractAsync({
+      writeEstimated({
         address: CORE_ADDRESS,
         abi: coreAbi,
         functionName: "declareDone",
@@ -100,7 +109,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
 
   const cosign = (id: bigint) =>
     run(() =>
-      writeContractAsync({
+      writeEstimated({
         address: CORE_ADDRESS,
         abi: coreAbi,
         functionName: "cosign",
@@ -110,7 +119,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
 
   const object = (id: bigint) =>
     run(() =>
-      writeContractAsync({
+      writeEstimated({
         address: CORE_ADDRESS,
         abi: coreAbi,
         functionName: "object",
@@ -120,7 +129,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
 
   const resolveExpired = (id: bigint) =>
     run(() =>
-      writeContractAsync({
+      writeEstimated({
         address: CORE_ADDRESS,
         abi: coreAbi,
         functionName: "resolveExpired",
@@ -130,7 +139,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
 
   const crossMissed = (id: bigint) =>
     run(() =>
-      writeContractAsync({
+      writeEstimated({
         address: CORE_ADDRESS,
         abi: coreAbi,
         functionName: "crossMissed",
@@ -145,7 +154,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
     memo: string,
   ) =>
     run(() =>
-      writeContractAsync({
+      writeEstimated({
         address: CORE_ADDRESS,
         abi: coreAbi,
         functionName: "proposePayout",
@@ -155,7 +164,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
 
   const cosignPayout = (payoutId: bigint) =>
     run(() =>
-      writeContractAsync({
+      writeEstimated({
         address: CORE_ADDRESS,
         abi: coreAbi,
         functionName: "cosignPayout",
@@ -163,7 +172,16 @@ export function useBondlineWrite(onConfirmed?: () => void) {
       }),
     );
 
+  const openVerifiedBond = (circle: `0x${string}`, description: string, deadline: bigint, stake: string, kind: number, verifier: `0x${string}`, target: bigint, spec: string) => run(() => writeEstimated({ address: CORE_ADDRESS, abi: coreAbi, functionName: "openVerifiedBond", args: [circle, description, deadline, kind, verifier, target, spec], value: parseEther(stake) }));
+  const backCommitment = (id: bigint) => run(() => writeEstimated({ address: CORE_ADDRESS, abi: coreAbi, functionName: "backCommitment", args: [id] }));
+  const verifyBalance = (id: bigint) => run(() => writeEstimated({ address: CORE_ADDRESS, abi: coreAbi, functionName: "verifyBalance", args: [id] }));
+  const joinTesterCohort = () => run(() => writeEstimated({ address: CORE_ADDRESS, abi: coreAbi, functionName: "joinTesterCohort" }));
+  const withdrawRefund = (to: Address) => run(() => writeEstimated({ address: CORE_ADDRESS, abi: coreAbi, functionName: "withdrawRefund", args: [to] }));
+  const claimReward = (circle: `0x${string}`, epoch: bigint, to: `0x${string}`) => run(() => writeEstimated({ address: CORE_ADDRESS, abi: coreAbi, functionName: "claimReward", args: [circle, epoch, to] }));
+  const invite = (circle: `0x${string}`, member: `0x${string}`) => run(() => writeEstimated({ address: circle, abi: circleAbi, functionName: "invite", args: [member] }));
+  const join = (circle: `0x${string}`) => run(() => writeEstimated({ address: circle, abi: circleAbi, functionName: "join" }));
   return {
+    openVerifiedBond, backCommitment, verifyBalance, claimReward, invite, join, withdrawRefund, joinTesterCohort,
     createCircle,
     openBond,
     declareDone,
@@ -175,7 +193,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
     cosignPayout,
     hash,
     error,
-    isPending,
+    isPending: isPending || isPreparing,
     isConfirming,
     isSuccess,
     reset,
@@ -184,7 +202,7 @@ export function useBondlineWrite(onConfirmed?: () => void) {
 
 function friendly(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e);
-  if (/user rejected|denied/i.test(msg)) return "Transaction rejected.";
+  if (/user rejected|denied/i.test(msg)) return "Confirmation cancelled. Your commitment was not changed.";
   const m = msg.match(
     /(StakeRequired|StakeTooLarge|DeadlineInPast|UnknownCircle|NotCircleMember|NotCreator|NotActive|DeadlinePassed|NotPending|CreatorCannotCosign|AlreadyCosigned|CosignClosed|CosignStillOpen|TransferFailed|InsufficientPotBalance|AlreadyExecuted|CircleTooSmall|ZeroMember|DuplicateMember|ThresholdOutOfRange|NoSuch\w+)/,
   );

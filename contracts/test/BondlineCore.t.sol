@@ -424,7 +424,7 @@ contract BondlineCoreTest is Test {
 
     function test_payout_executesAtThreshold() public {
         address circle = _four(5000); // payouts: eligible = full membership 4, required ceil(2)=2
-        _fund(circle, 4 ether);
+        vm.deal(circle, 4 ether); // unreserved surplus; failed stakes cannot be spent by a vote
 
         vm.prank(alice);
         uint256 pid = core.proposePayout(circle, vendor, 4 ether, "group dinner");
@@ -455,7 +455,7 @@ contract BondlineCoreTest is Test {
 
     function test_payout_doubleCosignReverts() public {
         address circle = _four(10000); // required = all 4, so it stays open after proposer
-        _fund(circle, 2 ether);
+        vm.deal(circle, 2 ether);
         vm.prank(alice);
         uint256 pid = core.proposePayout(circle, vendor, 2 ether, "trip");
         vm.prank(alice);
@@ -481,8 +481,10 @@ contract BondlineCoreTest is Test {
         // bob confirms -> refund fires to attacker, which re-enters on receive.
         // nonReentrant makes the whole resolution revert rather than double-pay.
         vm.prank(bob);
-        vm.expectRevert();
         core.cosign(id);
+        assertEq(uint256(_status(id)), uint256(BondlineCore.Status.Met));
+        assertEq(core.refundCredit(address(attacker)), 2 ether);
+        assertEq(address(core).balance, 2 ether);
     }
 }
 

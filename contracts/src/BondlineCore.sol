@@ -63,11 +63,79 @@ contract BondlineCore is ReentrancyGuard {
     CircleFactory public factory;
     address public immutable deployer;
 
+    uint64 public constant PERIOD = 7 days;
+    uint64 public constant MAX_DURATION = 30 days;
+    enum VerifierType { CircleReview, OnchainBalance, External }
+    struct Verification {
+        VerifierType kind;
+        address verifier;
+        uint96 targetBalance;
+        bytes32 conditionHash;
+        uint64 createdAt;
+    }
+    mapping(uint256 => Verification) public verification;
+    mapping(uint256 => string) public verificationSpec;
+    mapping(address => bool) public isTrustedVerifier;
+    event VerifierTrustChanged(address indexed verifier, bool trusted);
+    function setTrustedVerifier(address verifier, bool trusted) external {
+        if (msg.sender != deployer) revert OnlyDeployer();
+        if (verifier == address(0)) revert ZeroAddress();
+        isTrustedVerifier[verifier] = trusted;
+        emit VerifierTrustChanged(verifier, trusted);
+    }
+    mapping(uint256 => uint256) public eligibleAtCreation;
+    mapping(uint256 => mapping(address => bool)) public hasBacked;
+    mapping(uint256 => uint32) public backerCount;
+    mapping(address => bool) public isTester;
+    uint256 public testerCount;
+    uint256 public totalSocialCosigns;
+    mapping(address => mapping(address => bool)) public hasSupportedCreator;
+    mapping(address => uint256) public uniqueCosigners;
+    event TesterJoined(address indexed tester);
+    function joinTesterCohort() external {
+        if (isTester[msg.sender]) revert AlreadyBacked();
+        isTester[msg.sender] = true;
+        testerCount += 1;
+        emit TesterJoined(msg.sender);
+    }
+    function _recordSupport(address creator, address supporter) private {
+        if (!hasSupportedCreator[creator][supporter]) {
+            hasSupportedCreator[creator][supporter] = true;
+            uniqueCosigners[creator] += 1;
+        }
+    }
+    mapping(address => uint256) public refundCredit;
+    mapping(address => mapping(uint256 => uint256)) public periodPot;
+    mapping(address => mapping(uint256 => uint256)) public periodPending;
+    mapping(address => mapping(uint256 => uint256)) public periodSuccesses;
+    mapping(address => mapping(uint256 => mapping(address => uint256))) public memberSuccesses;
+    mapping(address => mapping(uint256 => mapping(address => bool))) public rewardClaimed;
+    mapping(address => uint256) public reservedPot;
+    mapping(address => mapping(uint256 => uint256)) public rewardPool;
+    mapping(address => mapping(uint256 => bool)) public periodClosed;
+
+    event CommitmentBacked(uint256 indexed id, address indexed backer, uint32 count);
+    event VerificationConfigured(uint256 indexed id, VerifierType kind, address verifier, bytes32 conditionHash);
+    event CommitmentVerified(uint256 indexed id, bool success, bytes32 evidenceHash);
+    event PotRewardClaimed(address indexed circle, uint256 indexed period, address indexed member, uint256 amount);
+    event PotPeriodClosed(address indexed circle, uint256 indexed period, uint256 amount, uint256 successes);
+    event RefundCredited(address indexed creator, uint256 amount);
+    error InvalidCondition();
+    error WrongVerifier();
+    error PeriodNotReady();
+    error NoReward();
+    error AlreadyBacked();
+    error InvalidDescription();
+    error DurationTooLong();
+
+    function protocolVersion() external pure returns (uint256) { return 2; }
+
     Bond[] private _bonds;
     /// @dev bond id => cosigner => responded already (creator excluded from voting)
     mapping(uint256 => mapping(address => bool)) public hasResponded;
 
     Payout[] private _payouts;
+    mapping(uint256 => uint256) public payoutEligible;
     /// @dev payout id => member => cosigned already
     mapping(uint256 => mapping(address => bool)) public hasCosignedPayout;
 
@@ -122,6 +190,7 @@ contract BondlineCore is ReentrancyGuard {
 
     constructor() {
         deployer = msg.sender;
+        isTrustedVerifier[msg.sender] = true;
     }
 
     /// @notice Wire the factory once, after both are deployed (they reference
@@ -138,7 +207,7 @@ contract BondlineCore is ReentrancyGuard {
     /// @notice Stake MON against a personal deadline, tied to a Circle you're in.
     ///         Cross the Line (or fail the cosign) and the stake funds the Pot.
     function openBond(address circle, string calldata description, uint64 deadline)
-        external
+        public
         payable
         returns (uint256 id)
     {
@@ -148,6 +217,8 @@ contract BondlineCore is ReentrancyGuard {
         if (msg.value == 0) revert StakeRequired();
         if (msg.value > MAX_STAKE) revert StakeTooLarge();
         if (deadline <= block.timestamp) revert DeadlineInPast();
+        if (deadline > block.timestamp + MAX_DURATION) revert DurationTooLong();
+        if (bytes(description).length == 0 || bytes(description).length > 280) revert InvalidDescription();
 
         id = _bonds.length;
         _bonds.push(
@@ -166,7 +237,70 @@ contract BondlineCore is ReentrancyGuard {
             })
         );
 
+        eligibleAtCreation[id] = Circle(circle).memberCount() - 1;
+        verification[id].createdAt = uint64(block.timestamp);
+        periodPending[circle][deadline / PERIOD] += 1;
         emit BondOpened(id, msg.sender, circle, msg.value, deadline, description);
+    }
+
+    /// @notice Conditions are bound to escrow at creation and cannot be changed.
+    function openVerifiedBond(address circle, string calldata description, uint64 deadline,
+        VerifierType kind, address verifier, uint96 targetBalance, string calldata spec)
+        external payable returns (uint256 id)
+    {
+        bytes32 conditionHash = keccak256(bytes(spec));
+        if (bytes(spec).length > 512) revert InvalidCondition();
+        if (kind == VerifierType.CircleReview) revert InvalidCondition();
+        if (kind == VerifierType.OnchainBalance) {
+            if (targetBalance == 0 || verifier != address(0)) revert InvalidCondition();
+        } else if (verifier == address(0) || verifier == msg.sender || !isTrustedVerifier[verifier] || bytes(spec).length == 0) {
+            revert InvalidCondition();
+        }
+        id = openBond(circle, description, deadline);
+        verification[id] = Verification(kind, verifier, targetBalance, conditionHash, uint64(block.timestamp));
+        verificationSpec[id] = spec;
+        emit VerificationConfigured(id, kind, verifier, conditionHash);
+    }
+
+    /// @notice Public encouragement is separate from evidence review and cannot settle funds.
+    function backCommitment(uint256 id) external {
+        Bond storage b = _get(id);
+        if (b.status != Status.Active || block.timestamp >= b.deadline) revert NotActive();
+        if (msg.sender == b.creator) revert CreatorCannotCosign();
+        if (!Circle(b.circle).isMember(msg.sender)) revert NotCircleMember();
+        if (hasBacked[id][msg.sender]) revert AlreadyBacked();
+        hasBacked[id][msg.sender] = true;
+        backerCount[id] += 1;
+        totalSocialCosigns += 1;
+        _recordSupport(b.creator, msg.sender);
+        emit CommitmentBacked(id, msg.sender, backerCount[id]);
+    }
+
+    /// @notice Anyone can prove the configured balance target before the deadline.
+    function verifyBalance(uint256 id) external nonReentrant {
+        Bond storage b = _get(id);
+        if (b.status != Status.Active) revert NotActive();
+        if (block.timestamp >= b.deadline) revert DeadlinePassed();
+        Verification memory v = verification[id];
+        if (v.kind != VerifierType.OnchainBalance) revert WrongVerifier();
+        if (b.creator.balance < v.targetBalance) revert InvalidCondition();
+        emit CommitmentVerified(id, true, keccak256(abi.encode(b.creator.balance, block.number)));
+        _resolve(id, b, true);
+    }
+
+    /// @notice External attestor is explicitly trusted, fixed at creation, and cannot be creator.
+    ///         Success must be observed before deadline; failure may only finalize after it.
+    function attest(uint256 id, bool success, bytes32 conditionHash, bytes32 evidenceHash) external nonReentrant {
+        Bond storage b = _get(id);
+        Verification memory v = verification[id];
+        if (v.kind != VerifierType.External || msg.sender != v.verifier) revert WrongVerifier();
+        if (b.status != Status.Active) revert NotActive();
+        if (conditionHash != v.conditionHash || evidenceHash == bytes32(0)) revert InvalidCondition();
+        if (success && block.timestamp >= b.deadline) revert DeadlinePassed();
+        if (!success && block.timestamp < b.deadline) revert DeadlineNotReached();
+        b.receiptsHash = evidenceHash;
+        emit CommitmentVerified(id, success, evidenceHash);
+        _resolve(id, b, success);
     }
 
     /// @notice Creator declares they are done before the deadline. This is a
@@ -176,6 +310,7 @@ contract BondlineCore is ReentrancyGuard {
     function declareDone(uint256 id, bytes32 receiptsHash, string calldata receiptsUri) external {
         Bond storage b = _get(id);
         if (msg.sender != b.creator) revert NotCreator();
+        if (verification[id].kind != VerifierType.CircleReview) revert WrongVerifier();
         if (b.status != Status.Active) revert NotActive();
         if (block.timestamp >= b.deadline) revert DeadlinePassed();
         if (receiptsHash == bytes32(0) || bytes(receiptsUri).length == 0) revert ReceiptRequired();
@@ -207,19 +342,20 @@ contract BondlineCore is ReentrancyGuard {
         if (b.status != Status.PendingCosign) revert NotPending();
         if (block.timestamp >= b.cosignClosesAt) revert CosignClosed();
         if (msg.sender == b.creator) revert CreatorCannotCosign();
-        if (!Circle(b.circle).isMember(msg.sender)) revert NotCircleMember();
+        if (!Circle(b.circle).isMember(msg.sender) || Circle(b.circle).memberIndex(msg.sender) > eligibleAtCreation[id] + 1) revert NotCircleMember();
         if (hasResponded[id][msg.sender]) revert AlreadyResponded();
 
         hasResponded[id][msg.sender] = true;
         if (confirm) {
             b.cosigns += 1;
+            _recordSupport(b.creator, msg.sender);
             emit Cosigned(id, msg.sender, b.cosigns);
         } else {
             b.objections += 1;
             emit Objected(id, msg.sender, b.objections);
         }
 
-        uint256 eligible = _eligibleCosigners(b.circle);
+        uint256 eligible = eligibleAtCreation[id];
         uint256 required = BondlineMath.requiredCosigns(eligible, Circle(b.circle).cosignThresholdBps());
 
         if (BondlineMath.isCleared(b.cosigns, required)) {
@@ -250,7 +386,7 @@ contract BondlineCore is ReentrancyGuard {
         if (b.status != Status.PendingCosign) revert NotPending();
         if (block.timestamp < b.cosignClosesAt) revert CosignStillOpen();
 
-        uint256 eligible = _eligibleCosigners(b.circle);
+        uint256 eligible = eligibleAtCreation[id];
         uint256 required = BondlineMath.requiredCosigns(eligible, Circle(b.circle).cosignThresholdBps());
         _resolve(id, b, BondlineMath.isCleared(b.cosigns, required));
     }
@@ -261,18 +397,64 @@ contract BondlineCore is ReentrancyGuard {
     ///      nonReentrant.
     function _resolve(uint256 id, Bond storage b, bool cleared) private {
         uint256 stake = b.stake;
+        uint256 epoch = b.deadline / PERIOD;
+        periodPending[b.circle][epoch] -= 1;
         if (cleared) {
             b.status = Status.Met;
-            (bool ok, ) = payable(b.creator).call{value: stake}("");
-            if (!ok) revert TransferFailed();
+            periodSuccesses[b.circle][epoch] += 1;
+            memberSuccesses[b.circle][epoch][b.creator] += 1;
+            // A rejecting recipient cannot prevent settlement. Credit remains withdrawable to another address.
+            (bool ok, ) = payable(b.creator).call{value: stake, gas: 50_000}("");
+            if (!ok) {
+                refundCredit[b.creator] += stake;
+                emit RefundCredited(b.creator, stake);
+            }
         } else {
             b.status = Status.Crossed;
+            periodPot[b.circle][epoch] += stake;
+            reservedPot[b.circle] += stake;
             Circle(b.circle).fundPot{value: stake}();
         }
         emit BondResolved(id, b.status, stake);
     }
 
-    // --- Pot payouts ---
+    function withdrawRefund(address payable to) external nonReentrant {
+        uint256 amount = refundCredit[msg.sender];
+        if (amount == 0 || to == address(0)) revert NoReward();
+        refundCredit[msg.sender] = 0;
+        (bool ok,) = to.call{value: amount}("");
+        if (!ok) revert TransferFailed();
+    }
+
+    /// @notice Close a deadline week once every commitment has settled. Equal weight per success.
+    ///         Empty-success weeks roll into the following week; rounding dust remains reserved there.
+    function closePeriod(address circle, uint256 epoch) public {
+        if (epoch >= block.timestamp / PERIOD || periodPending[circle][epoch] != 0) revert PeriodNotReady();
+        if (periodClosed[circle][epoch]) revert AlreadyExecuted();
+        periodClosed[circle][epoch] = true;
+        uint256 pot = periodPot[circle][epoch];
+        uint256 successes = periodSuccesses[circle][epoch];
+        uint256 pool = successes == 0 ? 0 : (pot / successes) * successes;
+        rewardPool[circle][epoch] = pool;
+        // Roll forward to the first not-yet-closed current/future week in O(1).
+        uint256 next = block.timestamp / PERIOD;
+        periodPot[circle][next] += pot - pool;
+        emit PotPeriodClosed(circle, epoch, pool, successes);
+    }
+
+    function claimReward(address circle, uint256 epoch, address payable to) external nonReentrant {
+        if (!periodClosed[circle][epoch]) closePeriod(circle, epoch);
+        if (rewardClaimed[circle][epoch][msg.sender] || to == address(0)) revert NoReward();
+        uint256 successes = periodSuccesses[circle][epoch];
+        uint256 amount = successes == 0 ? 0 : rewardPool[circle][epoch] / successes * memberSuccesses[circle][epoch][msg.sender];
+        if (amount == 0) revert NoReward();
+        rewardClaimed[circle][epoch][msg.sender] = true;
+        reservedPot[circle] -= amount;
+        Circle(circle).payout(to, amount);
+        emit PotRewardClaimed(circle, epoch, msg.sender, amount);
+    }
+
+    // --- Pot payouts (unreserved surplus only) ---
 
     /// @notice Propose paying out MON from a Circle's Pot. Proposer must be a
     ///         member and auto-cosigns. Requires the Circle to currently hold at
@@ -287,12 +469,13 @@ contract BondlineCore is ReentrancyGuard {
         if (!factory.isCircle(circle)) revert UnknownCircle();
         if (!Circle(circle).isMember(msg.sender)) revert NotCircleMember();
         if (to == address(0)) revert ZeroAddress();
-        if (amount == 0 || amount > Circle(circle).balance()) revert InsufficientPotBalance();
+        if (amount == 0 || amount > Circle(circle).balance() - reservedPot[circle]) revert InsufficientPotBalance();
 
         payoutId = _payouts.length;
         _payouts.push(
             Payout({circle: circle, to: to, amount: amount, executed: false, cosigns: 1, memo: memo})
         );
+        payoutEligible[payoutId] = Circle(circle).memberCount();
         hasCosignedPayout[payoutId][msg.sender] = true;
         emit PayoutProposed(payoutId, circle, to, amount, memo);
         emit PayoutCosigned(payoutId, msg.sender, 1);
@@ -306,7 +489,7 @@ contract BondlineCore is ReentrancyGuard {
         if (payoutId >= _payouts.length) revert NoSuchPayout();
         Payout storage p = _payouts[payoutId];
         if (p.executed) revert AlreadyExecuted();
-        if (!Circle(p.circle).isMember(msg.sender)) revert NotCircleMember();
+        if (!Circle(p.circle).isMember(msg.sender) || Circle(p.circle).memberIndex(msg.sender) > payoutEligible[payoutId]) revert NotCircleMember();
         if (hasCosignedPayout[payoutId][msg.sender]) revert AlreadyCosignedPayout();
 
         hasCosignedPayout[payoutId][msg.sender] = true;
@@ -320,10 +503,10 @@ contract BondlineCore is ReentrancyGuard {
     ///      membership is the eligible set for payouts.
     function _maybeExecutePayout(uint256 payoutId, address circle) private {
         Payout storage p = _payouts[payoutId];
-        uint256 eligible = Circle(circle).memberCount();
+        uint256 eligible = payoutEligible[payoutId];
         uint256 required = BondlineMath.requiredCosigns(eligible, Circle(circle).cosignThresholdBps());
         if (!BondlineMath.isCleared(p.cosigns, required)) return;
-        if (p.amount > Circle(circle).balance()) revert InsufficientPotBalance();
+        if (p.amount > Circle(circle).balance() - reservedPot[circle] - reservedPot[circle]) revert InsufficientPotBalance();
 
         p.executed = true; // effects before interaction
         Circle(circle).payout(p.to, p.amount);

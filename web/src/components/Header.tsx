@@ -1,30 +1,28 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAccount } from "wagmi";
 import { ConnectButton } from "./ConnectButton";
 import { Wordmark } from "./Logo";
 import { NotificationCenter } from "./NotificationCenter";
 
 export function Header() {
+  const { isConnected } = useAccount();
+  const pathname = usePathname();
   return (
-    <header className="flex items-center justify-between gap-4">
-      <div className="flex items-center gap-5">
-        <Link href="/" className="transition-opacity hover:opacity-80">
-          <Wordmark size={30} />
-        </Link>
-        <span className="tnum hidden items-center gap-1.5 rounded border border-gold/30 bg-gold/5 px-1.5 py-0.5 text-[10px] tracking-wide text-gold/90 sm:inline-flex">
-          <span className="h-1 w-1 rounded-full bg-gold" />
-          MONAD MAINNET
-        </span>
-      </div>
-      <div className="flex items-center gap-1.5 sm:gap-4">
-        <Link
-          href="/docs"
-          className="hidden px-2 text-sm text-muted transition-colors hover:text-gold sm:inline"
-        >
-          How it works
-        </Link>
-        <NotificationCenter />
+    <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-4 border-b border-line/70 pb-5">
+      <Link href="/" aria-label="Bondline home" className="shrink-0 transition-opacity hover:opacity-80">
+        <Wordmark size={32} />
+      </Link>
+      <div className="ml-auto flex items-center gap-3 sm:gap-5">
+        {!isConnected && <Link href="/docs" className="hidden text-sm text-muted transition-colors hover:text-bone sm:block">How it works</Link>}
+        {isConnected && <NotificationCenter />}
         <ConnectButton />
       </div>
+      {isConnected && <nav aria-label="Main navigation" className="flex w-full items-center gap-6 text-sm">
+        {[ ["/", "Circles"], ["/profile", "Your history"] ].map(([href, label]) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined} className={pathname === href ? "font-medium text-gold" : "text-muted transition-colors hover:text-bone"}>{label}</Link>)}
+      </nav>}
     </header>
   );
 }

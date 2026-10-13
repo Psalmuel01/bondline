@@ -8,17 +8,19 @@ import { countdownParts, formatMon, shortAddr } from "@/lib/format";
 import { explorerAddr, explorerTx } from "@/lib/chain";
 import { useBondlineWrite } from "@/lib/useBondlineWrite";
 import { CosignPanel } from "./CosignPanel";
+import { CommitmentSignals, useVerification } from "./CommitmentSignals";
+import { hasV2 } from "@/lib/contracts";
 import { ReceiptPreview } from "./ReceiptPreview";
 
 const STATUS_META: Record<Status, { label: string; cls: string; dot: string }> = {
-  [Status.Active]: { label: "ON THE LINE", cls: "text-gold border-gold/40 bg-gold/10", dot: "bg-gold" },
+  [Status.Active]: { label: "ACTIVE", cls: "text-gold border-gold/40 bg-gold/10", dot: "bg-gold" },
   [Status.PendingCosign]: {
-    label: "COSIGNING",
+    label: "AWAITING REVIEW",
     cls: "text-gold border-gold/40 bg-gold/10",
     dot: "bg-gold",
   },
-  [Status.Met]: { label: "BEAT THE LINE", cls: "text-confirm border-confirm/40 bg-confirm/10", dot: "bg-confirm" },
-  [Status.Crossed]: { label: "CROSSED THE LINE", cls: "text-forfeit border-forfeit/40 bg-forfeit/10", dot: "bg-forfeit" },
+  [Status.Met]: { label: "COMPLETED", cls: "text-confirm border-confirm/40 bg-confirm/10", dot: "bg-confirm" },
+  [Status.Crossed]: { label: "FAILED", cls: "text-forfeit border-forfeit/40 bg-forfeit/10", dot: "bg-forfeit" },
 };
 
 export function BondCard({
@@ -36,6 +38,7 @@ export function BondCard({
 }) {
   const { address } = useAccount();
   const write = useBondlineWrite(onResolved);
+  const verification = useVerification(b.id);
   const [declaring, setDeclaring] = useState(false);
   const [evidenceUri, setEvidenceUri] = useState("");
 
@@ -48,7 +51,7 @@ export function BondCard({
   const pending = b.status === Status.PendingCosign;
   const expired = active && cd.expired;
 
-  const canDeclare = active && !cd.expired && isCreator;
+  const canDeclare = active && !cd.expired && isCreator && (!hasV2 || verification?.[0] === 0);
   const canResolveExpired = pending && voteCd.expired;
 
   const busy = write.isPending || write.isConfirming;
@@ -73,7 +76,7 @@ export function BondCard({
           className={`tnum inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wider ${meta.cls}`}
         >
           <span className={`h-1.5 w-1.5 rounded-full ${meta.dot} ${active || pending ? "pulse" : ""}`} />
-          {expired ? "LINE CROSSED" : meta.label}
+          {expired ? "AWAITING SETTLEMENT" : meta.label}
         </span>
           <span className="tnum text-xs text-faint">#{b.id.toString().padStart(3, "0")}</span>
       </div>
@@ -124,6 +127,8 @@ export function BondCard({
         {b.status === Status.Met && <span className="text-confirm">shipped in time</span>}
       </div>
 
+      <CommitmentSignals bond={b} circle={circle} onChange={onResolved} />
+
       {/* live voting */}
       {pending && !voteCd.expired && <CosignPanel b={b} circle={circle} onResolved={onResolved} />}
 
@@ -135,7 +140,7 @@ export function BondCard({
           onClick={() => setDeclaring(true)}
           className="w-full rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-ink transition hover:brightness-108"
         >
-          I shipped it → drop your Receipts
+          Submit evidence
         </button>
       )}
       {canDeclare && declaring && (

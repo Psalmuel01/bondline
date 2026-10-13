@@ -6,6 +6,7 @@ import {
   http,
   isAddress,
   type Address,
+  type Abi,
   type Hash,
   type Log,
 } from "viem";
@@ -15,6 +16,7 @@ import {
   CORE_ADDRESS,
   circleFactoryAbi,
   coreAbi,
+  circleAbi,
   isConfigured,
 } from "@/lib/contracts";
 import { supabaseAdminRequest } from "@/lib/server/supabase-admin";
@@ -134,7 +136,7 @@ async function getLogsInRanges(
 async function getLogsFromHyperSync(fromBlock: bigint, toBlock: bigint) {
   const token = process.env.HYPERSYNC_BEARER_TOKEN;
   if (!token) return;
-  const endpoint = (process.env.BONDLINE_HYPERSYNC_URL ?? "https://monad.hypersync.xyz").replace(/\/$/, "");
+  const endpoint = (process.env.BONDLINE_HYPERSYNC_URL ?? (monadMainnet.id === 10143 ? "https://monad-testnet.hypersync.xyz" : "https://monad.hypersync.xyz")).replace(/\/$/, "");
   const logs: Log<bigint, number, false>[] = [];
   let cursor = fromBlock;
 
@@ -190,11 +192,11 @@ async function getLogsFromHyperSync(fromBlock: bigint, toBlock: bigint) {
   return logs;
 }
 
-function decodeLogs(logs: readonly Log<bigint, number, false>[], abi: typeof coreAbi | typeof circleFactoryAbi) {
+function decodeLogs(logs: readonly Log<bigint, number, false>[], abi: Abi) {
   return logs.map((log) => {
     try {
       const event = decodeEventLog({ abi, data: log.data, topics: log.topics, strict: true });
-      return { log, eventName: event.eventName, args: event.args as Record<string, unknown> };
+      return { log, eventName: event.eventName, args: event.args as unknown as Record<string, unknown> };
     } catch {
       throw new Error(`Could not decode a Bondline log at block ${log.blockNumber}. Cursor was not advanced.`);
     }
@@ -206,6 +208,7 @@ export async function runIndexerBatch(): Promise<IndexerRunResult> {
   const rpcUrl = process.env.MONAD_RPC_URL;
   if (!rpcUrl) throw new Error("MONAD_RPC_URL is required by the indexer.");
 
+  if (monadMainnet.id === 10143 && !process.env.BONDLINE_DEPLOYMENT_BLOCK) throw new Error("Set the testnet deployment block explicitly.");
   const deploymentBlock = positiveBigInt("BONDLINE_DEPLOYMENT_BLOCK", DEFAULT_DEPLOYMENT_BLOCK);
   const finalityBlocks = positiveBigInt("BONDLINE_INDEXER_FINALITY_BLOCKS", DEFAULT_FINALITY_BLOCKS);
   const blockRange = process.env.HYPERSYNC_BEARER_TOKEN
@@ -262,9 +265,13 @@ export async function runIndexerBatch(): Promise<IndexerRunResult> {
         getLogsInRanges(client, CIRCLE_FACTORY_ADDRESS, fromBlock, throughBlock, logRange),
         getLogsInRanges(client, CORE_ADDRESS, fromBlock, throughBlock, logRange),
       ]);
+  const circleAddresses = await client.readContract({ address: CIRCLE_FACTORY_ADDRESS, abi: circleFactoryAbi, functionName: "allCircles", blockNumber: throughBlock });
+  const circleLogs = (await mapConcurrent([...circleAddresses], 4, (address) => getLogsInRanges(client, address, fromBlock, throughBlock, logRange))).flat();
+  const membershipAbi = circleAbi.filter((entry) => entry.type === "event" && (entry.name === "CircleJoined" || entry.name === "MemberInvited"));
   const decoded = [
     ...decodeLogs(factoryLogs, circleFactoryAbi),
     ...decodeLogs(coreLogs, coreAbi),
+    ...decodeLogs(circleLogs, membershipAbi),
   ].sort((a, b) => Number(a.log.blockNumber - b.log.blockNumber) || Number((a.log.logIndex ?? 0) - (b.log.logIndex ?? 0)));
 
   const [indexedBonds, indexedPayouts] = await Promise.all([
@@ -301,8 +308,8 @@ export async function runIndexerBatch(): Promise<IndexerRunResult> {
     const bondId = args.id === undefined ? null : String(args.id);
     const payoutId = args.payoutId === undefined ? null : String(args.payoutId);
     const directCircle = typeof args.circle === "string" && isAddress(args.circle) ? args.circle.toLowerCase() : null;
-    const circleAddress = directCircle ?? (bondId ? bondCircles.get(bondId) : undefined) ?? (payoutId ? payoutCircles.get(payoutId) : undefined) ?? null;
-    const actor = [args.creator, args.cosigner, args.objector, args.member].find((value) => typeof value === "string" && isAddress(value));
+    const circleAddress = (circleAddresses.some((circle) => circle.toLowerCase() === log.address.toLowerCase()) ? log.address.toLowerCase() : directCircle) ?? (bondId ? bondCircles.get(bondId) : undefined) ?? (payoutId ? payoutCircles.get(payoutId) : undefined) ?? null;
+    const actor = [args.creator, args.cosigner, args.objector, args.backer, args.member, args.tester].find((value) => typeof value === "string" && isAddress(value));
     return {
       chain_id: monadMainnet.id,
       tx_hash: log.transactionHash.toLowerCase(),

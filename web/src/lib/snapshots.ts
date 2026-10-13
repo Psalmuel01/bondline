@@ -146,11 +146,21 @@ function eventBody(event: ChainActivityRow) {
   const payload = event.payload ?? {};
   if (event.event_name === "BondOpened") return typeof payload.description === "string" ? `Opened a Bond · ${payload.description}` : "Opened a Bond";
   if (event.event_name === "BondDeclared") return "Submitted a receipt and opened the cosign";
-  if (event.event_name === "BondResolved") return Number(payload.status) === Status.Met ? "Cleared a Bond" : "Crossed the Line";
+  if (event.event_name === "BondResolved") return Number(payload.status) === Status.Met ? "Completed a commitment · stake returned" : "Missed a commitment · stake funded the Circle Pot";
   if (event.event_name === "PayoutProposed") return typeof payload.memo === "string" ? `Proposed a Circle payout · ${payload.memo}` : "Proposed a Circle payout";
   const label: Record<string, string> = {
     CircleCreated: "Created the Circle",
-    Cosigned: "Cosigned a Bond",
+    Cosigned: "Approved commitment evidence",
+    CommitmentBacked: "Cosigned a commitment",
+    CommitmentVerified: "Verified a commitment",
+    VerificationConfigured: "Chose automatic verification",
+    PotRewardClaimed: "Received a weekly Pot reward",
+    PotPeriodClosed: "Closed a Pot reward week",
+    CircleJoined: "Joined the Circle",
+    MemberInvited: "Invited a friend",
+    TesterJoined: "Joined the product test",
+    VerifierTrustChanged: "Updated verifier availability",
+    RefundCredited: "Returned stake is available to receive",
     Objected: "Objected to a Bond",
     PayoutCosigned: "Cosigned a Circle payout",
     PayoutExecuted: "Executed a Circle payout",

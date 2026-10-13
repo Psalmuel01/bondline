@@ -136,24 +136,26 @@ export function LandingExperience() {
       <section className="grid items-center gap-10 py-14 sm:py-20 lg:grid-cols-[1.08fr_0.92fr]">
         <div>
           <span className="tnum inline-flex items-center gap-2 rounded-full border border-line px-3 py-1 text-[11px] tracking-wide text-muted"><span className="h-1.5 w-1.5 rounded-full bg-gold pulse" />MONEY ON THE LINE · YOUR CREW DECIDES</span>
-          <h1 className="font-display mt-6 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">Ship together,<br /><span className="text-gold">or fund the group chat.</span></h1>
-          <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-muted sm:text-base">Start a Circle with your friends. Stake MON on your deadline. Your crew cosigns whether you actually shipped. Beat the Line → your money back. Cross it → your money buys the group dinner.</p>
+          <h1 className="font-display mt-6 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">Put money behind<br /><span className="text-gold">the promises you make.</span></h1>
+          <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-muted sm:text-base">Create commitments, stake on yourself, let your friends hold you accountable, and reward the people who actually follow through.</p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a href="#circles" className="rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-ink transition hover:brightness-108">Start a Circle</a>
-            <Link href="/docs" className="rounded-lg border border-line px-5 py-2.5 text-sm font-medium text-bone transition hover:border-panel-hi">How it works</Link>
+            <a href="#circles" className="rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-ink transition hover:brightness-108">Make a commitment</a>
+            <Link href="/docs" className="rounded-lg border border-line px-5 py-2.5 text-sm font-medium text-bone transition hover:border-panel-hi">See how it works</Link>
           </div>
         </div>
         <ChatDrama />
       </section>
 
+      <p className="mb-3 text-xs text-faint">Interactive illustration · no money moves here</p>
       <CosignDemo />
       <div className="mt-10"><GlobalTicker /></div>
 
-      <section className="grid gap-4 py-14 sm:grid-cols-3">
+      <section className="grid gap-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          ["01", "Make a Circle", "Pick your crew and agree on the cosign bar."],
-          ["02", "Put MON on the Line", "Stake against a deadline that actually matters."],
-          ["03", "Let the crew decide", "Cosigns refund you. Misses build the Pot."],
+          ["01", "Commit", "Set a measurable goal and put something behind it."],
+          ["02", "Get backed", "Your friends publicly cosign your commitment."],
+          ["03", "Prove it", "An automatic check or your Circle verifies the evidence."],
+          ["04", "Settle", "Follow through and keep your stake. Miss it and reward your Circle."],
         ].map(([number, title, copy]) => (
           <div key={number} className="rounded-xl border border-line bg-panel p-5"><span className="tnum text-xs text-gold">{number}</span><h2 className="font-display mt-5 text-lg font-semibold text-bone">{title}</h2><p className="mt-2 text-sm leading-relaxed text-muted">{copy}</p></div>
         ))}

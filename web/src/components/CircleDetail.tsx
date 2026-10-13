@@ -7,7 +7,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCircle, useBonds, usePayouts, useNow } from "@/lib/hooks";
 import { useCircleSnapshot } from "@/lib/useSnapshots";
 import { circleSnapshotKey, type CircleSnapshot } from "@/lib/snapshots";
-import { Status } from "@/lib/contracts";
+import { CircleRewards, CircleMembership } from "./CircleRewards";
+import { hasV2, Status } from "@/lib/contracts";
 import { bpsPct, formatMon, shortAddr } from "@/lib/format";
 import { explorerAddr } from "@/lib/chain";
 import { Header } from "./Header";
@@ -201,7 +202,8 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
                   You&apos;re not in this Circle, so you can watch but not stake.
                 </div>
               )}
-              <PayoutPanel circle={circle} onDone={refreshAll} />
+              {hasV2 ? <CircleRewards circle={circle} bonds={circleBonds} onChange={refreshAll} /> : <PayoutPanel circle={circle} onDone={refreshAll} />}
+              {hasV2 && <CircleMembership circle={circle} onChange={refreshAll} />}
               <PayoutList circle={circle} payouts={circlePayouts} onChange={refreshAll} />
               <CircleChat circle={circle} names={names} />
             </div>

@@ -1,0 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { privateKeyToAccount } from 'viem/accounts';
+import { createPublicClient, http } from 'viem';
+import { monad, monadTestnet } from 'viem/chains';
+const text=readFileSync('../contracts/.env','utf8');
+const key=text.match(/^PRIVATE_KEY=["']?(0x[a-fA-F0-9]{64})/m)?.[1];
+if(!key)throw new Error('Existing deployer configuration is absent.');
+const account=privateKeyToAccount(key);
+const chain=process.argv.includes('--mainnet')?monad:monadTestnet;
+const client=createPublicClient({chain,transport:http()});
+console.log(JSON.stringify({chainId:await client.getChainId(),deployer:account.address,balance:(await client.getBalance({address:account.address})).toString()}));

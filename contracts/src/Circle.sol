@@ -33,6 +33,28 @@ contract Circle is Initializable {
 
     address[] private _members;
     mapping(address => bool) public isMember;
+    mapping(address => uint256) public memberIndex;
+    mapping(address => bool) public invited;
+    event MemberInvited(address indexed member, address indexed inviter);
+    event CircleJoined(address indexed member);
+    error NotMember();
+    error NotInvited();
+
+    function invite(address member) external {
+        if (!isMember[msg.sender]) revert NotMember();
+        if (member == address(0) || isMember[member]) revert NotInvited();
+        invited[member] = true;
+        emit MemberInvited(member, msg.sender);
+    }
+
+    function join() external {
+        if (!invited[msg.sender] || isMember[msg.sender]) revert NotInvited();
+        invited[msg.sender] = false;
+        isMember[msg.sender] = true;
+        _members.push(msg.sender);
+        memberIndex[msg.sender] = _members.length;
+        emit CircleJoined(msg.sender);
+    }
 
     error NotCore();
     error AlreadyInitialized();
@@ -68,6 +90,7 @@ contract Circle is Initializable {
         for (uint256 i = 0; i < members_.length; i++) {
             _members.push(members_[i]);
             isMember[members_[i]] = true;
+            memberIndex[members_[i]] = i + 1;
         }
     }
 

@@ -7,6 +7,9 @@ import { useCircles, useBonds } from "@/lib/hooks";
 import { isConfigured } from "@/lib/contracts";
 import { getMessages, isSupabaseConfigured } from "@/lib/supabase";
 import { circleSnapshotKey, getCircleSnapshot } from "@/lib/snapshots";
+import { reliability } from "@/lib/reliability";
+import { formatMon } from "@/lib/format";
+import Link from "next/link";
 import { CircleCard } from "./CircleCard";
 import { CreateCircle } from "./CreateCircle";
 import { useWalletSession } from "@/lib/useWalletSession";
@@ -66,6 +69,7 @@ export function Dashboard() {
 
   return (
     <div className="flex flex-col gap-8">
+      {address && <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">{[["Your active commitments",reliability(bonds.filter((b)=>b.creator.toLowerCase()===address.toLowerCase())).active],["Completion streak",reliability(bonds.filter((b)=>b.creator.toLowerCase()===address.toLowerCase())).streak],["Your Circles",mine.length],["Circle Pots",`${formatMon(mine.reduce((sum,c)=>sum+c.balance,0n))} MON`]].map(([label,value])=><Link key={label} href="/profile" className="rounded-xl border border-line bg-panel p-4"><p className="text-xs text-muted">{label}</p><p className="tnum mt-2 text-xl text-bone">{value}</p></Link>)}</section>}
       <div className="flex items-center justify-between">
         <h2 className="font-display text-lg font-semibold tracking-tight text-bone">
           Your Circles

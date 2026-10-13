@@ -1,0 +1,33 @@
+{
+  "chainId": 10143,
+  "protocolVersion": 2,
+  "deploymentBlock": 70697469,
+  "contracts": {
+    "core": "0x7b37d3be163f10af7662e083709aea9102530823",
+    "factory": "0x27c527934b115e64eed61c5f783a1060b540a6c4",
+    "circleImplementation": "0xb96f540bf5df893a06670705dc43f40cfc75ada6"
+  },
+  "transactions": [
+    {
+      "hash": "0x012fd508eabc910c68e43266da116e3f239788ee7d6e367f330384b3123608c2",
+      "block": 70697469,
+      "status": "0x1"
+    },
+    {
+      "hash": "0xd21e0f4c76bb7326c055b7f3c9abfba7a6eafb35ff3c05b0e131e92c20f0755d",
+      "block": 70697474,
+      "status": "0x1"
+    },
+    {
+      "hash": "0x54933dbe8a9ee370865581547fe4d63690df998decb6d5535ae8dad201a23b31",
+      "block": 70697478,
+      "status": "0x1"
+    },
+    {
+      "hash": "0x00e28ec8078f72f7941029138aef53a8bda176b37079e38515b37bd1b502ad03",
+      "block": 70697482,
+      "status": "0x1"
+    }
+  ],
+  "deployedAt": "2026-10-13T13:50:58.754Z"
+}

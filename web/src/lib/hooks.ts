@@ -9,6 +9,7 @@ import {
   circleAbi,
   coreAbi,
   Status,
+  isConfigured,
   type Bond,
   type Circle,
   type Payout,
@@ -92,15 +93,16 @@ export function usePayouts() {
 
 export function useBonds() {
   const snapshot = useDashboardSnapshot();
-  const { data: count, isLoading: countLoading, refetch: refetchCount } = useReadContract({ address: CORE_ADDRESS, abi: coreAbi, functionName: "bondCount", query: { refetchInterval: 30_000 } });
+  const { data: count, isLoading: countLoading, error: countError, refetch: refetchCount } = useReadContract({ address: CORE_ADDRESS, abi: coreAbi, functionName: "bondCount", query: { enabled: isConfigured, refetchInterval: 30_000 } });
   const calls = Array.from({ length: Number(count ?? 0) }, (_, i) => ({ address: CORE_ADDRESS, abi: coreAbi, functionName: "bonds" as const, args: [BigInt(i)] as const }));
-  const { data, isLoading, refetch } = useReadContracts({ contracts: calls, query: { enabled: calls.length > 0, staleTime: 60_000, gcTime: 30 * 60_000, refetchInterval: 30_000 } });
+  const { data, isLoading, error: readError, refetch } = useReadContracts({ contracts: calls, query: { enabled: calls.length > 0, staleTime: 60_000, gcTime: 30 * 60_000, refetchInterval: 30_000 } });
   const liveBonds = (data ?? []).flatMap((entry, i) => { if (entry.status !== "success" || !entry.result) return []; const t = entry.result as unknown as [`0x${string}`, `0x${string}`, bigint, bigint, bigint, number, number, number, string, `0x${string}`, string]; return [{ id: BigInt(i), creator: t[0], circle: t[1], stake: t[2], deadline: t[3], cosignClosesAt: t[4], status: t[5] as Status, cosigns: Number(t[6]), objections: Number(t[7]), description: t[8], receiptsHash: t[9], receiptsUri: t[10] } satisfies Bond]; });
   const liveComplete = count !== undefined && (calls.length === 0 || (!isLoading && data?.length === calls.length && data.every((entry) => entry.status === "success")));
   const liveReady = liveComplete && Number(count ?? 0) >= (snapshot.data?.bonds.length ?? 0);
   const bonds = liveReady ? liveBonds : (snapshot.data?.bonds ?? []);
   return {
     bonds,
+    error: !snapshot.data ? (countError ?? readError) : undefined,
     count: liveReady ? Number(count ?? 0) : bonds.length,
     isLoading: !liveReady && !snapshot.data && (countLoading || isLoading || snapshot.isLoading),
     refresh: () => { void snapshot.refetch(); void refetchCount(); void refetch(); },
