@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { WagmiProvider } from "wagmi";
 import { wagmiConfig } from "@/lib/wagmi";
+import { PreferencesProvider } from "@/lib/usePreferences";
 import { WalletSessionProvider } from "@/lib/useWalletSession";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -27,7 +28,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <WalletSessionProvider>{children}</WalletSessionProvider>
+        <WalletSessionProvider>
+          <PreferencesProvider>{children}</PreferencesProvider>
+        </WalletSessionProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );

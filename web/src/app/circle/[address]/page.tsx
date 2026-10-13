@@ -1,20 +1,16 @@
-"use client";
-
-import { useParams } from "next/navigation";
+import { notFound } from "next/navigation";
 import { isAddress } from "viem";
 import { CircleDetail } from "@/components/CircleDetail";
-
-export default function CirclePage() {
-  const params = useParams<{ address: string }>();
-  const raw = params?.address ?? "";
-
-  if (!isAddress(raw)) {
-    return (
-      <div className="mx-auto w-full max-w-6xl px-5 py-10 text-sm text-gone sm:px-8">
-        Invalid Circle address.
-      </div>
-    );
-  }
-
-  return <CircleDetail address={raw as `0x${string}`} />;
+export const metadata = {
+  title: "Circle workspace",
+  robots: { index: false, follow: false },
+};
+export default async function CirclePage({
+  params,
+}: {
+  params: Promise<{ address: string }>;
+}) {
+  const { address } = await params;
+  if (!isAddress(address)) notFound();
+  return <CircleDetail address={address as `0x${string}`} />;
 }

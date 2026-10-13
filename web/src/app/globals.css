@@ -209,120 +209,303 @@ summary {
 }
 
 /* Shared product controls: consistent hierarchy and generous touch targets. */
-
-.primary-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 44px;
-  border-radius: 12px;
-  background: var(--gold);
-  color: var(--ink);
-  padding: 0.7rem 1.1rem;
-  font-size: 0.875rem;
-  font-weight: 650;
-  transition:
-    filter 0.15s,
-    transform 0.15s;
-}
-.primary-button:hover {
-  filter: brightness(1.08);
-}
-.primary-button:disabled,
-.secondary-button:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-.secondary-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 44px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 0.65rem 1rem;
-  font-size: 0.875rem;
-  color: var(--bone);
-  background: var(--panel);
-}
-.secondary-button:hover {
-  border-color: var(--gold);
-}
-.icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 40px;
-  width: 40px;
-  border-radius: 12px;
-  color: var(--muted);
-  font-size: 1.5rem;
-}
-.icon-button:hover {
-  background: var(--panel-hi);
-  color: var(--bone);
-}
-.product-modal {
-  position: fixed;
-  inset: 0;
-  margin: auto;
-  width: min(680px, calc(100% - 24px));
-  max-height: calc(100dvh - 32px);
-  overflow-y: auto;
-  border-radius: 24px;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--bone);
-  box-shadow: 0 24px 100px #0008;
-}
-.product-modal::backdrop {
-  background: #050705b8;
-  backdrop-filter: blur(8px);
-}
-.workspace-tab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 44px;
-  padding: 0.65rem 1rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  color: var(--muted);
-}
-.workspace-tab[aria-pressed="true"],
-.workspace-tab[aria-current="page"] {
-  background: var(--panel-hi);
-  color: var(--bone);
-  font-weight: 600;
-}
-.workspace-tab:hover {
-  color: var(--bone);
-}
-.product-field {
-  width: 100%;
-  min-height: 48px;
-  border: 1px solid var(--line);
-  background: var(--bg);
-  border-radius: 12px;
-  padding: 0.8rem 1rem;
-  font-size: 0.875rem;
-  color: var(--bone);
-}
-.product-field:focus {
-  border-color: var(--gold);
-  outline: none;
-  box-shadow: 0 0 0 3px #e3b65d15;
-}
-.chat-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
-}
-@media (max-width: 639px) {
+@layer components {
+  .primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    border-radius: 12px;
+    background: var(--gold);
+    color: var(--ink);
+    padding: 0.7rem 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 650;
+    transition:
+      filter 0.15s,
+      transform 0.15s;
+  }
+  .primary-button:hover {
+    filter: brightness(1.08);
+  }
+  .primary-button:disabled,
+  .secondary-button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+  .secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    color: var(--bone);
+    background: var(--panel);
+  }
+  .secondary-button:hover {
+    border-color: var(--gold);
+  }
+  .icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    width: 40px;
+    border-radius: 12px;
+    color: var(--muted);
+    font-size: 1.5rem;
+  }
+  .icon-button:hover {
+    background: var(--panel-hi);
+    color: var(--bone);
+  }
   .product-modal {
-    border-radius: 20px;
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    width: min(680px, calc(100% - 24px));
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    border-radius: 24px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--bone);
+    box-shadow: 0 24px 100px #0008;
+  }
+  .product-modal::backdrop {
+    background: #050705b8;
+    backdrop-filter: blur(8px);
+  }
+  .workspace-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    color: var(--muted);
+  }
+  .workspace-tab[aria-pressed="true"],
+  .workspace-tab[aria-current="page"] {
+    background: var(--panel-hi);
+    color: var(--bone);
+    font-weight: 600;
+  }
+  .workspace-tab:hover {
+    color: var(--bone);
+  }
+  .product-field {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    font-size: 0.875rem;
+    color: var(--bone);
+  }
+  .product-field:focus {
+    border-color: var(--gold);
+    outline: none;
+    box-shadow: 0 0 0 3px #e3b65d15;
+  }
+  .chat-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  @media (max-width: 639px) {
+    .product-modal {
+      border-radius: 20px;
+    }
+  }
+}
+
+/* A quiet perspective plane behind the hero, inspired by the reference. */
+.landing-hero {
+  isolation: isolate;
+}
+.perspective-world {
+  position: absolute;
+  inset: -40px -20px -20px;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  perspective: 700px;
+  mask-image: radial-gradient(ellipse at 65% 62%, #000 0%, transparent 72%);
+}
+.perspective-grid {
+  position: absolute;
+  width: 150%;
+  height: 850px;
+  left: -15%;
+  top: -15%;
+  background-image:
+    linear-gradient(rgba(160, 165, 155, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(160, 165, 155, 0.18) 1px, transparent 1px);
+  background-size: 52px 52px;
+  transform: rotateX(58deg) rotateZ(-24deg);
+  transform-origin: center;
+}
+.grid-beacon {
+  position: absolute;
+  width: 150px;
+  height: 72px;
+  right: 20%;
+  bottom: 8%;
+  border: 1px solid rgba(227, 182, 93, 0.45);
+  border-radius: 50%;
+  box-shadow:
+    0 0 50px rgba(227, 182, 93, 0.07),
+    inset 0 0 30px rgba(227, 182, 93, 0.04);
+  animation: beacon-enter 2s ease-out both;
+}
+.grid-beacon::after {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.grid-star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 12px var(--gold);
+}
+.star-one {
+  left: 16%;
+  bottom: 23%;
+  opacity: 0.55;
+}
+.star-two {
+  right: 8%;
+  top: 29%;
+  opacity: 0.35;
+}
+.chat-orbit {
+  position: absolute;
+  inset: -16px;
+  border: 1px solid rgba(227, 182, 93, 0.12);
+  border-radius: 32px;
+  transform: rotate(-3deg);
+  pointer-events: none;
+}
+.hero-copy {
+  animation: hero-enter 0.7s ease-out both;
+}
+.chat-stage {
+  animation: hero-enter 0.9s 0.12s ease-out both;
+}
+.chat-stage[data-paused="true"] .chat-bubble {
+  animation-play-state: paused;
+}
+.mechanic-card,
+.goal-strip {
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+.mechanic-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(227, 182, 93, 0.45);
+}
+.goal-strip:hover {
+  transform: translateX(5px);
+  border-color: rgba(227, 182, 93, 0.35);
+}
+.back-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+}
+.back-burst i {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: var(--gold);
+  border-radius: 2px;
+  --angle: calc(var(--particle) * 60deg);
+  animation: back-confetti 0.75s ease-out both;
+}
+@keyframes hero-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes beacon-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes back-confetti {
+  from {
+    opacity: 1;
+    transform: rotate(var(--angle)) translateX(0) rotate(0);
+  }
+  to {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateX(55px) rotate(160deg);
+  }
+}
+@media (max-width: 767px) {
+  .perspective-world {
+    inset: 0 -20px;
+    mask-image: radial-gradient(ellipse at 50% 65%, #000, transparent 75%);
+  }
+  .perspective-grid {
+    background-size: 40px 40px;
+    top: 25%;
+  }
+  .grid-beacon {
+    right: 12%;
+    bottom: 2%;
+  }
+  .chat-orbit {
+    inset: -8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-copy,
+  .chat-stage,
+  .grid-beacon,
+  .back-burst i {
+    animation: none;
+  }
+  .back-burst {
+    display: none;
+  }
+  .mechanic-card,
+  .goal-strip {
+    transition: none;
+  }
+  .mechanic-card:hover,
+  .goal-strip:hover {
+    transform: none;
   }
 }

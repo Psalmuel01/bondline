@@ -1,120 +1,147 @@
 # Bondline
 
-**Stake on your word. Let your crew hold the line.**
+**Put money behind the promises you make.**
 
-Bondline turns a personal deadline into an on-chain object your friends enforce. You start a *Circle* with your crew, stake MON against your own deadline, and declare when you've shipped. Enough of the Circle confirms it and your stake refunds. Miss the deadline, or fail the vote, and the stake pools into the Circle's shared Pot — money your own misses hand to the group.
+Bondline brings goals, financial stakes, social accountability, and verification into one product. Create a Circle with people you trust, choose a deadline and a stake in MON, then prove you followed through. Verified success releases the stake; failure funds the Circle’s shared Pot. Your settled outcomes build a transparent history of follow-through.
 
-Built for the **Spark** hackathon on **Monad** (mainnet, chain `143`).
+[Open Bondline](https://bondline-circle.vercel.app) · [Product guide](https://bondline-circle.vercel.app/guide) · [Documentation](https://bondline-circle.vercel.app/docs) · [Security](https://bondline-circle.vercel.app/security)
 
-📹 **Demo video:** https://youtu.be/4dWGt0zatQI
+![Bondline’s public homepage with a live Circle preview](docs/assets/homepage-desktop.png)
 
-🔗 **Live app:** https://bondline-circle.vercel.app/
+Actual rendered homepage; the chat is a labeled interactive illustration. [Mobile view and product captures](docs/assets/README.md).
 
----
+## The product
 
-## Deployed contracts (Monad mainnet)
+- **Circles:** private member conversation, shared goals, invitation/acceptance, identity, and a separate on-chain Pot.
+- **Commitments:** a specific goal, stake, deadline, and verification rule, with review before signing.
+- **Support and evidence:** backing records encouragement; later evidence approval determines a Circle-reviewed outcome. These are separate actions.
+- **Verification:** Circle evidence review and native MON balance checks. A trusted GitHub worker is included but requires authorization, funding, and recurring operation.
+- **Rewards:** v2 failed stakes are reserved for deadline-week pools. Completed commitments earn equal shares after the week ends and all its commitments settle.
+- **Reliability:** completion rate, settled history, streak, committed amounts, and unique supporters. This is not a credit score.
+- **Mera accounts:** passkey-based signing without a seed phrase screen, extension requirement, or custody backend. A browser wallet remains optional.
+- **A complete workspace:** personal commitments, Circles, finalized activity, profile, settings, guided onboarding, local notification preferences/read state, and an authenticated export of the user’s profile and authored messages.
 
-Explorer: [monadscan.com](https://monadscan.com)
+The public website uses an animated, explicitly illustrative group-chat hero and a compact product story. Repeated marketing routes redirect into homepage sections; detailed explanations stay in Docs. Verification availability, risk disclosures, privacy, and terms remain accessible. No traction or testimonials are fabricated.
 
-| Contract | Address |
+## Deployment
+
+The current v2 manifest targets **Monad testnet, chain ID 10143**, from block **70697469**. Test MON has no cash value. The older v1 mainnet deployment is a separate product version; do not mix its addresses or Pot rules with v2.
+
+| Contract | v2 testnet address |
 | --- | --- |
-| `BondlineCore` | [`0x111004038f8e918a02cd760e2e2630e0c9e789d6`](https://monadscan.com/address/0x111004038f8e918a02cd760e2e2630e0c9e789d6) |
-| `CircleFactory` | [`0xb337fc04b8a146c93bcc7b57229cc8cb18c03fd6`](https://monadscan.com/address/0xb337fc04b8a146c93bcc7b57229cc8cb18c03fd6) |
-| `Circle` (implementation) | [`0x8beafbe2da703a8ff869c8ab57863bdea5ad82bf`](https://monadscan.com/address/0x8beafbe2da703a8ff869c8ab57863bdea5ad82bf) |
+| BondlineCore | `0x7b37d3be163f10af7662e083709aea9102530823` |
+| CircleFactory | `0x27c527934b115e64eed61c5f783a1060b540a6c4` |
+| Circle implementation | `0xb96f540bf5df893a06670705dc43f40cfc75ada6` |
 
----
+[Deployment manifest and receipts](docs/deployments/monad-testnet.json) · [Contract reference](https://bondline-circle.vercel.app/docs/contracts)
 
-## Why this exists
-
-Every promise with a deadline — grant milestones, contributor bounties, your own side projects — relies on willpower or someone chasing you. There's no neutral thing that just *enforces the deadline*. Bondline is that thing, but it makes the enforcer your crew instead of a lone witness: the people who'd actually know if you shipped, voting together, with your stake on the line.
-
-The shift from a single witness to a Circle is the whole point. One witness is a single point of failure and a coin-flip on collusion. A Circle of friends with a tunable approval threshold turns "did you ship?" into a group verdict, and turns everyone's individual misses into a shared Pot the group spends together.
-
----
-
-## How it works
-
-1. **Start a Circle** — name it, add your crew's addresses, pick a cosign threshold (e.g. 50%). You're auto-included as the first member. The Circle deploys as its own isolated vault contract (an EIP-1167 clone).
-2. **Open a Bond** — describe it, set a deadline, escrow MON.
-3. **Declare Met** before the deadline, attaching a receipts link (hashed on-chain so it can't be swapped later). This opens the cosign.
-4. **The crew cosigns.** The instant *yes* cosigns clear the Circle's threshold, the stake refunds automatically. If objections make the bar unreachable, it forfeits early. If the cosign window lapses under the bar — or the deadline passes with no declaration at all — the stake forfeits to the Circle. Anyone can trigger the resolution; there's no way to trap a stake.
-5. **Spend the Pot.** Forfeited stakes collect in the Circle's shared Pot. Any member proposes a payout; once the same threshold approves, it pays out.
-
-Every action shows its transaction on the Monad explorer. Nothing is faked or optimistic — the UI reflects on-chain state only, and the voting panel lights up each member's avatar the moment their `Cosigned` event lands.
-
----
-
-## Run it
-
-### Contract tests
-```bash
-cd contracts
-forge test -vv
-```
-Covers the threshold math, per-Circle Pot isolation (one Circle can't touch another's balance), the full voting lifecycle in both directions, early-approve / early-reject / expiry / missed-deadline resolution, access control on every entry point, and reentrancy attackers on the refund path.
-
-### Frontend
-```bash
-cd web
-pnpm install
-cp .env.example .env.local   # set NEXT_PUBLIC_CORE_ADDRESS + NEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS
-pnpm dev                     # http://localhost:3000
-```
-
----
+The account menu and Security page use the configured chain and addresses. The website’s release does not deploy new contracts or move funds.
 
 ## Architecture
 
-Four contracts: two singletons plus a per-Circle clone.
-
+```mermaid
+flowchart LR
+    Person[Browser / Next.js] --> Mera[Mera passkey<br/>short-lived signing account]
+    Mera --> Monad[Monad contracts]
+    Person --> Session[Signed app session<br/>Next.js APIs]
+    Session --> Social[Supabase profiles<br/>member chat / public media]
+    Monad --> Events[Finalized events]
+    Events --> Retrieval[Envio HyperSync<br/>or RPC fallback]
+    Retrieval --> Indexer[Resumable indexer]
+    Indexer --> Database[Atomic Supabase projections]
+    Database --> Person
+    Worker[Optional trusted GitHub worker] --> Monad
 ```
-contracts/src/BondlineMath.sol     pure threshold math (shared by core + circles)
-contracts/src/BondlineCore.sol     all escrow, voting, and resolution state
-contracts/src/Circle.sol           per-circle clone: membership, threshold, shared Pot
-contracts/src/CircleFactory.sol    EIP-1167 clone deployer + circle registry
-web/                               Next.js + wagmi/viem, dark "countdowns" UI
-supabase/migrations/               social schema + canonical event projections
-```
 
-The Next.js server also contains a resumable event indexer. It copies finalized
-contract events and verified historical state into Supabase so a Circle can
-eventually load as one consistent snapshot. Supabase remains the database and
-the chain remains the authority; this is a fast, queryable copy rather than a
-second source of truth.
+`BondlineCore` owns escrow, evidence decisions, verification, settlement, refund credits, and weekly reward accounting. `CircleFactory` creates registered Circle clones, each with its own membership and Pot. The core and Circle code are not upgradeable proxies over user funds; the administrator manages the external-verifier registry.
 
-- **`BondlineCore`** holds every Bond and payout proposal under internal accounting (`mapping(id => Bond)`), rather than a contract per Bond — cheaper gas, and Monad's throughput makes it the obvious default. It's the *only* address allowed to move a Circle's money.
-- **`Circle`** is deployed once as an implementation template, then cloned per Circle. Each clone owns its membership set, approval threshold, and forfeited-stake balance (the Pot). Funds are physically isolated: a bug or drain against one Circle can't reach another's balance, and only the core can call `executeWithdrawal` / `depositForfeit`.
-- **`CircleFactory`** clones Circles and maintains the registry the frontend reads (`allCircles`) and the core trusts (`isCircle`).
+The event pipeline consumes **Envio HyperSync** and has RPC fallback. It is not a deployed HyperIndex/Envio Cloud indexer. The indexer writes finalized projections atomically, with a contiguous cursor and overlap-safe retries. Live contract state remains the authority for actions and accounting.
 
-### Threshold math
+**CRE is not implemented.** The current GitHub verifier is a Node worker, not a Chainlink CRE workflow. **An encrypted private journal is not implemented.** PRF material currently derives the signing account; member chat is access-controlled, not end-to-end encrypted.
 
-`requiredApprovals(eligibleVoters, bps) = max(1, ceil(eligibleVoters × bps / 10000))`.
+## Technology
 
-For a **Bond**, eligible voters are everyone *but* the creator (you can't vote on your own claim). For a **payout**, the whole membership is eligible (there's no creator to exclude). The frontend mirrors this pure function in `web/src/lib/threshold.ts` so the create-circle screen can spell out "with 4 other members, at least 2 must confirm" before anything is signed — but the chain is always the source of truth at resolution.
+Next.js 16 / React 19 · TypeScript · wagmi / viem · Mera 0.2 · Solidity / Foundry · Supabase PostgreSQL and Storage · Envio HyperSync · Vercel.
 
-### Design decisions worth noting
-- **Early resolution, both directions.** A vote doesn't wait out its window if the outcome is already decided: hitting the yes-bar refunds immediately, and making the yes-bar unreachable forfeits immediately. The window only matters when the vote stalls under the bar.
-- **Silence forfeits, never deadlocks.** Three separate paths guarantee no stake is ever trapped: `cosign` auto-resolves on the decisive vote, `resolveExpired` settles a lapsed vote (forfeiting under the bar), and `crossMissed` forfeits a Bond whose creator blew the deadline without ever declaring. All three are permissionless.
-- **Receipts are hashed, not stored.** The declaration takes a receipts URI plus its keccak hash; the hash is emitted on-chain so the link can't be swapped after voting starts, without paying to store the string.
-- **Per-circle Pot isolation is enforced, not conventional.** `Circle` clones only accept calls from the core, and the core credits forfeits to the owning Circle only. Tests assert one Circle's balance is untouched when another resolves.
-- **The financial sting shrinks as the Circle grows.** In a Circle of N, forfeiting costs you stake × (1 − 1/N). Circles of 3–6 are the sweet spot; past that the real deterrent is social (being *the one* who keeps funding the trip by never shipping), not the money.
+## Run locally
 
-**Known v1 limitations:**
-- **No member add/remove after creation.** The Circle's roster is fixed at deploy. A departing member's share of the Pot stays in the Pot. A later version could add governance for roster changes.
-- **Payout proposals have no expiry.** A stale proposal sits open until it clears the bar or is ignored. Fine at this scale; a real version would time them out.
-
----
-
-## Deploy
+Prerequisites: Node compatible with the current Next.js release, pnpm, and Foundry for contract tests.
 
 ```bash
-cd contracts
-cp .env.example .env          # set PRIVATE_KEY (funded mainnet deployer)
-make deploy-verify-mainnet    # deploys to Monad mainnet, then verifies via sourcify
+cd web
+pnpm install --frozen-lockfile
+cp .env.example .env.local
+# Configure matching chain, addresses, and social-service values.
+pnpm dev
 ```
 
-`deploy-verify-mainnet` deploys against `monad_mainnet` (chain `143`), verifies all three contracts on [monadscan.com](https://monadscan.com), and writes the deployed addresses straight into `web/.env.local` (`NEXT_PUBLIC_CORE_ADDRESS`, `NEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS`). This spends real MON — make sure the deployer is funded.
+Use the same passkey and stable domain to return to the same Mera account. Localhost and production relying-party scopes are different; do not assume a production credential works on an unrelated preview domain.
 
-## Security
+### Environment
 
-It's an escrow contract, so it's written like one: ReentrancyGuard on every fund-moving path, checks-effects-interactions ordering (status finalized before any transfer), per-circle Pot isolation, and reentrancy attacker contracts in the test suite proving a double-payout reverts. Core logic is immutable — no upgradeable proxy over user funds. This is a hackathon build and has not been formally audited; it runs on Monad mainnet with real MON, so treat it as such.
+Use [web/.env.example](web/.env.example) and the [environment reference](https://bondline-circle.vercel.app/docs/environment). Public settings include the chain, RPC, contract addresses, Supabase public project values, and optional site/support/video URLs. **Never expose** service-role credentials, session/indexer secrets, HyperSync tokens, GitHub tokens, or verifier private keys through `NEXT_PUBLIC_` values.
+
+Mera’s integration here does not require an app ID. Its relying-party ID defaults to the current hostname. Changing that scope can affect existing credentials.
+
+### Database and jobs
+
+For a **new dedicated v2 database**, run [supabase/bootstrap-v2.sql](supabase/bootstrap-v2.sql). Review individual migrations for existing databases; do not reset an active database blindly.
+
+Configure [supabase/schedule-indexer.sql](supabase/schedule-indexer.sql) with the matching Vault secret and application URL. Then:
+
+```bash
+cd web
+pnpm indexer:backfill
+```
+
+Confirm a successful response and cursor advancement. Installing cron does not repair authentication, schema, or decoding failures. The indexer job does not run GitHub verification or every settlement action. The optional verifier requires its own recurring worker:
+
+```bash
+pnpm verifier:check
+# Only after reviewing the configured account, chain, condition, and fee:
+pnpm verifier:run
+```
+
+The broadcast command can spend the worker’s funds. Do not run it as part of a read-only setup check.
+
+### Tests and build
+
+```bash
+cd web
+pnpm typecheck
+pnpm test
+pnpm build
+
+# From the repository root:
+forge test --root contracts --offline
+```
+
+The frontend tests cover transaction preparation/signing, notification eligibility, strict event selection, bounded verifier input, private export authorization/pagination, and public activity query validation. Foundry covers lifecycle, access control, frozen reviewers, backing/review separation, reserved rewards, refund handling, and adversarial paths. Passing tests are not an independent audit.
+
+### Frontend deployment
+
+The existing Vercel project uses **web** as its root directory. Set the intended target’s environment values and rebuild. Public environment values are compiled into a release; changing a Vercel value does not update local `.env.local` or already-built deployments.
+
+Git-triggered releases use the repository version. Vercel CLI releases can upload local source without a Git push, so keep the live deployment and repository aligned. Exclude credentials and private planning documents from release snapshots.
+
+Contract deployment commands are in [contracts/Makefile](contracts/Makefile) and [contracts/README.md](contracts/README.md). Review their target carefully: a mainnet deployment spends real MON. Record and verify new deployments before updating the application configuration.
+
+## Trust and privacy
+
+Contracts are **not independently audited**. Stakes can be forfeited. Smart-contract bugs, infrastructure outages, malicious reviewers or attestors, and loss of signing access remain risks. Bondline is not a bank and does not guarantee productivity, rewards, or refunds outside the contract rules.
+
+On-chain commitments, membership, evidence URIs, and outcomes are public. Display profiles and uploaded images are public. Chat requires server-verified identity and membership but is readable by operators and database infrastructure. Do not share sensitive records in descriptions, evidence, or chat.
+
+[Security](https://bondline-circle.vercel.app/security) · [Privacy](https://bondline-circle.vercel.app/privacy) · [Terms](https://bondline-circle.vercel.app/terms) · [Contact](https://bondline-circle.vercel.app/contact)
+
+## Product walkthrough and assets
+
+The [written product guide](https://bondline-circle.vercel.app/guide) works without a video. The [3-minute recording script](web/public/walkthrough-script.md) specifies narration, shot order, real screen states, consent, and publication requirements. Set `NEXT_PUBLIC_GUIDANCE_VIDEO_URL` only after a real completed recording is available; homepage, onboarding, and guide links then point to it.
+
+The [product capture pack](docs/assets/README.md) includes desktop/mobile homepages, real Circle history, documentation, security, and signed-out Activity/Profile introductions. Private signed-in flows require the account holder’s confirmation.
+
+The lighter homepage scored **100 accessibility and best practices on desktop/mobile**, with **86 mobile performance and 100 mobile SEO** in its latest lab run. All 21 frontend tests, the offline Foundry suite, TypeScript, and the production build passed. See the [release validation](docs/release-validation.md) for measurements, route checks, and the remaining manual sign-in/transaction checks. These results are not an independent security audit.
+
+## Project history
+
+Bondline began as a Spark project on Monad with v1 Pot governance. The v2 work targets Metropolis’s consumer product experience, using Mera for accounts and Envio HyperSync for event retrieval. Sponsor or track eligibility is not a claim of award acceptance. CRE and a non-wallet PRF journal must not be claimed as completed integrations.

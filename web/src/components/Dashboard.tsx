@@ -11,6 +11,7 @@ import { reliability } from "@/lib/reliability";
 import { formatMon, countdownParts } from "@/lib/format";
 import Link from "next/link";
 import { CircleCard } from "./CircleCard";
+import { GettingStartedChecklist } from "./GettingStartedChecklist";
 import { CreateCircle } from "./CreateCircle";
 import { Modal } from "./ui/Modal";
 import { EmptyState } from "./ui/EmptyState";
@@ -20,12 +21,17 @@ import { useWalletSession } from "@/lib/useWalletSession";
 /// Multi-group dashboard: every Circle you're in, plus a toggle to spin up a new
 /// one. Circles you're not a member of are shown dimmed under "other Circles" so
 /// the registry is visible without cluttering your crews.
-export function Dashboard() {
+export function Dashboard({ compact = false }: { compact?: boolean } = {}) {
   const { address } = useAccount();
   const queryClient = useQueryClient();
   const { isAuthenticated } = useWalletSession();
   const { circles, isLoading: circlesLoading, error, refresh } = useCircles();
-  const { bonds, isLoading: bondsLoading, refresh: refreshBonds } = useBonds();
+  const {
+    bonds,
+    isLoading: bondsLoading,
+    error: bondsError,
+    refresh: refreshBonds,
+  } = useBonds();
   const isLoading = circlesLoading || bondsLoading;
   const [creating, setCreating] = useState(false);
   const [view, setView] = useState("mine");
@@ -57,7 +63,7 @@ export function Dashboard() {
   // from memory instead of starting a new chain/Supabase waterfall.
   useEffect(() => {
     if (!isSupabaseConfigured || isLoading) return;
-    for (const circle of circles) {
+    for (const circle of mine.slice(0, 10)) {
       const circleKey = circle.address.toLowerCase();
       void queryClient.prefetchQuery({
         queryKey: circleSnapshotKey(circle.address),
@@ -76,7 +82,7 @@ export function Dashboard() {
         });
       }
     }
-  }, [address, circles, isAuthenticated, isLoading, queryClient]);
+  }, [address, mine, isAuthenticated, isLoading, queryClient]);
 
   if (!isConfigured)
     return (
@@ -97,7 +103,18 @@ export function Dashboard() {
   const visible = address && view === "mine" ? mine : others;
   return (
     <div className="space-y-8">
-      {address && (
+      {address && !isLoading && (
+        <GettingStartedChecklist
+          joined={mine.length > 0}
+          committed={personal.length > 0}
+          circleHref={
+            mine[0] ? `/circle/${mine[0].address}?view=commitments` : undefined
+          }
+          onCreate={() => setCreating(true)}
+          onDiscover={() => setView("discover")}
+        />
+      )}
+      {address && !compact && (
         <div className="flex flex-wrap gap-x-10 gap-y-5 border-b border-line pb-7">
           {[
             ["In progress", stats.active],
@@ -107,7 +124,7 @@ export function Dashboard() {
           ].map(([label, value]) => (
             <div key={label}>
               <p className="tnum text-2xl font-semibold">
-                {isLoading ? "—" : value}
+                {isLoading || error || bondsError ? "—" : value}
               </p>
               <p className="mt-1 text-xs text-muted">{label}</p>
             </div>
@@ -120,7 +137,7 @@ export function Dashboard() {
           </Link>
         </div>
       )}
-      {address && upcoming.length > 0 && (
+      {address && !compact && upcoming.length > 0 && (
         <section className="space-y-4">
           <SectionHeading
             title="Keep the momentum"
@@ -206,7 +223,7 @@ export function Dashboard() {
               />
             ))}
           </div>
-        ) : error ? (
+        ) : error || bondsError ? (
           <EmptyState
             title="Couldn’t load your Circles"
             action={

@@ -1,15 +1,11 @@
 "use client";
 
+import { evidenceUrl } from "@/lib/evidence";
 import { useState } from "react";
 
 export function ReceiptPreview({ uri }: { uri: string }) {
-  let url: URL;
-  try {
-    url = new URL(uri);
-  } catch {
-    return null;
-  }
-  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  const url = evidenceUrl(uri);
+  if (!url) return null;
   const host = url.hostname.replace("www.", "");
   const image = /\.(png|jpe?g|gif|webp)(\?.*)?$/i.test(url.pathname);
   const youtubeId =

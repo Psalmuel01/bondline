@@ -5,7 +5,9 @@ export const runtime = "nodejs";
 
 export async function GET() {
   const session = await getWalletSession();
-  return NextResponse.json(session ? { address: session.address, expiresAt: session.expiresAt } : null);
+  return NextResponse.json(
+    session ? { address: session.address, expiresAt: session.expiresAt } : null,
+  );
 }
 
 export async function DELETE() {

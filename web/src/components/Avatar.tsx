@@ -57,7 +57,7 @@ export function Avatar({
       }}
       title={title ?? `${shortAddr(addr)}${you ? " (you)" : ""}`}
     >
-      {showImage ? <img src={imageUrl ?? undefined} alt="" onError={() => setFailedImageUrl(imageUrl ?? null)} className="h-full w-full rounded-full object-cover" /> : addrInitials(addr)}
+      {showImage ? <img loading="lazy" decoding="async" width={size} height={size} src={imageUrl ?? undefined} alt="" onError={() => setFailedImageUrl(imageUrl ?? null)} className="h-full w-full rounded-full object-cover" /> : addrInitials(addr)}
     </div>
   );
 }

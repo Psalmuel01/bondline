@@ -138,18 +138,23 @@ function Reward({
   return (
     <div className="mt-3 flex flex-col gap-2 rounded-lg border border-line p-3">
       <p className="text-sm text-bone">
-        Week of {label} · {formatMon(amount)} MON earned
+        Week of {label} ·{" "}
+        {ready
+          ? `${formatMon(amount)} MON earned`
+          : "Reward details unavailable"}
       </p>
       <p className="text-xs text-muted">
-        {!ended
-          ? "Week is still open"
-          : pending > 0n
-            ? `${pending} commitments still need settlement`
-            : claimed
-              ? "Reward received"
-              : amount === 0n
-                ? "No funds in this week's Pot"
-                : "Ready to receive"}
+        {!ready
+          ? "Reward information could not be verified. Check again shortly."
+          : !ended
+            ? "Week is still open"
+            : pending > 0n
+              ? `${pending} commitments still need settlement`
+              : claimed
+                ? "Reward received"
+                : amount === 0n
+                  ? "No funds in this week's Pot"
+                  : "Ready to receive"}
       </p>
       <button
         disabled={

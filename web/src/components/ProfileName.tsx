@@ -46,6 +46,7 @@ export function ProfileName({
     setOpen(true);
   }
 
+  if (!editable) return <span>{label}</span>;
   return (
     <>
       <button

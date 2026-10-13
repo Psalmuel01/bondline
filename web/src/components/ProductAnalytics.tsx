@@ -4,11 +4,15 @@ import { reliability } from "@/lib/reliability";
 import { formatMon } from "@/lib/format";
 import { useReadContracts } from "wagmi";
 import { CORE_ADDRESS, coreAbi, hasV2 } from "@/lib/contracts";
-import { TesterPanel } from "./TesterPanel";
+
 import { useQuery } from "@tanstack/react-query";
 export function ProductAnalytics() {
   const { bonds, isLoading, error } = useBonds();
-  const { circles } = useCircles();
+  const {
+    circles,
+    error: circlesError,
+    isLoading: circlesLoading,
+  } = useCircles();
   const stats = reliability(bonds);
   const members = new Set(
     circles.flatMap((c) => c.members.map((m) => m.toLowerCase())),
@@ -48,8 +52,8 @@ export function ProductAnalytics() {
         Progress across Bondline.
       </h1>
       <p className="mb-6 text-sm text-muted">
-        Contract state and canonical events. Seeded accounts are included in
-        network totals; opted-in testers are reported separately.
+        Public contract records and indexed events. These totals describe
+        account activity, not a count of unique people.
       </p>
       {isLoading && <p className="text-sm text-muted">Loading live state…</p>}
       {error && <p className="text-forfeit">Unable to fetch live state.</p>}
@@ -77,12 +81,6 @@ export function ProductAnalytics() {
               "—",
           ],
           ["Unique supporters", indexed.data?.uniqueCosigners ?? "—"],
-          [
-            "Opted-in tester accounts",
-            totals.data?.[1]?.result?.toString() ??
-              indexed.data?.testers ??
-              "—",
-          ],
           ["Indexed transactions", indexed.data?.transactions ?? "—"],
         ].map(([label, value]) => (
           <div
@@ -90,17 +88,20 @@ export function ProductAnalytics() {
             className="rounded-2xl border border-line bg-panel p-5"
           >
             <p className="text-xs text-muted">{label}</p>
-            <p className="tnum mt-2 text-2xl text-bone">{value}</p>
+            <p className="tnum mt-2 text-2xl text-bone">
+              {isLoading || circlesLoading || error || circlesError
+                ? "—"
+                : value}
+            </p>
           </div>
         ))}
       </div>
       <p className="mt-4 text-xs text-faint">
-        Completion rate excludes unsettled commitments. Social cosigns and
-        tester enrollments come directly from the contract. Unique supporters
-        and transaction counts use the event indexer. An account count does not
-        establish a number of real people. {indexed.data?.source}
+        Completion rate excludes unsettled commitments. Backing totals come
+        directly from the contract. Unique supporters and transaction counts use
+        the event indexer. An account count does not establish a number of real
+        people. {indexed.data?.source}
       </p>
-      <TesterPanel />
     </section>
   );
 }

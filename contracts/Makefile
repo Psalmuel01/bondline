@@ -5,18 +5,8 @@ export
 
 deploy:
 	@echo "Running deployment script on Monad Testnet..."
-	forge script script/Deploy.s.sol --rpc-url monad_testnet --broadcast
-	@echo "Updating web/.env.local with deployed contract addresses..."
-	@node -e "\
-		const fs = require('fs'); \
-		const run = JSON.parse(fs.readFileSync('broadcast/Deploy.s.sol/10143/run-latest.json', 'utf8')); \
-		const core = run.transactions.find(tx => tx.contractName === 'BondlineCore').contractAddress; \
-		const factory = run.transactions.find(tx => tx.contractName === 'CircleFactory').contractAddress; \
-		fs.writeFileSync('../web/.env.local', 'NEXT_PUBLIC_CORE_ADDRESS=' + core + '\nNEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS=' + factory + '\n'); \
-		console.log('Successfully wrote web/.env.local:'); \
-		console.log('  NEXT_PUBLIC_CORE_ADDRESS=' + core); \
-		console.log('  NEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS=' + factory); \
-	"
+	forge script script/Deploy.s.sol --rpc-url monad_testnet --chain 10143 --broadcast
+	@node ../web/scripts/sync-deployment.mjs 10143
 
 verify:
 	@echo "Verifying contracts via sourcify on blockvision explorer..."
@@ -44,18 +34,8 @@ deploy-verify: deploy verify
 
 deploy-mainnet:
 	@echo "Running deployment script on Monad Mainnet..."
-	forge script script/Deploy.s.sol --rpc-url monad_mainnet --broadcast
-	@echo "Updating web/.env.local with deployed contract addresses..."
-	@node -e "\
-		const fs = require('fs'); \
-		const run = JSON.parse(fs.readFileSync('broadcast/Deploy.s.sol/143/run-latest.json', 'utf8')); \
-		const core = run.transactions.find(tx => tx.contractName === 'BondlineCore').contractAddress; \
-		const factory = run.transactions.find(tx => tx.contractName === 'CircleFactory').contractAddress; \
-		fs.writeFileSync('../web/.env.local', 'NEXT_PUBLIC_CORE_ADDRESS=' + core + '\\nNEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS=' + factory + '\\n'); \
-		console.log('Successfully wrote web/.env.local:'); \
-		console.log('  NEXT_PUBLIC_CORE_ADDRESS=' + core); \
-		console.log('  NEXT_PUBLIC_CIRCLE_FACTORY_ADDRESS=' + factory); \
-	"
+	forge script script/Deploy.s.sol --rpc-url monad_mainnet --chain 143 --broadcast
+	@node ../web/scripts/sync-deployment.mjs 143
 
 verify-mainnet:
 	@echo "Verifying contracts via sourcify on blockvision explorer (mainnet)..."

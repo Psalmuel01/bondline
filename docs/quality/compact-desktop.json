@@ -1,0 +1,33 @@
+{
+  "release": "dpl_AMrkTS7WQvLFQ7KznVjdUoL2tgKo",
+  "fetchTime": "2026-10-13T23:52:24.537Z",
+  "lighthouseVersion": "13.5.0",
+  "scores": {
+    "accessibility": 100,
+    "best-practices": 100
+  },
+  "console": {
+    "id": "errors-in-console",
+    "title": "No browser errors logged to the console",
+    "description": "Errors logged to the console indicate unresolved problems. They can come from network request failures and other browser concerns. [Learn more about this errors in console diagnostic audit](https://developer.chrome.com/docs/lighthouse/best-practices/errors-in-console/)",
+    "score": 1,
+    "scoreDisplayMode": "binary",
+    "details": {
+      "type": "table",
+      "headings": [
+        {
+          "key": "sourceLocation",
+          "valueType": "source-location",
+          "label": "Source"
+        },
+        {
+          "key": "description",
+          "valueType": "code",
+          "label": "Description"
+        }
+      ],
+      "items": []
+    }
+  },
+  "note": "Captured before the final decorative grid visibility adjustment; no functional changes followed."
+}

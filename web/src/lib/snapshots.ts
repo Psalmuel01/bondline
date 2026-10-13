@@ -144,8 +144,8 @@ function toPayout(row: IndexedPayoutRow): Payout {
 
 function eventBody(event: ChainActivityRow) {
   const payload = event.payload ?? {};
-  if (event.event_name === "BondOpened") return typeof payload.description === "string" ? `Opened a Bond · ${payload.description}` : "Opened a Bond";
-  if (event.event_name === "BondDeclared") return "Submitted a receipt and opened the cosign";
+  if (event.event_name === "BondOpened") return typeof payload.description === "string" ? `Made a commitment · ${payload.description}` : "Made a commitment";
+  if (event.event_name === "BondDeclared") return "Submitted evidence for Circle review";
   if (event.event_name === "BondResolved") return Number(payload.status) === Status.Met ? "Completed a commitment · stake returned" : "Missed a commitment · stake funded the Circle Pot";
   if (event.event_name === "PayoutProposed") return typeof payload.memo === "string" ? `Proposed a Circle payout · ${payload.memo}` : "Proposed a Circle payout";
   const label: Record<string, string> = {
@@ -158,17 +158,17 @@ function eventBody(event: ChainActivityRow) {
     PotPeriodClosed: "Closed a Pot reward week",
     CircleJoined: "Joined the Circle",
     MemberInvited: "Invited a friend",
-    TesterJoined: "Joined the product test",
+    TesterJoined: "Joined the evaluation cohort",
     VerifierTrustChanged: "Updated verifier availability",
     RefundCredited: "Returned stake is available to receive",
-    Objected: "Objected to a Bond",
+    Objected: "Disputed commitment evidence",
     PayoutCosigned: "Cosigned a Circle payout",
     PayoutExecuted: "Executed a Circle payout",
   };
   return label[event.event_name] ?? event.event_name.replace(/([a-z])([A-Z])/g, "$1 $2");
 }
 
-function toActivity(event: ChainActivityRow): Activity {
+export function toActivity(event: ChainActivityRow): Activity {
   return {
     id: `${event.tx_hash}:${event.log_index}`,
     circle_address: event.circle_address ?? "",

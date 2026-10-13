@@ -15,7 +15,7 @@ export function EmptyState({
       >
         ◎
       </span>
-      <h3 className="font-display text-lg font-semibold">{title}</h3>
+      <h2 className="font-display text-lg font-semibold">{title}</h2>
       <div className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
         {children}
       </div>

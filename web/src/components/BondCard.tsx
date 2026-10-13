@@ -1,6 +1,7 @@
 "use client";
 
 import { Avatar } from "./Avatar";
+import { evidenceUrl } from "@/lib/evidence";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { keccak256, toBytes } from "viem";
@@ -71,7 +72,7 @@ export function BondCard({
 
   const busy = write.isPending || write.isConfirming;
   const receipt = evidenceUri.trim();
-  const canOpenCosign = receipt.length > 0;
+  const canOpenCosign = Boolean(evidenceUrl(receipt));
 
   async function submitDeclare() {
     if (!canOpenCosign) return;
@@ -183,12 +184,18 @@ export function BondCard({
             Link to your evidence
           </span>
           <input
+            maxLength={2048}
             aria-label="Evidence link"
             value={evidenceUri}
             onChange={(e) => setEvidenceUri(e.target.value)}
             placeholder="https://… (PR, demo, screenshot)"
             className="rounded-md border border-line bg-panel px-3 py-2 text-sm text-bone outline-none focus:border-gold/50"
           />
+          {receipt && !canOpenCosign && (
+            <p role="alert" className="text-xs text-forfeit">
+              Enter a complete HTTP or HTTPS link your reviewers can access.
+            </p>
+          )}
           <span className="text-xs text-faint">
             Share evidence of completion. Your Circle has 24 hours to review it.
             Earlier backing is encouragement; evidence approval decides the
@@ -251,7 +258,9 @@ export function BondCard({
         >
           {write.isConfirming
             ? "tx pending — view on explorer ↗"
-            : "tx confirmed — view on explorer ↗"}
+            : write.isSuccess
+              ? "Action confirmed — view on explorer ↗"
+              : "View transaction ↗"}
         </a>
       )}
     </div>

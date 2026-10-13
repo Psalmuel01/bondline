@@ -199,7 +199,11 @@ export function CreateCircle({ onCreated }: { onCreated: () => void }) {
           rel="noreferrer"
           className="tnum mt-3 block text-xs text-gold underline decoration-dotted underline-offset-2"
         >
-          {write.isConfirming ? "deployment pending ↗" : "Circle deployed ↗"}
+          {write.isConfirming
+            ? "Circle creation pending ↗"
+            : write.isSuccess
+              ? "Circle created ↗"
+              : "View transaction ↗"}
         </a>
       )}
     </div>

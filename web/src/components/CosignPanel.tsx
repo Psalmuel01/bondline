@@ -1,5 +1,6 @@
 "use client";
 
+import { evidenceUrl } from "@/lib/evidence";
 import { useEffect, useState } from "react";
 import {
   useAccount,
@@ -115,9 +116,7 @@ export function CosignPanel({
     },
   });
 
-  const evidenceHref = /^https?:\/\//i.test(b.receiptsUri)
-    ? b.receiptsUri
-    : undefined;
+  const evidenceHref = evidenceUrl(b.receiptsUri) ? b.receiptsUri : undefined;
   const state = resolution.data;
   const required = Number(state?.[1] ?? 1);
   const eligibleMembers =
@@ -247,7 +246,11 @@ export function CosignPanel({
           rel="noreferrer"
           className="tnum text-xs text-gold underline decoration-dotted underline-offset-2"
         >
-          {write.isConfirming ? "Review pending ↗" : "Review recorded ↗"}
+          {write.isConfirming
+            ? "Review pending ↗"
+            : write.isSuccess
+              ? "Review recorded ↗"
+              : "View transaction ↗"}
         </a>
       )}
     </div>
