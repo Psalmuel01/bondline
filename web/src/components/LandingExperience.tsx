@@ -43,8 +43,8 @@ function CosignDemo() {
       <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
         <div>
           <p className="tnum text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">Try the mechanic</p>
-          <h2 className="font-display mt-2 text-2xl font-semibold tracking-tight text-bone">Cosign Sam&apos;s Bond.</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted">Sam staked <span className="tnum text-bone">50 MON</span> to ship by Friday. The crew decides if it counts.</p>
+          <h2 className="font-display mt-2 text-2xl font-semibold tracking-tight text-bone">Back Sam&apos;s commitment.</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">Sam staked <span className="tnum text-bone">50 MON</span> to ship by Friday. Show him you believe he can follow through. Evidence is reviewed separately.</p>
         </div>
         <div className="flex flex-col gap-4 rounded-xl border border-line bg-bg/60 p-4 sm:min-w-[320px]">
           <div className="flex items-center justify-between">
@@ -60,14 +60,11 @@ function CosignDemo() {
               ))}
             </div>
             <span className={`tnum text-xs ${cosigned ? "text-confirm" : "text-muted"}`}>
-              {cosigned ? "2/3 cosigns" : "1/3 cosigns"}
+              {cosigned ? "3 supporters" : "2 supporters"}
             </span>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-line">
-            <div className={`h-full bg-confirm transition-all duration-500 ${cosigned ? "w-2/3" : "w-1/3"}`} />
-          </div>
           <button onClick={() => setCosigned(true)} disabled={cosigned} className="rounded-lg border border-confirm/50 bg-confirm/10 px-4 py-2.5 text-sm font-semibold text-confirm transition hover:bg-confirm/20 disabled:cursor-default disabled:border-confirm/20 disabled:bg-transparent">
-            {cosigned ? "Cosigned — 1 more to clear" : "Cosign Sam's Bond"}
+            {cosigned ? "You backed Sam" : "Back Sam"}
           </button>
         </div>
       </div>

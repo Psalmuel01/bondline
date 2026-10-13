@@ -151,7 +151,7 @@ function eventBody(event: ChainActivityRow) {
   const label: Record<string, string> = {
     CircleCreated: "Created the Circle",
     Cosigned: "Approved commitment evidence",
-    CommitmentBacked: "Cosigned a commitment",
+    CommitmentBacked: "Backed a commitment",
     CommitmentVerified: "Verified a commitment",
     VerificationConfigured: "Chose automatic verification",
     PotRewardClaimed: "Received a weekly Pot reward",

@@ -95,4 +95,24 @@ contract MetropolisTest is BondlineCoreTest {
         vm.prank(alice);vm.expectRevert(BondlineCore.InvalidDescription.selector);core.openBond{value:1}(c,"",uint64(block.timestamp+1 days));
         vm.prank(alice);vm.expectRevert(BondlineCore.DurationTooLong.selector);core.openBond{value:1}(c,"x",uint64(block.timestamp+31 days));
     }
+    function test_backingPersistsThroughEvidenceReview() public {
+        address c = _four(5000);
+        uint256 id = _openBond(c, alice, 1 ether);
+        vm.prank(bob); core.backCommitment(id);
+        _declare(id, alice);
+        assertTrue(core.hasBacked(id, bob));
+        assertFalse(core.hasResponded(id, bob));
+        (, , , , , , uint32 approvals, , , , ) = core.bonds(id);
+        assertEq(approvals, 0);
+        assertEq(uint256(_status(id)), uint256(BondlineCore.Status.PendingCosign));
+        vm.prank(bob); core.cosign(id);
+        assertTrue(core.hasResponded(id, bob));
+        assertTrue(core.hasBacked(id, bob));
+        assertEq(core.backerCount(id), 1);
+        assertEq(core.uniqueCosigners(alice), 1); // backing plus review is one unique supporter
+        vm.prank(carol); core.cosign(id);
+        assertEq(uint256(_status(id)), uint256(BondlineCore.Status.Met));
+        assertTrue(core.hasBacked(id, bob));
+        assertEq(alice.balance, 100 ether);
+    }
 }

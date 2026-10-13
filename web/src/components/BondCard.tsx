@@ -61,8 +61,8 @@ export function BondCard({
   async function submitDeclare() {
     if (!canOpenCosign) return;
     const hash = keccak256(toBytes(receipt));
-    await write.declareDone(b.id, hash, receipt);
-    setDeclaring(false);
+    const submitted = await write.declareDone(b.id, hash, receipt);
+    if (submitted) setDeclaring(false);
   }
 
   return (
@@ -86,7 +86,7 @@ export function BondCard({
       <div className="flex items-end justify-between">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-faint">
-            {pending ? "Cosign closes in" : active ? (expired ? "Overdue" : "Left on the Line") : "Resolved"}
+            {pending ? "Evidence review closes in" : active ? (expired ? "Overdue" : "Left on the Line") : "Resolved"}
           </div>
           <div
             className={`tnum text-2xl font-semibold ${
@@ -153,7 +153,7 @@ export function BondCard({
             className="rounded-md border border-line bg-panel px-3 py-2 text-sm text-bone outline-none focus:border-gold/50"
           />
           <span className="text-xs text-faint">
-            Add a link before opening the cosign. It is hashed on-chain so it can&apos;t be swapped after the fact.
+            Share evidence of completion. Your Circle has 24 hours to review it. Earlier backing is encouragement; evidence approval decides the refund.
           </span>
           <div className="flex gap-2">
             <button
@@ -161,7 +161,7 @@ export function BondCard({
               disabled={busy || !canOpenCosign}
               className="flex-1 rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-ink transition hover:brightness-108 disabled:opacity-50"
             >
-              {busy ? "Confirming…" : "Open the cosign"}
+              {busy ? "Confirming…" : "Submit for review"}
             </button>
             <button
               onClick={() => setDeclaring(false)}
@@ -180,7 +180,7 @@ export function BondCard({
           disabled={busy}
           className="w-full rounded-md border border-line bg-panel px-3 py-2 text-sm font-medium text-bone transition hover:border-panel-hi disabled:opacity-50"
         >
-          {busy ? "Confirming…" : "Cosign window closed → resolve"}
+          {busy ? "Confirming…" : "Review window closed · Settle commitment"}
         </button>
       )}
 

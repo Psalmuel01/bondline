@@ -135,7 +135,7 @@ export function CircleDetail({ address: circleAddress }: { address: `0x${string}
             {/* roster */}
             <div className="relative flex flex-col gap-2">
               <span className="text-[10px] uppercase tracking-widest text-faint">
-                {circle.members.length} members · {bpsPct(circle.cosignThresholdBps)} to cosign
+                {circle.members.length} members · {bpsPct(circle.cosignThresholdBps)} evidence approval threshold
               </span>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex flex-wrap items-center gap-3">
