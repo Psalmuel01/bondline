@@ -194,8 +194,15 @@ export function CircleDetail({
                       "A shared space to check in, make commitments, and keep each other going."}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                   <CircleShare circle={circle} />
+                  {isMember && (
+                    <CircleSettings
+                      circle={circle}
+                      metadata={metadata}
+                      onMetadata={setCircleMetadata}
+                    />
+                  )}
                   {isMember && (
                     <button
                       className="primary-button"
@@ -280,7 +287,7 @@ export function CircleDetail({
                 </button>
               ))}
             </nav>
-            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
               <div className="min-w-0 space-y-5">
                 {view === "chat" && chat}
                 {view === "commitments" && (
@@ -482,71 +489,58 @@ export function CircleDetail({
                     </button>
                   </div>
                 )}
-                <div className="rounded-2xl border border-line bg-panel p-5">
-                  <h2 className="font-display text-base font-semibold">
-                    In the works{" "}
-                    <span className="ml-1 text-xs font-normal text-faint">
-                      {ongoing.length}
-                    </span>
-                  </h2>
-                  {ongoing.length ? (
-                    <div className="mt-2 divide-y divide-line">
-                      {ongoing.slice(0, 3).map((b) => (
-                        <button
-                          key={b.id.toString()}
-                          onClick={() => {
-                            setView("commitments");
-                            setFilter("ongoing");
-                          }}
-                          className="block w-full py-4 text-left"
-                        >
-                          <p className="text-xs text-gold">
-                            {b.status === Status.PendingCosign
-                              ? "Evidence ready"
-                              : "In progress"}
-                          </p>
-                          <p className="mt-1 line-clamp-2 text-sm leading-relaxed">
-                            {b.description}
-                          </p>
-                          <p className="mt-2 text-xs text-muted">
-                            {names[b.creator.toLowerCase()] ||
-                              shortAddr(b.creator)}{" "}
-                            · {formatMon(b.stake)} MON
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm leading-relaxed text-muted">
-                      A fresh start. Make the first commitment for your Circle.
-                    </p>
-                  )}
-                </div>
+                {ongoing.length > 0 && (
+                  <div className="rounded-2xl border border-line bg-panel p-5">
+                    <h2 className="font-display text-base font-semibold">
+                      In the works{" "}
+                      <span className="ml-1 text-xs font-normal text-faint">
+                        {ongoing.length}
+                      </span>
+                    </h2>
+                    {ongoing.length ? (
+                      <div className="mt-2 divide-y divide-line">
+                        {ongoing.slice(0, 3).map((b) => (
+                          <button
+                            key={b.id.toString()}
+                            onClick={() => {
+                              setView("commitments");
+                              setFilter("ongoing");
+                            }}
+                            className="block w-full py-4 text-left"
+                          >
+                            <p className="text-xs text-gold">
+                              {b.status === Status.PendingCosign
+                                ? "Evidence ready"
+                                : "In progress"}
+                            </p>
+                            <p className="mt-1 line-clamp-2 text-sm leading-relaxed">
+                              {b.description}
+                            </p>
+                            <p className="mt-2 text-xs text-muted">
+                              {names[b.creator.toLowerCase()] ||
+                                shortAddr(b.creator)}{" "}
+                              · {formatMon(b.stake)} MON
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-sm leading-relaxed text-muted">
+                        A fresh start. Make the first commitment for your
+                        Circle.
+                      </p>
+                    )}
+                  </div>
+                )}
                 {!isMember && hasV2 && (
                   <CircleMembership circle={circle} onChange={refreshAll} />
                 )}
-                <details className="rounded-2xl border border-line p-5">
-                  <summary className="cursor-pointer text-sm text-muted">
-                    Circle activity
-                  </summary>
-                  <div className="mt-4">
-                    <ActivityTimeline
-                      bonds={circleBonds}
-                      names={names}
-                      snapshotEvents={snapshot.data?.activity}
-                    />
-                  </div>
-                </details>
-                {isMember && (
-                  <div className="flex items-center justify-between px-1 text-xs text-muted">
-                    <span>Circle settings</span>
-                    <CircleSettings
-                      circle={circle}
-                      metadata={metadata}
-                      onMetadata={setCircleMetadata}
-                    />
-                  </div>
-                )}
+                <ActivityTimeline
+                  compact
+                  bonds={circleBonds}
+                  names={names}
+                  snapshotEvents={snapshot.data?.activity}
+                />
               </aside>
             </div>
             <Modal

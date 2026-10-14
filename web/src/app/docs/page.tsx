@@ -38,7 +38,7 @@ export default function DocsIndex() {
                 <Link
                   key={slug}
                   href={`/docs/${slug}`}
-                  className="rounded-2xl border border-line bg-panel p-5 hover:border-gold/40"
+                  className="motion-card rounded-2xl border border-line bg-panel p-5 hover:border-gold/40"
                 >
                   <h3 className="text-sm font-semibold">{doc.title} ↗</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted">

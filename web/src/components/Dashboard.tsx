@@ -21,7 +21,7 @@ import { useWalletSession } from "@/lib/useWalletSession";
 /// Multi-group dashboard: every Circle you're in, plus a toggle to spin up a new
 /// one. Circles you're not a member of are shown dimmed under "other Circles" so
 /// the registry is visible without cluttering your crews.
-export function Dashboard({ compact = false }: { compact?: boolean } = {}) {
+export function Dashboard() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
   const { isAuthenticated } = useWalletSession();
@@ -114,7 +114,7 @@ export function Dashboard({ compact = false }: { compact?: boolean } = {}) {
           onDiscover={() => setView("discover")}
         />
       )}
-      {address && !compact && (
+      {address && (
         <div className="flex flex-wrap gap-x-10 gap-y-5 border-b border-line pb-7">
           {[
             ["In progress", stats.active],
@@ -137,7 +137,7 @@ export function Dashboard({ compact = false }: { compact?: boolean } = {}) {
           </Link>
         </div>
       )}
-      {address && !compact && upcoming.length > 0 && (
+      {address && upcoming.length > 0 && (
         <section className="space-y-4">
           <SectionHeading
             title="Keep the momentum"
@@ -148,7 +148,7 @@ export function Dashboard({ compact = false }: { compact?: boolean } = {}) {
               <Link
                 key={b.id.toString()}
                 href={`/circle/${b.circle}?view=commitments`}
-                className="rounded-2xl border border-line bg-panel p-5 transition hover:border-gold/40"
+                className="motion-card rounded-2xl border border-line bg-panel p-5 transition hover:border-gold/40"
               >
                 <p className="text-xs text-gold">
                   {b.status === Status.PendingCosign

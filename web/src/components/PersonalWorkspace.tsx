@@ -9,7 +9,6 @@ import { toActivity } from "@/lib/snapshots";
 import { useAccountActivity } from "@/lib/useAccountActivity";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
-import { Dashboard } from "./Dashboard";
 import { BondCard } from "./BondCard";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { ConnectButton } from "./ConnectButton";
@@ -53,11 +52,7 @@ export function PersonalWorkspace({ view }: { view: string }) {
     .sort((a, b) => Number(a.deadline - b.deadline));
   const { names } = useProfiles([...new Set(joined.flatMap((c) => c.members))]);
   const title =
-    view === "circles"
-      ? "Your Circles"
-      : view === "activity"
-        ? "Your Circle activity"
-        : "Your commitments";
+    view === "activity" ? "Your Circle activity" : "Your commitments";
   return (
     <div className="mx-auto w-full max-w-7xl px-5 py-6 sm:px-8">
       <Header />
@@ -73,9 +68,7 @@ export function PersonalWorkspace({ view }: { view: string }) {
             <p className="mt-3 text-sm text-muted">
               {view === "activity"
                 ? "Backing, evidence, outcomes, and rewards—recorded as they happen."
-                : view === "circles"
-                  ? "Find your people and give your goals a shared home."
-                  : "A clear view of what you promised, what needs review, and what followed through."}
+                : "A clear view of what you promised, what needs review, and what followed through."}
             </p>
           </div>
           {address && view === "commitments" && (
@@ -95,8 +88,6 @@ export function PersonalWorkspace({ view }: { view: string }) {
             Return with the same passkey or wallet to find your Circles and
             commitments.
           </EmptyState>
-        ) : view === "circles" ? (
-          <Dashboard compact />
         ) : view === "activity" ? (
           <>
             {activity.isError ? (
@@ -128,7 +119,7 @@ export function PersonalWorkspace({ view }: { view: string }) {
               <EmptyState
                 title="Your Circle’s story will appear here"
                 action={
-                  <Link href="/app/circles" className="primary-button">
+                  <Link href="/" className="primary-button">
                     Find your Circle →
                   </Link>
                 }
@@ -255,7 +246,7 @@ export function PersonalWorkspace({ view }: { view: string }) {
                 key={c.address}
                 href={`/circle/${c.address}?view=commitments`}
                 onClick={() => setChoosing(false)}
-                className="flex items-center justify-between rounded-xl border border-line p-4 text-sm hover:border-gold/40"
+                className="motion-card flex items-center justify-between rounded-xl border border-line p-4 text-sm hover:border-gold/40"
               >
                 {c.name}
                 <span className="text-gold">Open →</span>
@@ -267,7 +258,7 @@ export function PersonalWorkspace({ view }: { view: string }) {
               action={
                 <Link
                   className="primary-button"
-                  href="/app/circles"
+                  href="/"
                   onClick={() => setChoosing(false)}
                 >
                   Create or join a Circle →

@@ -71,6 +71,14 @@ export default function RootLayout({
       className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <div className="bondline-world" aria-hidden="true">
+          <div className="world-plane" />
+          <div className="world-beacon">
+            <span />
+          </div>
+          <span className="world-spark world-spark-one" />
+          <span className="world-spark world-spark-two" />
+        </div>
         <Providers>{children}</Providers>
       </body>
     </html>

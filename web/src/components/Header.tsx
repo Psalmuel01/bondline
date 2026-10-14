@@ -15,7 +15,6 @@ const publicLinks = [
 const appLinks = [
   ["/", "Home"],
   ["/app/commitments", "Commitments"],
-  ["/app/circles", "Circles"],
   ["/app/activity", "Activity"],
   ["/profile", "Profile"],
 ];

@@ -1,3 +1,27 @@
+# Workspace consolidation
+
+Signed-in Home is the single Circle workspace, retaining creation, discovery, onboarding, upcoming commitments, and progress. The duplicate Circles navigation item and compact dashboard branch were removed. Existing `/app/circles` links redirect to `/`; onboarding and app calls to action link directly to Home. Commitments, Activity, Profile, and individual Circle detail pages retain their separate functions.
+
+Deployment `dpl_3DVVTmbTHGqt6cd6TAhvCi5ncce3` passed TypeScript and the production build. Live checks confirmed `/app/circles` returns 307 to `/`, and Home, Commitments, and Activity return 200. This navigation-only update does not change account or contract logic.
+
+---
+
+# Circle UX follow-up
+
+Deployment `dpl_EGVWhmzcRy6JeRUEDKytztnA1u5Z` passed the production build and TypeScript; all 21 frontend tests passed again. Chat now has a shorter panel, bottom-aligned/grouped messages, inline timestamps, a growing one-line composer, and draft preservation when a previous send completes. The activity sidebar shows three updates with optional expansion and no nested panel. Empty active-goal panels are hidden. Circle Settings moved beside the header actions.
+
+The settings form fills the modal, includes explicit Cancel/Save actions, a cover preview, and a clear display-only Pot target with client validation. Actual components were rendered in isolated localhost fixtures to inspect populated chat and desktop/mobile settings without a wallet or private API requests. Final desktop chat and mobile settings fixtures scored 100 accessibility. These are visual fixtures, not authenticated end-to-end testing or production screenshots; they are not included in the marketing capture pack. The temporary review server was stopped afterward.
+
+---
+
+# Shared visual system follow-up
+
+The perspective grid and beacon now live in the root layout, giving public pages and application routes the same background. Page entrances, modal opening transitions, button press feedback, and hover lift on commitment/Circle/documentation cards share CSS motion rules. Decorative layers cannot intercept pointer events; reduced-motion preferences disable movement. The landing no longer adds a second grid.
+
+Deployment `dpl_2e5c9unugrD13gWyfi4935j38PJa` passed TypeScript and the production build. Desktop Docs and the signed-out mobile Circles app route both scored 100 accessibility/best practices with no console errors ([desktop](quality/shared-docs.json), [mobile](quality/shared-app-mobile.json)). This is a visual-only update; account, contract, indexing, and authorization logic are unchanged. Earlier audit scores below describe their recorded releases, not a new performance measurement of this follow-up.
+
+---
+
 # Lighter design follow-up
 
 The homepage now uses the animated group-chat illustration, a perspective grid, three public navbar links, four concise mechanic steps, and five FAQ questions. Repeated product/how-it-works/Circles/verification/about pages redirect to homepage sections (verified 307 responses). Documentation, security, and legal pages remain available.

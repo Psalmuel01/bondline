@@ -10,12 +10,6 @@ export function PublicLanding() {
         id="get-started"
         className="landing-hero relative isolate grid items-center gap-12 py-14 sm:py-20 lg:min-h-[650px] lg:grid-cols-[1.1fr_1fr]"
       >
-        <div className="perspective-world" aria-hidden="true">
-          <div className="perspective-grid" />
-          <span className="grid-beacon" />
-          <span className="grid-star star-one" />
-          <span className="grid-star star-two" />
-        </div>
         <div className="hero-copy">
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-gold">
             Your word. Your people. Something at stake.

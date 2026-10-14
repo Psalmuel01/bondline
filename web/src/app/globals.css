@@ -71,15 +71,6 @@ body {
   background-attachment: fixed;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(20, 18, 15, 0.84);
-  pointer-events: none;
-  z-index: -1;
-}
-
 .font-display {
   font-family: var(--font-space-grotesk), var(--font-inter), sans-serif;
 }
@@ -328,74 +319,188 @@ summary {
   }
 }
 
-/* A quiet perspective plane behind the hero, inspired by the reference. */
-.landing-hero {
+/* One decorative world shared by every route, behind all controls. */
+body {
   isolation: isolate;
 }
-.perspective-world {
-  position: absolute;
-  inset: -40px -20px -20px;
+.bondline-world {
+  position: fixed;
+  inset: 0;
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  perspective: 700px;
-  mask-image: radial-gradient(ellipse at 65% 62%, #000 0%, transparent 72%);
+  perspective: 800px;
+  background: radial-gradient(ellipse at 72% 60%, #e3b65d08, transparent 65%);
 }
-.perspective-grid {
+.world-plane {
   position: absolute;
-  width: 150%;
-  height: 850px;
-  left: -15%;
-  top: -15%;
+  left: -30%;
+  top: -25%;
+  width: 170%;
+  height: 150%;
   background-image:
-    linear-gradient(rgba(160, 165, 155, 0.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(160, 165, 155, 0.18) 1px, transparent 1px);
-  background-size: 52px 52px;
-  transform: rotateX(58deg) rotateZ(-24deg);
-  transform-origin: center;
+    linear-gradient(#a0a59b22 1px, transparent 1px),
+    linear-gradient(90deg, #a0a59b22 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: rotateX(52deg) rotateZ(-24deg);
+  mask-image: radial-gradient(ellipse at 60% 55%, #000 15%, transparent 70%);
+  animation: world-arrive 1.6s ease-out both;
 }
-.grid-beacon {
+.world-beacon {
   position: absolute;
-  width: 150px;
-  height: 72px;
-  right: 20%;
-  bottom: 8%;
-  border: 1px solid rgba(227, 182, 93, 0.45);
+  right: 14%;
+  bottom: 14%;
+  width: 180px;
+  height: 86px;
+  border: 1px solid #e3b65d44;
   border-radius: 50%;
   box-shadow:
-    0 0 50px rgba(227, 182, 93, 0.07),
-    inset 0 0 30px rgba(227, 182, 93, 0.04);
-  animation: beacon-enter 2s ease-out both;
+    0 0 65px #e3b65d08,
+    inset 0 0 35px #e3b65d06;
+  animation: world-arrive 1.8s ease-out both;
 }
-.grid-beacon::after {
+.world-beacon::before {
   content: "";
   position: absolute;
-  width: 9px;
-  height: 5px;
+  inset: -12px;
+  border: 1px solid #e3b65d1a;
   border-radius: 50%;
-  background: var(--gold);
+  animation: world-ripple 3s ease-out 2;
+}
+.world-beacon span {
+  position: absolute;
   top: 50%;
   left: 50%;
+  width: 8px;
+  height: 4px;
+  background: var(--gold);
+  opacity: 0.55;
+  border-radius: 50%;
   transform: translate(-50%, -50%);
 }
-.grid-star {
+.world-spark {
   position: absolute;
   width: 3px;
   height: 3px;
   border-radius: 50%;
   background: var(--gold);
-  box-shadow: 0 0 12px var(--gold);
+  box-shadow: 0 0 14px #e3b65d55;
+  opacity: 0.4;
 }
-.star-one {
-  left: 16%;
-  bottom: 23%;
-  opacity: 0.55;
+.world-spark-one {
+  left: 14%;
+  bottom: 30%;
 }
-.star-two {
+.world-spark-two {
   right: 8%;
-  top: 29%;
-  opacity: 0.35;
+  top: 22%;
 }
+@keyframes world-arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes world-ripple {
+  from {
+    opacity: 0.8;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+@keyframes page-enter {
+  from {
+    transform: translateY(7px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+main {
+  animation: page-enter 0.45s ease-out;
+}
+.product-modal[open] {
+  animation: dialog-enter 0.22s ease-out both;
+}
+.motion-card {
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .motion-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 35px #0002;
+  }
+  .primary-button:not(:disabled):hover,
+  .secondary-button:not(:disabled):hover {
+    transform: translateY(-2px);
+  }
+}
+.primary-button,
+.secondary-button,
+.icon-button,
+.workspace-tab {
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.primary-button:not(:disabled):active,
+.secondary-button:not(:disabled):active,
+.icon-button:active {
+  transform: scale(0.97);
+}
+.workspace-tab:hover {
+  background: var(--panel-hi);
+}
+@media (max-width: 767px) {
+  .world-plane {
+    background-size: 48px 48px;
+    width: 210%;
+    left: -55%;
+  }
+  .world-beacon {
+    right: -25px;
+    bottom: 20%;
+    opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  main,
+  .product-modal[open],
+  .world-plane,
+  .world-beacon,
+  .world-beacon::before {
+    animation: none;
+  }
+  .world-beacon::before {
+    opacity: 0.2;
+  }
+  .primary-button:active,
+  .secondary-button:active,
+  .icon-button:active {
+    transform: none;
+  }
+}
+
 .chat-orbit {
   position: absolute;
   inset: -16px;
@@ -474,18 +579,6 @@ summary {
   }
 }
 @media (max-width: 767px) {
-  .perspective-world {
-    inset: 0 -20px;
-    mask-image: radial-gradient(ellipse at 50% 65%, #000, transparent 75%);
-  }
-  .perspective-grid {
-    background-size: 40px 40px;
-    top: 25%;
-  }
-  .grid-beacon {
-    right: 12%;
-    bottom: 2%;
-  }
   .chat-orbit {
     inset: -8px;
   }
@@ -493,7 +586,6 @@ summary {
 @media (prefers-reduced-motion: reduce) {
   .hero-copy,
   .chat-stage,
-  .grid-beacon,
   .back-burst i {
     animation: none;
   }

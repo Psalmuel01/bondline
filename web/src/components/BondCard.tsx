@@ -83,7 +83,7 @@ export function BondCard({
 
   return (
     <div
-      className={`group relative flex flex-col gap-5 rounded-2xl border bg-panel p-5 sm:p-6 transition ${
+      className={`motion-card group relative flex flex-col gap-5 rounded-2xl border bg-panel p-5 sm:p-6 transition ${
         expired ? "border-gone/40" : pending ? "border-live/40" : "border-line"
       }`}
     >

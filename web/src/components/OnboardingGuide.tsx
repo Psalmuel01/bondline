@@ -96,7 +96,7 @@ export function OnboardingGuide({
               </button>
             ) : (
               <Link
-                href={circleHref || "/app/circles"}
+                href={circleHref || "/"}
                 onClick={close}
                 className="primary-button flex-1"
               >

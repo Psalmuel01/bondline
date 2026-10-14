@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Bond } from "@/lib/contracts";
 import { Status } from "@/lib/contracts";
 import { explorerAddr, explorerTx } from "@/lib/chain";
@@ -19,11 +20,14 @@ export function ActivityTimeline({
   bonds,
   names,
   snapshotEvents = [],
+  compact = false,
 }: {
   bonds: Bond[];
   names: Record<string, string>;
   snapshotEvents?: Activity[];
+  compact?: boolean;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const events = [...snapshotEvents].sort(
     (a, b) => Date.parse(b.created_at) - Date.parse(a.created_at),
   );
@@ -53,30 +57,36 @@ export function ActivityTimeline({
         timestamp,
       };
     });
+  const count = events.length || fallback.length;
+  const limit = compact && !expanded ? 3 : count;
   return (
     <section className="rounded-xl border border-line bg-panel">
-      <div className="flex items-center justify-between border-b border-line px-5 py-4">
+      <div className="flex items-center justify-between border-b border-line px-4 py-3">
         <div>
           <h2 className="font-display text-base font-semibold text-bone">
             {events.length ? "Recent activity" : "Commitment summaries"}
           </h2>
-          <p className="mt-0.5 text-xs text-faint">
-            {events.length
-              ? "Recorded on-chain events."
-              : "Current recorded states; times below are deadlines, not settlement times."}
-          </p>
+          {!compact && (
+            <p className="mt-0.5 text-xs text-faint">
+              {events.length
+                ? "Recorded on-chain events."
+                : "Current recorded states; times below are deadlines, not settlement times."}
+            </p>
+          )}
         </div>
-        <span className="tnum text-[10px] uppercase tracking-widest text-faint">
-          Timeline
-        </span>
+        {!compact && (
+          <span className="tnum text-[10px] uppercase tracking-widest text-faint">
+            Timeline
+          </span>
+        )}
       </div>
       <div className="divide-y divide-line">
         {events.length > 0 ? (
-          events.map((event) => (
-            <div key={event.id} className="flex gap-3 px-5 py-4">
+          events.slice(0, limit).map((event) => (
+            <div key={event.id} className="flex gap-2.5 px-4 py-3">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold" />
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-bone">{event.body}</p>
+                <p className="text-sm leading-6 text-bone">{event.body}</p>
                 <p className="mt-1 text-xs text-faint">
                   {when(event.created_at)}
                   {event.actor_address && (
@@ -84,12 +94,12 @@ export function ActivityTimeline({
                       {" "}
                       ·{" "}
                       <a
-                        className="hover:text-gold"
+                        className="underline decoration-line underline-offset-2 hover:text-gold"
                         href={explorerAddr(event.actor_address)}
                         target="_blank"
                         rel="noreferrer"
                       >
-                        {names[event.actor_address] ||
+                        {names[event.actor_address.toLowerCase()] ||
                           shortAddr(event.actor_address)}
                       </a>
                     </>
@@ -100,11 +110,13 @@ export function ActivityTimeline({
                       ·{" "}
                       <a
                         className="text-gold hover:underline"
+                        aria-label="View transaction on explorer"
+                        title="View transaction on explorer"
                         href={explorerTx(event.tx_hash)}
                         target="_blank"
                         rel="noreferrer"
                       >
-                        transaction ↗
+                        <span aria-hidden="true">↗</span>
                       </a>
                     </>
                   )}
@@ -113,11 +125,11 @@ export function ActivityTimeline({
             </div>
           ))
         ) : fallback.length > 0 ? (
-          fallback.map((event) => (
-            <div key={event.id} className="flex gap-3 px-5 py-4">
+          fallback.slice(0, limit).map((event) => (
+            <div key={event.id} className="flex gap-2.5 px-4 py-3">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold" />
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-bone">
+                <p className="text-sm leading-6 text-bone">
                   {event.person} {event.body}
                 </p>
                 <p className="mt-1 text-xs text-faint">
@@ -141,6 +153,15 @@ export function ActivityTimeline({
           </p>
         )}
       </div>
+      {compact && count > 3 && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
+          className="w-full border-t border-line px-4 py-3 text-left text-xs text-gold hover:bg-panel-hi"
+        >
+          {expanded ? "Show less ↑" : `Show all ${count} updates ↓`}
+        </button>
+      )}
     </section>
   );
 }
