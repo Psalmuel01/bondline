@@ -95,3 +95,33 @@ Next external steps: complete deployment-access approval; confirm the private-re
 Private-registry correction: wallet linking is not a prerequisite for the configured private registry. Earlier references to absent linked keys were observations about the organization, not blockers for this target. Deployment access and receiver report-owner metadata still require confirmation.
 
 The private-registry configuration was verified by `cre workflow hash` using the login session without a private key. The CLI successfully resolved the private owner and generated workflow hashes. Confirm the exact report-owner metadata before deploying the immutable receiver; wallet-linking output is not the private owner.
+
+## Meaningful local CLI simulation
+
+This path exercises the real CRE CLI against a loopback-only Anvil fork of the verified Monad v2 deployment. It uses actual GitHub HTTP results and the workflow's consensus/report/write capabilities. The local receiver adapter lives under `contracts/test/fixtures` and rejects deployment on either public Monad chain. The production receiver is not weakened. Local funds, identities, receipts and time jumps are not public-chain traction or a live DON.
+
+```bash
+# Terminal 1: isolated local fork, never a public broadcast endpoint
+anvil --fork-url https://testnet-rpc.monad.xyz --chain-id 31337 --port 8551 --block-time 1 --silent
+
+# Terminal 2, from repository root
+forge test --root contracts --offline --match-contract LocalCREReceiverTest
+pnpm --dir cre/github-verifier simulate:local prepare
+```
+
+Preparation creates two locally escrowed commitments before evidence exists: one requires one real new public commit by Psalmuel01 in Psalmuel01/bondline; the other requires 100 commits and is expected to remain unfinished. Publish a genuine code contribution after preparation; old commits are excluded. The fixture preparation date is the real local commitment creation timestamp, not a rewritten GitHub timestamp.
+
+```bash
+# Use the installed official CLI; if not on PATH, supply its executable path.
+CRE_CLI_PATH=/path/to/cre pnpm --dir cre/github-verifier simulate:local cli
+pnpm --dir cre/github-verifier simulate:local inspect
+
+# Advance only the LOCAL fixture past its deadline and simulate again.
+pnpm --dir cre/github-verifier simulate:local expire
+CRE_CLI_PATH=/path/to/cre pnpm --dir cre/github-verifier simulate:local cli
+pnpm --dir cre/github-verifier simulate:local inspect
+```
+
+The runner validates exact loopback RPC, Anvil identity and chain 31337 before every mutation. Its `--broadcast` is confined to that local endpoint and uses PUBLIC deterministic fixture-key material, not a user's or agent's wallet key. No signing key is written to an env file. Local balance is synthetic. The checked-in local RPC target must not be repointed; the runner rejects a changed URL. Config and local-state files are ignored. Do not enable this adapter in Vercel or the live Core.
+
+Inspect real local Core outcomes: the qualifying goal should reach status 2 and return its stake; insufficient evidence should remain status 0 until expiry; after local expiry the unfinished goal should reach status 3 and reserve 0.01 local MON in the Circle Pot. Those outcomes must be read back before calling a simulation successful. A preflight that simply skips an already-settled public goal does not demonstrate this full path.

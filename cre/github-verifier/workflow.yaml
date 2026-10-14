@@ -5,3 +5,11 @@ staging-settings:
   workflow-artifacts:
     workflow-path: "./main.ts"
     config-path: "./config.local.json"
+
+local-simulation:
+  user-workflow:
+    workflow-name: "bondline-github"
+    deployment-registry: "private"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.simulation.local.json"

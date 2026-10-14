@@ -2,3 +2,10 @@ staging-settings:
   rpcs:
     - chain-name: "monad-testnet"
       url: "https://testnet-rpc.monad.xyz"
+
+# Local fork only. EVM capabilities select Monad; the RPC is an isolated Anvil
+# fork with chain ID 31337. Never replace this endpoint with a public RPC.
+local-simulation:
+  rpcs:
+    - chain-name: "monad-testnet"
+      url: "http://127.0.0.1:8551"

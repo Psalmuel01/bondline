@@ -31,6 +31,9 @@ skills-lock.json
 
 # Local workflow settings, compiled bundles, and test reports
 cre/**/config.local.json
+cre/**/config.*.local.json
+cre/**/simulation.local.json
+cre/**/simulator.local.env
 cre/**/*-plan.local.json
 cre/**/dist/
 cre/**/artifacts/
