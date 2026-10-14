@@ -1,0 +1,4 @@
+# CRE CLI invokes `bun run cre-compile`. Keep its compiler on Bun's own runtime
+# instead of a parent project's node_modules/.bin/bun or Node shim.
+[run]
+bun = true

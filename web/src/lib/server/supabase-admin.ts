@@ -4,6 +4,21 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const mediaBucket = "circle-media";
 
+// Exact HEAD counts avoid PostgREST's row limit without fetching event payloads.
+export async function supabaseAdminCount(path: string): Promise<number> {
+  if (!url || !serviceKey) throw new Error("The secure social layer is not configured.");
+  const response = await fetch(`${url}/rest/v1/${path}`, {
+    method: "HEAD",
+    cache: "no-store",
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: "count=exact" },
+  });
+  if (!response.ok) throw new Error(`Supabase request failed (${response.status}).`);
+  const total = response.headers.get("content-range")?.match(/\/(\d+)$/)?.[1];
+  if (total === undefined || !Number.isSafeInteger(Number(total)))
+    throw new Error("Supabase did not return an exact count.");
+  return Number(total);
+}
+
 export async function supabaseAdminRequest<T>(path: string, init?: RequestInit): Promise<T> {
   if (!url || !serviceKey) throw new Error("The secure social layer is not configured.");
   const response = await fetch(`${url}/rest/v1/${path}`, {

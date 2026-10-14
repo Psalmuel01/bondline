@@ -89,7 +89,15 @@ export async function encryptJournal(
   webAuthnClient?: WebAuthnClient,
 ): Promise<JournalEnvelope> {
   parseJournalDocument(doc);
-  const bytes = new TextEncoder().encode(JSON.stringify(doc));
+  const bytes = new TextEncoder().encode(
+    JSON.stringify({
+      format: "bondline-journal-content-v1",
+      owner: owner.toLowerCase(),
+      chainId,
+      rpId,
+      document: doc,
+    }),
+  );
   try {
     const vault = await createSecretVaultWithExistingPasskey({
       rpId,
@@ -124,7 +132,17 @@ export async function decryptJournal(
     ...(webAuthnClient ? { webAuthnClient } : {}),
   });
   try {
-    return parseJournalDocument(JSON.parse(new TextDecoder().decode(bytes)));
+    const content = JSON.parse(new TextDecoder().decode(bytes));
+    if (
+      content.format !== "bondline-journal-content-v1" ||
+      content.owner !== envelope.owner.toLowerCase() ||
+      content.chainId !== envelope.chainId ||
+      content.rpId !== envelope.rpId
+    )
+      throw new Error(
+        "The encrypted journal context does not match its backup metadata.",
+      );
+    return parseJournalDocument(content.document);
   } finally {
     bytes.fill(0);
   }

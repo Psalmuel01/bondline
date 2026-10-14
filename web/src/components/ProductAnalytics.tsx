@@ -38,6 +38,7 @@ export function ProductAnalytics() {
         uniqueCosigners: number;
         testers: number;
         transactions: number;
+        circleJoins: number;
         source: string;
       }>;
     },
@@ -74,6 +75,8 @@ export function ProductAnalytics() {
             `${formatMon(circles.reduce((sum, c) => sum + c.balance, 0n))} MON`,
           ],
           ["Circles", circles.length],
+          ["Accepted Circle joins", indexed.data?.circleJoins ?? "—"],
+          ["Opt-in tester accounts", totals.data?.[1]?.result?.toString() ?? indexed.data?.testers ?? "—"],
           [
             "Social backing",
             totals.data?.[0]?.result?.toString() ??

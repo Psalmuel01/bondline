@@ -159,3 +159,26 @@ test("journal backups cannot cross accounts, domains or networks and entries are
     }),
   );
 });
+
+test("editing backup context cannot relabel authenticated journal ciphertext", async () => {
+  const a = authenticator();
+  const saved = await encryptJournal(
+    doc,
+    owner,
+    10143,
+    "bondline.example",
+    credential,
+    a.client,
+  );
+  const relabeled = { ...saved, chainId: 143 };
+  const envelope = parseJournalEnvelope(
+    JSON.stringify(relabeled),
+    owner,
+    143,
+    "bondline.example",
+  );
+  await assert.rejects(
+    () => decryptJournal(envelope, credential, a.client),
+    /context/,
+  );
+});

@@ -87,3 +87,19 @@ CRE orchestration and the encrypted PRF private journal remain unimplemented and
 ## Source and release provenance
 
 The production release was uploaded with Vercel CLI from a web-only snapshot of current source. Secret environment files and private planning documents were excluded. No Git commit or push was performed for this upgrade; the live deployment and current local source should be committed together when publishing the repository changes. Screenshot/report files added afterward are repository assets and do not change the deployed application.
+
+## 14 October requirements-audit release
+
+The private source-by-source audit is kept outside this public repository, in accordance with the request not to publish planning documents. This release adds the device-local Mera PRF journal, Home commitment launcher, Circle member ranking, custom deadlines/UTF-8 goal bounds, accepted Circle join/tester counts, a loopback-only deployed-code fork lifecycle script, and a CRE workflow/receiver package.
+
+Validation: 27 frontend tests, TypeScript, 100 offline Foundry test executions, 8 official CRE SDK runtime tests, CRE TypeScript and real WebAssembly compilation passed. The Vercel journal release generated 46 routes and was deployed to the existing production alias. The later analytics-only update uses the same deployment target. Existing contracts and database schema were not replaced.
+
+The local Anvil test executed 22 transactions using deployed testnet code, creating three labeled synthetic Circles and five fixture accounts, with three successful commitments, one failed commitment, one active commitment, and a weekly Pot close/claim. These are local fixtures, not live Monad receipts or real users.
+
+The production journal entry page's mobile Lighthouse lab result was performance 99, accessibility 100, and best practices 100. Its noindex policy intentionally excludes this private-account route from search. This is a signed-out route check; the authenticator fixture tests use actual SDK encryption but do not replace physical passkey confirmation.
+
+Live checks confirmed chain 10143, protocol v2, manifest/factory wiring, a working canonical snapshot and analytics API, and a progressing finalized index cursor. Authenticated Envio HyperSync returned a deployed-contract log. The public sample checked contained one Circle, two members, and one completed commitment; opted-in tester count was zero.
+
+User reported no errors on the requested live returning-passkey/journal save, lock/reopen and encrypted backup checks. These are user-reported results, not agent-observed biometrics. Backup import, injected-wallet and phone checks are not separately confirmed.
+
+Remaining readiness gaps: representative live failure/Pot and automatic-verification receipts; at least five real testers and feedback; CRE login/tenant deployment access (user confirms no account/access yet), trusted production forwarder/owner, receiver deployment/registration and activated workflow. Source-verification API returned403, so explorer verification remains unconfirmed. No new demo/pitch/bounty recordings were produced. CRE source/compiler tests do not establish a live DON integration. Contracts remain unaudited.

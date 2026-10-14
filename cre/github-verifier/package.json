@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prepare:receiver": "node ./prepare-receiver.mjs",
     "typecheck": "tsc --noEmit",
     "build": "cre-compile ./main.ts ./dist/workflow.wasm",
     "test": "bun test ./workflow.test.ts"

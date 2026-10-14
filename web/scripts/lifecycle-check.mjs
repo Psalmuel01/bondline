@@ -140,9 +140,9 @@ async function create(name, members) {
 const builders = await create("[Synthetic] Builders Circle", [alice, bob]);
 const fitness = await create("[Synthetic] Fitness Circle", [bob, carol]);
 const study = await create("[Synthetic] Study Circle", [alice, dan]);
-async function open(account, circle, goal, stake = "0.01", kind = 0) {
+async function open(account, circle, goal, stake = "0.01", kind = 0, duration = 120) {
   const id = await read("bondCount");
-  const deadline = BigInt((await now()) + 120);
+  const deadline = BigInt((await now()) + duration);
   if (kind === 0)
     await send(
       account,
@@ -211,7 +211,7 @@ await send(alice, core, coreAbi, "declareDone", [
   uri,
 ]);
 await send(dan, core, coreAbi, "cosign", [winner.id]);
-const active = await open(eve, builders, "Ship the next milestone");
+const active = await open(eve, builders, "Ship the next milestone", "0.01", 0, 14 * 86400);
 await send(alice, core, coreAbi, "backCommitment", [active.id]);
 await warp(Number(failed.deadline) + 1);
 await send(alice, core, coreAbi, "crossMissed", [failed.id]);

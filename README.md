@@ -6,7 +6,7 @@ Bondline brings goals, financial stakes, social accountability, and verification
 
 [Open Bondline](https://bondline-circle.vercel.app) · [Product guide](https://bondline-circle.vercel.app/guide) · [Documentation](https://bondline-circle.vercel.app/docs) · [Security](https://bondline-circle.vercel.app/security)
 
-![Bondline’s public homepage with a live Circle preview](docs/assets/homepage-desktop.png)
+![Bondline’s public homepage with an illustrative Circle preview](docs/assets/homepage-desktop.png)
 
 Actual rendered homepage; the chat is a labeled interactive illustration. [Mobile view and product captures](docs/assets/README.md).
 
@@ -59,7 +59,9 @@ The event pipeline consumes **Envio HyperSync** and has RPC fallback. It is not 
 
 **CRE code is now included:** a GitHub consensus workflow compiled to WebAssembly, plus a production receiver adapter and tests. It is not deployed or activated on the live app; see [CRE setup](cre/README.md). The Node worker is a separate integration. **Private journal:** Mera’s separate PRF-derived AES-GCM vault encrypts reflections on the device, with explicit lock, encrypted export/import, and recovery limits. Member chat remains access-controlled, not end-to-end encrypted.
 
-- **Private journal:** passkey-encrypted device-local reflections, encrypted backups, and a separate encryption key; no signing key or plaintext journal is persisted.
+## Why Monad
+
+Bondline uses small native-MON stakes and frequent social actions. Monad’s EVM compatibility lets the same Solidity escrow rules and viem tooling serve those flows, while finalized event retrieval keeps profiles and activity tied to settled outcomes. Transaction preparation estimates the full call and adds a small margin because Monad charges on the gas limit. These are implementation choices, not claims of independently measured throughput or guaranteed fees.
 
 ## Technology
 
@@ -142,8 +144,8 @@ The [written product guide](https://bondline-circle.vercel.app/guide) works with
 
 The [product capture pack](docs/assets/README.md) includes desktop/mobile homepages, real Circle history, documentation, security, and signed-out Activity/Profile introductions. Private signed-in flows require the account holder’s confirmation.
 
-The lighter homepage scored **100 accessibility and best practices on desktop/mobile**, with **86 mobile performance and 100 mobile SEO** in its latest lab run. All 21 frontend tests, the offline Foundry suite, TypeScript, and the production build passed. See the [release validation](docs/release-validation.md) for measurements, route checks, and the remaining manual sign-in/transaction checks. These results are not an independent security audit.
+The lighter homepage scored **100 accessibility and best practices on desktop/mobile**, with **86 mobile performance and 100 mobile SEO** in its latest lab run. Those measurements predate the journal release. The current release passes 27 frontend tests, 100 offline contract tests, 8 CRE SDK runtime tests, TypeScript checks, a 46-page Vercel production build, and CRE WebAssembly compilation. See the [release validation](docs/release-validation.md) for measurements, route checks, and the remaining manual sign-in/transaction checks. These results are not an independent security audit.
 
 ## Project history
 
-Bondline began as a Spark project on Monad with v1 Pot governance. The v2 work targets Metropolis’s consumer product experience, using Mera for accounts and Envio HyperSync for event retrieval. Sponsor or track eligibility is not a claim of award acceptance. CRE must not be claimed as a live DON deployment without its workflow/receiver receipts. The private journal is a genuine non-wallet Mera PRF use; its hardware flow and bounty eligibility still require verification.
+Bondline began as a Spark project on Monad with v1 Pot governance. The v2 work targets Metropolis’s consumer product experience, using Mera for accounts and Envio HyperSync for event retrieval. Sponsor or track eligibility is not a claim of award acceptance. CRE must not be claimed as a live DON deployment without its workflow/receiver receipts. The private journal is a genuine non-wallet Mera PRF use; the user reported its live passkey/save/lock/reopen/backup flow working, while bounty eligibility remains an organizer decision.

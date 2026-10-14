@@ -410,7 +410,7 @@ export const documentation: Record<string, Doc> = {
         title: "Verifier architecture and CRE status",
         paragraphs: [
           "scripts/verifier.mjs validates immutable GitHub specs, queries a bounded GitHub API response, hashes evidence, and can submit attestations from an authorized account. Configuration is worker-only; the frontend only receives the verifier address. --broadcast is an explicit spending action.",
-          "There is no CRE workflow in this repository. A future CRE implementation would need its own triggers, source validation, consensus and attestation design, supported chain setup, credentials, simulations, and operational deployment. Do not relabel the existing Node worker as CRE.",
+          "cre/github-verifier implements cron-triggered finalized Monad reads, bounded GitHub HTTP observations, identical consensus, signed reports, and EVM delivery. contracts/src/BondlineCREVerifier.sol authenticates the forwarder and workflow owner/name before calling the existing Core. SDK runtime tests and WebAssembly compilation pass; the receiver is not deployed or authorized and the workflow is not activated on the live app. See cre/README.md for exact setup.",
         ],
         links: [
           { label: "Verification guide", href: "/docs/verification" },
@@ -424,7 +424,7 @@ export const documentation: Record<string, Doc> = {
         title: "Mera and PRF",
         paragraphs: [
           "mera.ts creates or opens a PRF-enabled passkey, derives m/44'/60'/0'/0/0 through the pinned Mera/scure stack, opens a signing session, and closes it in finally. During connection the same session signs the server authentication challenge. Transaction signing prepares chain, gas, nonce, fees, and funding requirements before the ceremony.",
-          "No Mera app ID is required by the integration used here. RP_ID defaults to the current hostname; coordinate changes with existing credentials. PRF material is currently used for signing-account derivation only. There is no encrypted journal schema or application key separation implementation.",
+          "No Mera app ID is required by the integration used here. RP_ID defaults to the current hostname; coordinate changes with existing credentials. The device-local private journal reuses the passkey with separate random PRF salts and Mera’s encryption-specific HKDF/AES-GCM vault APIs. Journal context, titles, text, and timestamps are encrypted; backups bind to the account, network, domain, and credential. Signing keys and journal encryption keys are not stored.",
         ],
       },
       {
