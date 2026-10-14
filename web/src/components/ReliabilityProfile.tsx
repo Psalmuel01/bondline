@@ -109,6 +109,17 @@ export function ReliabilityProfile() {
             </p>
           )}
         </div>
+        <nav
+          aria-label="Profile tools"
+          className="ml-auto flex w-full flex-wrap gap-2 sm:w-auto"
+        >
+          <Link href="/journal" className="secondary-button">
+            Private journal
+          </Link>
+          <Link href="/settings" className="secondary-button">
+            Account settings
+          </Link>
+        </nav>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
