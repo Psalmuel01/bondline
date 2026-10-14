@@ -13,6 +13,7 @@ export type JournalEntry = {
   updatedAt: string;
   title: string;
   body: string;
+  commitment?: { id: string; core: string };
 };
 export type JournalDocument = { version: 1; entries: JournalEntry[] };
 export type JournalEnvelope = {
@@ -55,6 +56,13 @@ export function parseJournalDocument(input: unknown): JournalDocument {
     )
       throw new Error("A journal entry is invalid.");
     ids.add(entry.id);
+    if (entry.commitment !== undefined) {
+      const ref = entry.commitment;
+      if (!ref || typeof ref.id !== "string" || !/^\d{1,78}$/.test(ref.id) ||
+          BigInt(ref.id) >= 2n ** 256n || typeof ref.core !== "string" ||
+          !/^0x[0-9a-fA-F]{40}$/.test(ref.core) || /^0x0{40}$/i.test(ref.core))
+        throw new Error("A journal commitment reference is invalid.");
+    }
   }
   return doc;
 }

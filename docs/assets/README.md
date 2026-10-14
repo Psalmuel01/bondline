@@ -14,4 +14,4 @@ These are pixel-preserving crops of real rendered pages captured by Lighthouse i
 
 The homepage captures show the lighter design in deployment `dpl_AMrkTS7WQvLFQ7KznVjdUoL2tgKo`, before the final decorative grid visibility adjustment; the other captures are from the preceding UI deployment, before font and heading refinements. Data reflects capture time and can change.
 
-Authenticated dashboard, creation, private chat, and populated reliability-profile captures still require the account holder to sign in. Do not present signed-out introductions as those screens. No private-journal screenshot exists because that feature is not implemented. Use the [recording script](../../web/public/walkthrough-script.md) for the exact real states to capture.
+Authenticated dashboard, creation, private chat, and populated reliability-profile captures still require the account holder to sign in. Do not present signed-out introductions as those screens. The private journal is implemented and user-tested, but no private-journal screenshot is included. Use the [recording script](../../web/public/walkthrough-script.md) for the exact real states to capture.

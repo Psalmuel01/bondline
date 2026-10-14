@@ -47,6 +47,7 @@ const doc = {
       updatedAt: "2026-10-14T00:00:00Z",
       title: "A private goal",
       body: "My reflection must never be stored as plaintext.",
+      commitment: { id: "42", core: "0x9876543210987654321098765432109876543210" },
     },
   ],
 };
@@ -97,6 +98,7 @@ test("Mera journal encrypts, restores with the same passkey, and randomizes ever
   const serialized = JSON.stringify(first);
   assert.equal(serialized.includes(doc.entries[0].body), false);
   assert.equal(serialized.includes(doc.entries[0].title), false);
+  assert.equal(serialized.includes(doc.entries[0].commitment.core), false);
   assert.notEqual(first.vault.prfSalt, second.vault.prfSalt);
   assert.notEqual(first.vault.nonce, second.vault.nonce);
   assert.notEqual(first.vault.ciphertext, second.vault.ciphertext);
@@ -152,6 +154,12 @@ test("journal backups cannot cross accounts, domains or networks and entries are
   assert.throws(() =>
     parseJournalDocument({ ...doc, entries: [...doc.entries, ...doc.entries] }),
   );
+  for (const commitment of [
+    { id: "-1", core: owner },
+    { id: String(2n ** 256n), core: owner },
+    { id: "1", core: "0x0000000000000000000000000000000000000000" },
+  ]) assert.throws(() => parseJournalDocument({ ...doc, entries: [{ ...doc.entries[0], commitment }] }), /commitment/);
+  assert.doesNotThrow(() => parseJournalDocument({ ...doc, entries: [{ ...doc.entries[0], commitment: undefined }] }));
   assert.throws(() =>
     parseJournalDocument({
       ...doc,

@@ -33,7 +33,7 @@ The current v2 manifest targets **Monad testnet, chain ID 10143**, from block **
 | CircleFactory | `0x27c527934b115e64eed61c5f783a1060b540a6c4` |
 | Circle implementation | `0xb96f540bf5df893a06670705dc43f40cfc75ada6` |
 
-[Deployment manifest and receipts](docs/deployments/monad-testnet.json) · [Contract reference](https://bondline-circle.vercel.app/docs/contracts)
+[Deployment manifest and receipts](docs/deployments/monad-testnet.json) · [Source verification results](docs/deployments/monad-testnet-verification.json) · [Contract reference](https://bondline-circle.vercel.app/docs/contracts)
 
 The account menu and Security page use the configured chain and addresses. The website’s release does not deploy new contracts or move funds.
 
@@ -57,7 +57,7 @@ flowchart LR
 
 The event pipeline consumes **Envio HyperSync** and has RPC fallback. It is not a deployed HyperIndex/Envio Cloud indexer. The indexer writes finalized projections atomically, with a contiguous cursor and overlap-safe retries. Live contract state remains the authority for actions and accounting.
 
-**CRE code is now included:** a GitHub consensus workflow compiled to WebAssembly, plus a production receiver adapter and tests. It is not deployed or activated on the live app; see [CRE setup](cre/README.md). The Node worker is a separate integration. **Private journal:** Mera’s separate PRF-derived AES-GCM vault encrypts reflections on the device, with explicit lock, encrypted export/import, and recovery limits. Member chat remains access-controlled, not end-to-end encrypted.
+**CRE code is now included:** a GitHub consensus workflow compiled to WebAssembly, plus a production receiver adapter and tests. It is not deployed or activated on the live app; see [CRE setup](cre/README.md). The Node worker is a separate integration. **Private journal:** Mera’s separate PRF-derived AES-GCM vault encrypts reflections on the device, with explicit lock, encrypted export/import, private commitment associations, and recovery limits. Member chat remains access-controlled, not end-to-end encrypted.
 
 ## Why Monad
 

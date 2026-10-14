@@ -351,7 +351,7 @@ export const documentation: Record<string, Doc> = {
         title: "Private app features",
         paragraphs: [
           "The server verifies a signed nonce challenge before issuing a seven-day HttpOnly session cookie. Chat requests check current on-chain Circle membership. Profile and Circle changes are authorized server-side; database administrator keys are not sent to the browser.",
-          "Chat is access-controlled, not end-to-end encrypted. Project operators and database infrastructure can access stored messages. Display images, profiles, and Circle metadata are public. Do not upload sensitive content. A PRF-encrypted private journal is not implemented.",
+          "Chat is access-controlled, not end-to-end encrypted. Project operators and database infrastructure can access stored messages. Display images, profiles, and Circle metadata are public. Do not upload sensitive content. The separate private journal encrypts notes on your device using Mera’s PRF vault; its plaintext is not sent to chat or the database.",
         ],
       },
       {
@@ -381,7 +381,7 @@ export const documentation: Record<string, Doc> = {
     sections: [
       {
         title: "System map",
-        code: "Browser / Next.js UI\n  ├─ Mera passkey → short-lived signing account → Monad\n  ├─ wagmi + viem → contract reads and confirmations\n  └─ signed app session → Next.js social API → Supabase\n\nMonad events → Envio HyperSync (or RPC)\n  → resumable Next.js indexer → atomic Supabase projections\n  → dashboard / Circle snapshots and public activity\n\nOptional GitHub worker → trusted on-chain attestation\nPlanned: CRE orchestration; encrypted private journal",
+        code: "Browser / Next.js UI\n  ├─ Mera passkey → short-lived signing account → Monad\n  ├─ wagmi + viem → contract reads and confirmations\n  └─ signed app session → Next.js social API → Supabase\n\nMonad events → Envio HyperSync (or RPC)\n  → resumable Next.js indexer → atomic Supabase projections\n  → dashboard / Circle snapshots and public activity\n\nOptional GitHub worker → trusted on-chain attestation\nMera PRF vault → encrypted device-local journal / backups\nCRE workflow + receiver → compiled/tested; live activation pending",
       },
       {
         title: "Contracts and events",
@@ -569,7 +569,7 @@ export const documentation: Record<string, Doc> = {
         title: "Write privately",
         paragraphs: [
           "Open Private journal from your account menu or Settings. Passkey accounts can create a journal, add reflections, edit or delete entries, and encrypt and save them. Browser-wallet accounts continue to use Circles and commitments; this journal requires Mera’s passkey PRF.",
-          "Nothing in a journal is posted to Circle chat, commitment evidence, or the blockchain. No gas is needed. Unsaved changes stay in the current page’s memory; save before navigating away.",
+          "You can privately associate a reflection with one of your commitments. The commitment ID and deployment address are encrypted with the note, so saved references do not silently change when a deployment changes. Nothing in a journal is posted to Circle chat, commitment evidence, or the blockchain. No gas is needed. Unsaved changes stay in the current page’s memory; save before navigating away.",
         ],
         links: [{ label: "Open your journal", href: "/journal" }],
       },
@@ -577,7 +577,7 @@ export const documentation: Record<string, Doc> = {
         title: "Encryption and storage",
         paragraphs: [
           "Bondline uses Mera’s createSecretVaultWithExistingPasskey and decryptSecretVaultWithPasskey APIs. Each save uses a fresh random 32-byte PRF salt and a fresh 12-byte AES-GCM nonce. Mera derives a non-extractable AES-256-GCM key with HKDF-SHA-256 and its encryption-specific info string, distinct from the wallet signing derivation.",
-          "Only the encrypted vault is stored in browser storage. Titles, text, and entry timestamps are inside the ciphertext. Backup metadata includes the account address, chain ID, passkey domain, credential identifier, salt, and nonce. Plaintext is held in memory while open; an unlocked page, compromised device, or malicious application script could access it. This is encryption at rest, not a claim of an audited end-to-end privacy system.",
+          "Only the encrypted vault is stored in browser storage. Titles, text, optional commitment references, and entry timestamps are inside the ciphertext. Backup metadata includes the account address, chain ID, passkey domain, credential identifier, salt, and nonce. Plaintext is held in memory while open; an unlocked page, compromised device, or malicious application script could access it. This is encryption at rest, not a claim of an audited end-to-end privacy system.",
         ],
       },
       {

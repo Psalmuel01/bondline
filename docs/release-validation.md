@@ -103,3 +103,13 @@ Live checks confirmed chain 10143, protocol v2, manifest/factory wiring, a worki
 User reported no errors on the requested live returning-passkey/journal save, lock/reopen and encrypted backup checks. These are user-reported results, not agent-observed biometrics. Backup import, injected-wallet and phone checks are not separately confirmed.
 
 Remaining readiness gaps: representative live failure/Pot and automatic-verification receipts; at least five real testers and feedback; CRE login/tenant deployment access (user confirms no account/access yet), trusted production forwarder/owner, receiver deployment/registration and activated workflow. Source-verification API returned403, so explorer verification remains unconfirmed. No new demo/pitch/bounty recordings were produced. CRE source/compiler tests do not establish a live DON integration. Contracts remain unaudited.
+
+## Non-CRE bounty closure checks
+
+The user excluded Community Team and Privy. The authenticated portal entry selects Consumer Products & Payments, Envio, both Mera bounties, and CRE. Envio's actual requirement expressly accepts HyperIndex, HyperSync or HyperRPC meaningfully driving an app feature; a HyperIndex Cloud deployment is not required by that field. Sponsor videos for Envio and both Mera entries are optional. CRE's required video accepts a successful official CLI simulation or a live deployment; its current zero-report preflight is not a full GitHub-verification demonstration.
+
+The user confirmed encrypted journal backup import restored the same notes without errors, following the earlier save/lock/reopen/export check. Private reflections can now optionally reference the user's commitment and Core deployment, with that association inside the encrypted document. Existing unlinked notes/backups remain compatible.
+
+The Core, Factory and Circle implementation runtime artifacts match deployed bytecode with constructor immutables masked. Their compiler source bytes exactly match the already-public repository. The verification API returned success for all three on MonadVision (perfect match) and MonadScan (verified); see deployments/monad-testnet-verification.json. The public Git main matched local commit 7a377f1 before this follow-up change.
+
+At the fresh live check there were two Circles, one completed commitment, zero tester-cohort enrollments, and a progressing canonical cursor. Representative live balance/failure/Pot checks and at least five real people still need confirmation. Submission is locked/read-only on the portal; no submission fields were changed during this audit.

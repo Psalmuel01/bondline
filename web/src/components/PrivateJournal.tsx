@@ -5,6 +5,8 @@ import { useAccount } from "wagmi";
 import { ConnectButton } from "./ConnectButton";
 import { EmptyState } from "./ui/EmptyState";
 import { monadMainnet } from "@/lib/chain";
+import { CORE_ADDRESS } from "@/lib/contracts";
+import { useBonds } from "@/lib/hooks";
 import {
   encryptJournal,
   decryptJournal,
@@ -13,10 +15,39 @@ import {
   MAX_JOURNAL_BYTES,
   type JournalDocument,
   type JournalEnvelope,
+  type JournalEntry,
 } from "@/lib/journal";
 import type { PasskeyCredentialMetadata } from "@category-labs/mera";
 
 const empty: JournalDocument = { version: 1, entries: [] };
+function JournalCommitmentPicker({ owner, value, disabled, onChange }: {
+  owner: string;
+  value: JournalEntry["commitment"];
+  disabled: boolean;
+  onChange: (value: JournalEntry["commitment"]) => void;
+}) {
+  const { bonds, isLoading, error } = useBonds();
+  const own = bonds.filter((bond) => bond.creator.toLowerCase() === owner.toLowerCase());
+  const selection = value ? `${value.core.toLowerCase()}:${value.id}` : "";
+  const found = own.some((bond) => `${CORE_ADDRESS.toLowerCase()}:${bond.id}` === selection);
+  return (
+    <label className="mt-5 block text-sm">
+      Commitment <span className="text-muted">(optional)</span>
+      <select className="product-field mt-2" value={selection} disabled={disabled || isLoading}
+        onChange={(event) => {
+          const bond = own.find((item) => `${CORE_ADDRESS.toLowerCase()}:${item.id}` === event.target.value);
+          onChange(bond ? { id: String(bond.id), core: CORE_ADDRESS } : undefined);
+        }}>
+        <option value="">No commitment · a general reflection</option>
+        {value && !found && <option value={selection}>Saved commitment #{value.id}</option>}
+        {own.map((bond) => <option key={String(bond.id)} value={`${CORE_ADDRESS.toLowerCase()}:${bond.id}`}>#{String(bond.id)} · {bond.description}</option>)}
+      </select>
+      <span className="mt-2 block text-xs text-muted">
+        {error ? "Commitments could not load. Your saved link is preserved." : isLoading ? "Loading your commitments…" : "This connection and your note stay inside the encrypted journal. Your Circle cannot read them."}
+      </span>
+    </label>
+  );
+}
 export function PrivateJournal() {
   const { address, connector } = useAccount();
   const [document, setDocument] = useState<JournalDocument | null>(null);
@@ -386,6 +417,13 @@ export function PrivateJournal() {
                     placeholder="What did you learn today?"
                   />
                 </label>
+                <JournalCommitmentPicker owner={address} value={entry.commitment} disabled={busy}
+                  onChange={(commitment) => {
+                    setDocument({ ...document, entries: document.entries.map((item) => item.id === entry.id
+                      ? { ...item, commitment, updatedAt: new Date().toISOString() } : item) });
+                    setDirty(true);
+                    setNotice("");
+                  }} />
                 <label className="mt-5 block text-sm">
                   Your reflection
                   <textarea
