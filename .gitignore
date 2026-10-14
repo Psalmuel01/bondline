@@ -28,3 +28,8 @@ skills-lock.json
 # misc
 .DS_Store
 *.log
+
+# Local workflow settings, compiled bundles, and test reports
+cre/**/config.local.json
+cre/**/dist/
+cre/**/artifacts/

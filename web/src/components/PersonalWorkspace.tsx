@@ -13,7 +13,7 @@ import { BondCard } from "./BondCard";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { ConnectButton } from "./ConnectButton";
 import { EmptyState } from "./ui/EmptyState";
-import { Modal } from "./ui/Modal";
+import { CommitmentLauncher } from "./CommitmentLauncher";
 export function PersonalWorkspace({ view }: { view: string }) {
   const { address } = useAccount();
   const {
@@ -30,7 +30,6 @@ export function PersonalWorkspace({ view }: { view: string }) {
   const now = useNow();
   const [filter, setFilter] = useState("active");
   const [scope, setScope] = useState("mine");
-  const [choosing, setChoosing] = useState(false);
   const activity = useAccountActivity(circles);
   const joined = circles.filter((c) =>
     c.members.some((m) => m.toLowerCase() === address?.toLowerCase()),
@@ -72,12 +71,11 @@ export function PersonalWorkspace({ view }: { view: string }) {
             </p>
           </div>
           {address && view === "commitments" && (
-            <button
-              className="primary-button"
-              onClick={() => setChoosing(true)}
-            >
-              ＋ Make a commitment
-            </button>
+            <CommitmentLauncher
+              circles={joined}
+              loading={circlesLoading}
+              onCreated={refresh}
+            />
           )}
         </div>
         {!address ? (
@@ -219,12 +217,11 @@ export function PersonalWorkspace({ view }: { view: string }) {
                       : "You haven’t made a commitment in this view"
                 }
                 action={
-                  <button
-                    className="primary-button"
-                    onClick={() => setChoosing(true)}
-                  >
-                    Make a commitment →
-                  </button>
+                  <CommitmentLauncher
+                    circles={joined}
+                    loading={circlesLoading}
+                    onCreated={refresh}
+                  />
                 }
               >
                 A commitment brings together a goal, deadline, stake, and a
@@ -234,42 +231,6 @@ export function PersonalWorkspace({ view }: { view: string }) {
           </>
         )}
       </main>
-      <Modal
-        open={choosing}
-        onClose={() => setChoosing(false)}
-        title="Choose your Circle"
-      >
-        <div className="space-y-3 p-6">
-          {joined.length ? (
-            joined.map((c) => (
-              <Link
-                key={c.address}
-                href={`/circle/${c.address}?view=commitments`}
-                onClick={() => setChoosing(false)}
-                className="motion-card flex items-center justify-between rounded-xl border border-line p-4 text-sm hover:border-gold/40"
-              >
-                {c.name}
-                <span className="text-gold">Open →</span>
-              </Link>
-            ))
-          ) : (
-            <EmptyState
-              title="Start with your people"
-              action={
-                <Link
-                  className="primary-button"
-                  href="/"
-                  onClick={() => setChoosing(false)}
-                >
-                  Create or join a Circle →
-                </Link>
-              }
-            >
-              You need to belong to a Circle before committing a stake.
-            </EmptyState>
-          )}
-        </div>
-      </Modal>
       <Footer />
     </div>
   );

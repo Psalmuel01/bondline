@@ -116,7 +116,7 @@ export const faq = [
   },
   {
     q: "Are chat and journals encrypted?",
-    a: "Circle chat is protected by sign-in and membership checks, but it is not end-to-end encrypted. Project operators can access stored messages. An encrypted private journal is not implemented. Profiles, images, commitment descriptions, and evidence links should be treated as public.",
+    a: "Circle chat is protected by sign-in and membership checks, but it is not end-to-end encrypted. Project operators can access stored messages. The private journal uses a separate Mera PRF-derived encryption key and stores ciphertext on your device. Export encrypted backups; losing the passkey or unbacked local data can make notes unrecoverable. Profiles, images, commitment descriptions, and evidence links should be treated as public.",
   },
   {
     q: "What network does Bondline use?",
@@ -247,7 +247,7 @@ export const publicPages: Record<string, PublicPage> = {
       {
         title: "Where we can go next · planned",
         paragraphs: [
-          "Fitness providers, learning platforms, custom external providers, and CRE orchestration are future integration work. None is presented as live in this build. Encrypted private journals are also not available.",
+          "Fitness providers, learning platforms, custom external providers, and CRE orchestration are future integration work. None is presented as live in this build. A device-local, passkey-encrypted private journal is available separately from public evidence and Circle chat.",
         ],
         links: [
           {

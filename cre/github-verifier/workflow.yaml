@@ -1,0 +1,6 @@
+staging-settings:
+  user-workflow:
+    workflow-name: "bondline-github"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.local.json"

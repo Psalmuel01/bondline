@@ -57,11 +57,13 @@ flowchart LR
 
 The event pipeline consumes **Envio HyperSync** and has RPC fallback. It is not a deployed HyperIndex/Envio Cloud indexer. The indexer writes finalized projections atomically, with a contiguous cursor and overlap-safe retries. Live contract state remains the authority for actions and accounting.
 
-**CRE is not implemented.** The current GitHub verifier is a Node worker, not a Chainlink CRE workflow. **An encrypted private journal is not implemented.** PRF material currently derives the signing account; member chat is access-controlled, not end-to-end encrypted.
+**CRE code is now included:** a GitHub consensus workflow compiled to WebAssembly, plus a production receiver adapter and tests. It is not deployed or activated on the live app; see [CRE setup](cre/README.md). The Node worker is a separate integration. **Private journal:** Mera’s separate PRF-derived AES-GCM vault encrypts reflections on the device, with explicit lock, encrypted export/import, and recovery limits. Member chat remains access-controlled, not end-to-end encrypted.
+
+- **Private journal:** passkey-encrypted device-local reflections, encrypted backups, and a separate encryption key; no signing key or plaintext journal is persisted.
 
 ## Technology
 
-Next.js 16 / React 19 · TypeScript · wagmi / viem · Mera 0.2 · Solidity / Foundry · Supabase PostgreSQL and Storage · Envio HyperSync · Vercel.
+Next.js 16 / React 19 · TypeScript · wagmi / viem · Mera 0.2 · Solidity / Foundry · Supabase PostgreSQL and Storage · Envio HyperSync · Chainlink CRE SDK · Vercel.
 
 ## Run locally
 
@@ -144,4 +146,4 @@ The lighter homepage scored **100 accessibility and best practices on desktop/mo
 
 ## Project history
 
-Bondline began as a Spark project on Monad with v1 Pot governance. The v2 work targets Metropolis’s consumer product experience, using Mera for accounts and Envio HyperSync for event retrieval. Sponsor or track eligibility is not a claim of award acceptance. CRE and a non-wallet PRF journal must not be claimed as completed integrations.
+Bondline began as a Spark project on Monad with v1 Pot governance. The v2 work targets Metropolis’s consumer product experience, using Mera for accounts and Envio HyperSync for event retrieval. Sponsor or track eligibility is not a claim of award acceptance. CRE must not be claimed as a live DON deployment without its workflow/receiver receipts. The private journal is a genuine non-wallet Mera PRF use; its hardware flow and bounty eligibility still require verification.

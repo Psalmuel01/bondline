@@ -355,64 +355,96 @@ export function CircleDetail({
                       description="The friends who make showing up a little easier."
                     />
                     <div className="overflow-hidden rounded-2xl border border-line bg-panel">
-                      {circle.members.map((m) => (
-                        <div
-                          key={m}
-                          className="flex items-center gap-4 border-b border-line/70 p-5 last:border-0"
-                        >
-                          <Avatar
-                            addr={m}
-                            size={42}
-                            you={m.toLowerCase() === address?.toLowerCase()}
-                            imageUrl={profiles[m.toLowerCase()]?.avatar_url}
-                            color={profiles[m.toLowerCase()]?.avatar_color}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium">
-                              <ProfileName
-                                address={m}
-                                profile={profiles[m.toLowerCase()]}
-                                editable={
-                                  profilesEnabled &&
-                                  m.toLowerCase() === address?.toLowerCase()
-                                }
-                                onSave={(profile) => saveProfile(m, profile)}
-                              />
-                            </div>
-                            <a
-                              href={explorerAddr(m)}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="tnum mt-1 block text-xs text-muted hover:text-gold"
+                      {[...circle.members]
+                        .sort((a, b) => {
+                          const left = reliability(
+                            circleBonds.filter(
+                              (goal) =>
+                                goal.creator.toLowerCase() === a.toLowerCase(),
+                            ),
+                          );
+                          const right = reliability(
+                            circleBonds.filter(
+                              (goal) =>
+                                goal.creator.toLowerCase() === b.toLowerCase(),
+                            ),
+                          );
+                          return (
+                            right.completed - left.completed ||
+                            (right.percentage ?? -1) -
+                              (left.percentage ?? -1) ||
+                            a.toLowerCase().localeCompare(b.toLowerCase())
+                          );
+                        })
+                        .map((m, rank) => (
+                          <div
+                            key={m}
+                            className="flex items-center gap-4 border-b border-line/70 p-5 last:border-0"
+                          >
+                            <span
+                              className="tnum w-5 shrink-0 text-xs text-faint"
+                              aria-label={`Rank ${rank + 1}`}
                             >
-                              {shortAddr(m)} ↗
-                            </a>
-                          </div>
-                          <div className="text-right">
-                            <p className="tnum text-xs text-bone">
-                              {
-                                reliability(
-                                  circleBonds.filter(
-                                    (b) =>
-                                      b.creator.toLowerCase() ===
-                                      m.toLowerCase(),
-                                  ),
-                                ).completed
-                              }{" "}
-                              completed
-                            </p>
-                            <p className="mt-1 text-[10px] text-faint">
-                              In this Circle
-                            </p>
-                            <span className="text-xs text-faint">
-                              {m.toLowerCase() === address?.toLowerCase()
-                                ? "You"
-                                : "Member"}
+                              {rank + 1}
                             </span>
+                            <Avatar
+                              addr={m}
+                              size={42}
+                              you={m.toLowerCase() === address?.toLowerCase()}
+                              imageUrl={profiles[m.toLowerCase()]?.avatar_url}
+                              color={profiles[m.toLowerCase()]?.avatar_color}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium">
+                                <ProfileName
+                                  address={m}
+                                  profile={profiles[m.toLowerCase()]}
+                                  editable={
+                                    profilesEnabled &&
+                                    m.toLowerCase() === address?.toLowerCase()
+                                  }
+                                  onSave={(profile) => saveProfile(m, profile)}
+                                />
+                              </div>
+                              <a
+                                href={explorerAddr(m)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="tnum mt-1 block text-xs text-muted hover:text-gold"
+                              >
+                                {shortAddr(m)} ↗
+                              </a>
+                            </div>
+                            <div className="text-right">
+                              <p className="tnum text-xs text-bone">
+                                {
+                                  reliability(
+                                    circleBonds.filter(
+                                      (b) =>
+                                        b.creator.toLowerCase() ===
+                                        m.toLowerCase(),
+                                    ),
+                                  ).completed
+                                }{" "}
+                                completed
+                              </p>
+                              <p className="mt-1 text-[10px] text-faint">
+                                In this Circle
+                              </p>
+                              <span className="text-xs text-faint">
+                                {m.toLowerCase() === address?.toLowerCase()
+                                  ? "You"
+                                  : "Member"}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
                     </div>
+                    <p className="text-xs leading-6 text-muted">
+                      Ordered by completed commitments, then completion rate.
+                      This is your Circle’s follow-through record, not a credit
+                      score.
+                    </p>
                     {hasV2 && (
                       <CircleMembership circle={circle} onChange={refreshAll} />
                     )}

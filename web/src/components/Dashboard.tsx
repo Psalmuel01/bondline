@@ -10,6 +10,7 @@ import { circleSnapshotKey, getCircleSnapshot } from "@/lib/snapshots";
 import { reliability } from "@/lib/reliability";
 import { formatMon, countdownParts } from "@/lib/format";
 import Link from "next/link";
+import { CommitmentLauncher } from "./CommitmentLauncher";
 import { CircleCard } from "./CircleCard";
 import { GettingStartedChecklist } from "./GettingStartedChecklist";
 import { CreateCircle } from "./CreateCircle";
@@ -129,12 +130,16 @@ export function Dashboard() {
               <p className="mt-1 text-xs text-muted">{label}</p>
             </div>
           ))}
-          <Link
-            href="/profile"
-            className="ml-auto self-center text-sm text-gold"
-          >
-            Your progress ↗
-          </Link>
+          <div className="ml-auto flex flex-wrap items-center gap-4 self-center">
+            <Link href="/profile" className="text-sm text-gold">
+              Your progress ↗
+            </Link>
+            <CommitmentLauncher
+              circles={mine}
+              loading={isLoading}
+              onCreated={refreshAll}
+            />
+          </div>
         </div>
       )}
       {address && upcoming.length > 0 && (

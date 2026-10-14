@@ -38,7 +38,8 @@ export const policyPages: Record<string, PublicPage> = {
         title: "Cookies and browser storage",
         bullets: [
           "An HttpOnly sign-in cookie lasts up to seven days. A short-lived nonce cookie lasts up to five minutes. They establish identity for private app features.",
-          "Browser storage retains a Mera credential identifier, onboarding state, notification preferences, and notification read state. Signing keys are not deliberately persisted there.",
+          "Browser storage retains a Mera credential identifier, onboarding state, notification preferences, notification read state, and encrypted journal vaults. Signing or journal encryption keys are not deliberately persisted there. Journal plaintext stays in memory while open; saved notes lock when the page is hidden. Unsaved notes remain open until saved or discarded.",
+          "The private journal is stored only on the device and is not uploaded by Bondline. Export an encrypted backup before clearing storage. Import requires the same account, network, domain, and available passkey; Bondline cannot recover a lost encryption key. An unlocked page or compromised device can expose notes.",
           "Preference and notification state is stored per account and deployment network on the device; it is not synced between devices.",
           "Clearing browser storage does not delete a passkey from your password manager or erase on-chain history. Passkey recovery belongs to your provider.",
         ],

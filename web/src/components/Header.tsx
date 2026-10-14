@@ -28,7 +28,8 @@ export function Header() {
       pathname.startsWith("/app/") ||
       pathname.startsWith("/circle/") ||
       pathname === "/profile" ||
-      pathname === "/settings");
+      pathname === "/settings" ||
+      pathname === "/journal");
   const links = inApp ? appLinks : publicLinks;
   return (
     <>

@@ -265,6 +265,7 @@ export function SettingsExperience() {
             </button>
           </div>
           <div className="mt-5 flex flex-wrap gap-4 text-sm text-gold">
+            <Link href="/journal">Private journal →</Link>
             <Link href="/privacy">Privacy notice ↗</Link>
             <Link href="/contact">Data removal questions ↗</Link>
           </div>
@@ -307,7 +308,7 @@ export function SettingsExperience() {
           </ul>
           <p className="mt-5 text-xs leading-6 text-muted">
             A configured worker address does not establish uptime. Fitness,
-            learning, CRE, and encrypted journals are not integrated.
+            learning, and CRE production workflows are not active.
           </p>
           <Link
             href="/docs/verification"

@@ -1,0 +1,19 @@
+{
+  "name": "bondline-cre-github-verifier",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "cre-compile ./main.ts ./dist/workflow.wasm",
+    "test": "bun test ./workflow.test.ts"
+  },
+  "dependencies": {
+    "@chainlink/cre-sdk": "1.23.0",
+    "viem": "2.55.2",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "24.0.0",
+    "typescript": "5.9.3"
+  }
+}

@@ -230,6 +230,13 @@ export function ConnectButton({
                   Your commitment history →
                 </Link>
                 <Link
+                  href="/journal"
+                  onClick={close}
+                  className="secondary-button mt-3 w-full"
+                >
+                  Private journal →
+                </Link>
+                <Link
                   onClick={close}
                   href="/settings"
                   className="text-sm text-muted hover:text-gold"

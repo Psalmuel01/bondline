@@ -239,7 +239,7 @@ export const documentation: Record<string, Doc> = {
           "Fitness providers: no wearable or fitness API integration is live.",
           "Learning providers: no course platform integration is live.",
           "Custom external signals: the attestation contract path exists; provider integrations need implementation and explicit trust review.",
-          "Chainlink CRE orchestration: not integrated or deployed in the current build. The existing GitHub worker is a normal Node process, not a CRE workflow.",
+          "A Chainlink CRE GitHub workflow and a separate production receiver are included in the repository. They are not deployed or operating on the current public app. The Node worker remains a separate option; do not describe it as CRE execution.",
         ],
         links: [
           {
@@ -560,22 +560,37 @@ export const documentation: Record<string, Doc> = {
     ],
   },
   "private-journal": {
-    title: "Private journal status",
+    title: "Private journal",
     description:
-      "No encrypted journal is available in the current application.",
+      "Personal reflections encrypted with the same Mera passkey, using a separate PRF-derived encryption key.",
     group: "Trust",
     sections: [
       {
-        title: "What exists today",
+        title: "Write privately",
         paragraphs: [
-          "Bondline uses Mera’s PRF-derived material for a signing account. It does not currently provide a private journal, encrypt Circle chat end to end, or store PRF-derived encryption keys for notes.",
+          "Open Private journal from your account menu or Settings. Passkey accounts can create a journal, add reflections, edit or delete entries, and encrypt and save them. Browser-wallet accounts continue to use Circles and commitments; this journal requires Mera’s passkey PRF.",
+          "Nothing in a journal is posted to Circle chat, commitment evidence, or the blockchain. No gas is needed. Unsaved changes stay in the current page’s memory; save before navigating away.",
+        ],
+        links: [{ label: "Open your journal", href: "/journal" }],
+      },
+      {
+        title: "Encryption and storage",
+        paragraphs: [
+          "Bondline uses Mera’s createSecretVaultWithExistingPasskey and decryptSecretVaultWithPasskey APIs. Each save uses a fresh random 32-byte PRF salt and a fresh 12-byte AES-GCM nonce. Mera derives a non-extractable AES-256-GCM key with HKDF-SHA-256 and its encryption-specific info string, distinct from the wallet signing derivation.",
+          "Only the encrypted vault is stored in browser storage. Titles, text, and entry timestamps are inside the ciphertext. Backup metadata includes the account address, chain ID, passkey domain, credential identifier, salt, and nonce. Plaintext is held in memory while open; an unlocked page, compromised device, or malicious application script could access it. This is encryption at rest, not a claim of an audited end-to-end privacy system.",
         ],
       },
       {
-        title: "What an encrypted journal would require",
+        title: "Lock and recover",
         paragraphs: [
-          "A future implementation needs domain-separated key derivation distinct from transaction signing, authenticated encryption, a documented ciphertext storage boundary, nonce handling, recovery design, and failure testing. Losing the required passkey could make encrypted notes permanently unreadable.",
-          "Until that implementation exists and is reviewed, do not treat chat, profile fields, evidence links, or local drafts as a private encrypted journal.",
+          "Saved notes lock when this page is hidden. Unsaved edits stay open so changing tabs does not silently destroy a draft; explicitly lock to discard them. Signing out or changing accounts clears the open journal.",
+          "Export an encrypted backup after saving. Import on the same passkey domain, network, and account; the original passkey must still be available. Import decrypts and validates the file before replacing saved data. There is no custody backend, automatic cloud backup, reset service, or recovery phrase. Losing the passkey can make notes permanently unreadable. Clearing browser storage without a backup deletes this device’s journal.",
+        ],
+      },
+      {
+        title: "Limits and tests",
+        paragraphs: [
+          "The journal supports up to 100 reflections, 120-character titles, and 8,000-character bodies. Backups are bounded to 2 MB. Tests exercise the real Mera vault APIs using an isolated authenticator fixture: encryption/restore, fresh salts and nonces, tamper rejection, credential binding, account/network/domain boundaries, and malformed entries. Actual biometric and multi-device recovery must still be checked on the devices you intend to use.",
         ],
       },
     ],

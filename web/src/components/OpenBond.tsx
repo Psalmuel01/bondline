@@ -29,6 +29,7 @@ export function OpenBond({
   const [description, setDescription] = useState("");
   const [stake, setStake] = useState("");
   const [hours, setHours] = useState(72);
+  const [customDeadline, setCustomDeadline] = useState("");
   const [kind, setKind] = useState(0);
   const [target, setTarget] = useState("1");
   const [repo, setRepo] = useState("");
@@ -53,9 +54,19 @@ export function OpenBond({
       commits <= 100);
 
   const stakeNum = Number(stake);
+  const customTimestamp = customDeadline
+    ? Math.floor(new Date(customDeadline).getTime() / 1000)
+    : undefined;
+  const deadlineValid =
+    customTimestamp === undefined ||
+    (Number.isFinite(customTimestamp) &&
+      customTimestamp > Date.now() / 1000 &&
+      customTimestamp <= Date.now() / 1000 + 30 * 86400);
+  const goalBytes = new TextEncoder().encode(description.trim()).length;
   const canSubmit =
     description.trim().length > 0 &&
-    description.trim().length <= 280 &&
+    goalBytes <= 280 &&
+    deadlineValid &&
     /^\d+(\.\d{1,18})?$/.test(stake) &&
     stakeNum > 0 &&
     stakeNum <= 1000000 &&
@@ -130,6 +141,12 @@ export function OpenBond({
               {description.length}/280
             </span>
           </label>
+          {goalBytes > 280 && (
+            <p role="alert" className="text-xs text-forfeit">
+              This goal is too long. Shorten it before continuing; some
+              characters take more space.
+            </p>
+          )}
           <fieldset>
             <legend className="mb-3 text-sm font-medium">
               Give yourself a deadline
@@ -139,14 +156,31 @@ export function OpenBond({
                 <button
                   type="button"
                   key={p.hours}
-                  aria-pressed={hours === p.hours}
-                  onClick={() => setHours(p.hours)}
-                  className={`min-h-12 rounded-xl border text-sm ${hours === p.hours ? "border-gold/50 bg-gold/10 text-gold" : "border-line text-muted"}`}
+                  aria-pressed={!customDeadline && hours === p.hours}
+                  onClick={() => {
+                    setHours(p.hours);
+                    setCustomDeadline("");
+                  }}
+                  className={`min-h-12 rounded-xl border text-sm ${!customDeadline && hours === p.hours ? "border-gold/50 bg-gold/10 text-gold" : "border-line text-muted"}`}
                 >
                   {p.label}
                 </button>
               ))}
             </div>
+            <label className="mt-4 block text-xs text-muted">
+              Or choose an exact date and time
+              <input
+                type="datetime-local"
+                value={customDeadline}
+                onChange={(e) => setCustomDeadline(e.target.value)}
+                className="product-field mt-2"
+              />
+            </label>
+            {!deadlineValid && (
+              <p role="alert" className="mt-2 text-xs text-forfeit">
+                Choose a future date within the next 30 days.
+              </p>
+            )}
           </fieldset>
           <label className="block text-sm font-medium">
             Your stake <span className="font-normal text-muted">in MON</span>
@@ -244,7 +278,10 @@ export function OpenBond({
             disabled={!canSubmit || busy}
             onClick={() => {
               setReviewDeadline(
-                BigInt(Math.floor(Date.now() / 1000) + hours * 3600),
+                BigInt(
+                  customTimestamp ??
+                    Math.floor(Date.now() / 1000) + hours * 3600,
+                ),
               );
               setReviewing(true);
             }}
