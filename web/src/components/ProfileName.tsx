@@ -107,9 +107,9 @@ export function ProfileName({
               setSaving(false);
             }
           }}
-          className="w-full max-w-xl rounded-2xl border border-panel-hi bg-panel p-6 shadow-2xl shadow-black/30 sm:p-7"
+          className="w-full p-6 sm:p-7"
         >
-          <div className="mt-6 flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <div
               className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full text-lg font-semibold text-bone"
               style={{ background: color }}

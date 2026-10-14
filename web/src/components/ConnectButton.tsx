@@ -156,7 +156,7 @@ export function ConnectButton({
         onClick={(event) => {
           if (event.target === dialog.current) close();
         }}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-sm overflow-y-auto rounded-2xl border border-line bg-panel p-0 text-bone shadow-2xl backdrop:bg-black/65 backdrop:backdrop-blur-sm"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-sm md:max-w-lg overflow-y-auto rounded-2xl border border-line bg-panel p-0 text-bone shadow-2xl backdrop:bg-black/65 backdrop:backdrop-blur-sm"
       >
         <div className="p-6">
           <div className="mb-5 flex items-center justify-between gap-4">
