@@ -2,7 +2,7 @@
 
 This package implements a real Chainlink CRE workflow using HTTP, consensus, finalized EVM reads, report generation, and EVM report delivery. It compiles to WebAssembly. Its tests run through the official SDK's capability/runtime harness. A separate Solidity receiver connects authenticated reports to the existing v2 Core's `attest` entry point.
 
-**Operational status:** source, WebAssembly compilation, SDK runtime tests, and receiver lifecycle/security tests are complete. No receiver is registered on the public Core and no workflow is activated on a DON. A local test or dry run is not evidence of live settlement. Do not claim the CRE bounty as fully demonstrated until the real Monad receipt and workflow execution evidence exist.
+**Operational status:** the official authenticated CRE CLI end-to-end LOCAL simulation passed with real GitHub HTTP evidence, consensus/report delivery, a verified 0.01 local-MON refund, insufficient-evidence waiting, and deadline failure reserving 0.01 local MON in the Circle Pot. All 104 contract tests pass, including public-chain rejection of the local adapter. The Metropolis requirement accepts a successful CLI simulation or a live deployment; its required demonstration video remains to be recorded. No receiver is registered on the public Core and no workflow is activated on a DON. Local receipts are not live Monad receipts or real-user traction.
 
 ## Data path
 
@@ -125,3 +125,11 @@ pnpm --dir cre/github-verifier simulate:local inspect
 The runner validates exact loopback RPC, Anvil identity and chain 31337 before every mutation. Its `--broadcast` is confined to that local endpoint and uses PUBLIC deterministic fixture-key material, not a user's or agent's wallet key. No signing key is written to an env file. Local balance is synthetic. The checked-in local RPC target must not be repointed; the runner rejects a changed URL. Config and local-state files are ignored. Do not enable this adapter in Vercel or the live Core.
 
 Inspect real local Core outcomes: the qualifying goal should reach status 2 and return its stake; insufficient evidence should remain status 0 until expiry; after local expiry the unfinished goal should reach status 3 and reserve 0.01 local MON in the Circle Pot. Those outcomes must be read back before calling a simulation successful. A preflight that simply skips an already-settled public goal does not demonstrate this full path.
+
+### Verified simulation result
+
+The qualifying public commit was `9f6f305`, published after fixture creation. The real CLI returned one successful report with local transaction `0xddb072bb67a63b9e51afc27301372f4e207ddcec48c23e1f625a857f03adcdd6`. Independent state checks confirmed commitment 1 status 2, creator balance increased by exactly 0.01 local MON, commitment 2 status 0, and Pot/reserved balances zero. The 100-commit condition correctly waited after observing one qualifying commit.
+
+After the LOCAL deadline and finality buffer, the CLI returned one failure report with local transaction `0x208afad68a8e27263cb18b1d8b8ade696dca3f3aa290a6ee12cc5e05eceb03e2`. Independent state checks confirmed commitment 2 status 3 and both Circle Pot and reserved Pot exactly 0.01 local MON. Anvil's finalized tag trails by 64 blocks; the helper mines 128 local blocks after setup/time changes so the workflow's finalized-state policy is actually exercised. Production Monad gas calibration and workflow identity authorization are not established by these local tests.
+
+The original source/test/compiler readiness notes are historical; the meaningful CLI simulation now covers both outcomes. Live operation remains unconfigured, and this local adapter must not be enabled in the public app.

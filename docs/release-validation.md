@@ -113,3 +113,9 @@ The user confirmed encrypted journal backup import restored the same notes witho
 The Core, Factory and Circle implementation runtime artifacts match deployed bytecode with constructor immutables masked. Their compiler source bytes exactly match the already-public repository. The verification API returned success for all three on MonadVision (perfect match) and MonadScan (verified); see deployments/monad-testnet-verification.json. The public Git main matched local commit 7a377f1 before this follow-up change.
 
 At the fresh live check there were two Circles, one completed commitment, zero tester-cohort enrollments, and a progressing canonical cursor. Representative live balance/failure/Pot checks and at least five real people still need confirmation. Submission is locked/read-only on the portal; no submission fields were changed during this audit.
+
+## CRE simulation path validated
+
+The actual bounty requirement accepts a successful CRE CLI simulation or a live deployment. The authenticated official CLI now ran the full GitHub orchestration against a local fork of the verified v2 Core. The qualifying source commit 9f6f305 was published after the local goal creation; HTTP evidence was not fabricated. The CLI delivered one success report, and independent native-balance/Core reads confirmed a 0.01 local-MON refund and status 2. The 100-commit goal stayed active after only one qualifying commit.
+
+After a local-only time jump and finalized-block advancement, the CLI delivered one failure report. Independent reads confirmed status 3 and 0.01 local MON both in the Circle Pot and reserved accounting. Local report hashes and reproduction commands are in cre/README.md. All 104 offline contract test executions pass, including 4 local-adapter tests; the production receiver remains unchanged and strict. No public-chain transactions, tester traction, DON activation, commercial acceptance, or new recording were represented by this simulation.

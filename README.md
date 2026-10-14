@@ -57,7 +57,7 @@ flowchart LR
 
 The event pipeline consumes **Envio HyperSync** and has RPC fallback. It is not a deployed HyperIndex/Envio Cloud indexer. The indexer writes finalized projections atomically, with a contiguous cursor and overlap-safe retries. Live contract state remains the authority for actions and accounting.
 
-**CRE code is now included:** a GitHub consensus workflow compiled to WebAssembly, plus a production receiver adapter and tests. It is not deployed or activated on the live app; see [CRE setup](cre/README.md). The Node worker is a separate integration. **Private journal:** Mera’s separate PRF-derived AES-GCM vault encrypts reflections on the device, with explicit lock, encrypted export/import, private commitment associations, and recovery limits. Member chat remains access-controlled, not end-to-end encrypted.
+**CRE code is now included:** a GitHub consensus workflow compiled to WebAssembly, plus a production receiver adapter and tests. Its official CLI simulation now exercises real GitHub evidence, local success/refund, waiting and failure/Pot settlement on a guarded Anvil fork. It is not deployed or activated on the live app; see [CRE setup](cre/README.md). The Node worker is a separate integration. **Private journal:** Mera’s separate PRF-derived AES-GCM vault encrypts reflections on the device, with explicit lock, encrypted export/import, private commitment associations, and recovery limits. Member chat remains access-controlled, not end-to-end encrypted.
 
 ## Why Monad
 

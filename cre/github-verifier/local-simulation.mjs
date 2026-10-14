@@ -38,10 +38,6 @@ if (mode === "prepare") {
   if (!await client.getCode({ address: mockForwarder })) throw Error("Official simulation forwarder is absent from this fork.");
   const authority = await read("deployer");
   for (const account of [authority, alice, bob]) await unlock(account);
-  // CRE's well-known default simulator sender may have EIP-7702 code on the
-  // public fork. Clear it ONLY on our guarded local fork and give test balance.
-  const simulatorSender = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
-  await client.request({ method: "anvil_setCode", params: [simulatorSender, "0x"] }); await unlock(simulatorSender);
   const a = artifact("LocalCREReceiver");
   const data = encodeDeployData({ abi: a.abi, bytecode: a.bytecode.object, args: [core, mockForwarder] });
   const gas = await client.estimateGas({ account: alice, data });
@@ -61,12 +57,18 @@ if (mode === "prepare") {
   const state = { scope: "LOCAL ANVIL ONLY; NOT LIVE MONAD OR HUMAN TRACTION", chainId: 31337, core, circle, receiver, mockForwarder, alice, start, deadline, goals, setupReceipts: receipts };
   writeFileSync(stateFile, JSON.stringify(state, null, 2));
   writeFileSync(configFile, JSON.stringify({ schedule: "0 */1 * * * *", coreAddress: core, receiverAddress: receiver, commitmentIds: goals.map((g) => g.id), reportGasLimit: "400000" }, null, 2));
+  // Anvil's finalized tag trails latest by 64 blocks. CRE deliberately reads
+  // finalized state, so make fixture creation observable before its first run.
+  await client.request({ method: "anvil_mine", params: ["0x80", "0x1"] });
   console.log(JSON.stringify({ ...state, next: "Publish a genuine GitHub commit after this fixture's start, then run cli and inspect. Do not reuse this config for deployment." }, null, 2));
 } else {
   const state = JSON.parse(readFileSync(stateFile));
   assert.equal(state.core.toLowerCase(), core.toLowerCase());
   if (mode === "expire") {
-    await client.request({ method: "evm_setNextBlockTimestamp", params: [state.deadline + 1] }); await client.request({ method: "evm_mine", params: [] });
+    const next = Math.max(state.deadline + 1, Number((await client.getBlock()).timestamp) + 2);
+    await client.request({ method: "evm_setNextBlockTimestamp", params: [next] }); await client.request({ method: "evm_mine", params: [] });
+    await client.request({ method: "anvil_mine", params: ["0x80", "0x1"] });
+    assert.ok((await client.getBlock({ blockTag: "finalized" })).timestamp >= BigInt(state.deadline));
     console.log("Advanced LOCAL fixture past deadline; no public clock or contract changed.");
   } else if (mode === "inspect") {
     const bonds = await Promise.all(state.goals.map(async (goal) => { const b = await read("bonds", [BigInt(goal.id)]); return { ...goal, status: b[5], stakeWei: String(b[2]) }; }));
