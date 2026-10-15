@@ -92,7 +92,8 @@ export const documentation: Record<string, Doc> = {
         bullets: [
           "Circle review: submit evidence before the deadline; eligible peers review it during a 24-hour window.",
           "On-chain balance: reach the configured available MON balance and trigger Check progress before the deadline. Temporary balances can qualify; this is not a long-term savings measurement.",
-          "GitHub: available only when an external verifier is configured and operated. The rule specifies repository, author, and required commit count. See verification for the trust model.",
+          "GitHub: configure a public repository, username and required commit count. Availability depends on the authorized operator-backed CRE CLI service. See verification for its trust and deadline rules.",
+          "Onchain activity: prove a successful direct call from your commitment account to a specified Monad testnet contract using its transaction hash.",
         ],
       },
       {
@@ -227,10 +228,16 @@ export const documentation: Record<string, Doc> = {
         ],
       },
       {
-        title: "GitHub · configuration required",
+        title: "GitHub · available with the operating verifier",
         paragraphs: [
-          "The repository includes a trusted external worker for public GitHub commits. It checks a fixed repository, author, default branch, and commitment interval. It counts unique commit hashes and does not prove that the commitment creator owns the author’s GitHub account.",
-          "A funded verifier must be authorized in the contract, fixed when the commitment is opened, and run reliably before success deadlines. The form hides this method when no verifier address is configured. An API error is not automatically a verified failure.",
+          "Choose a public repository, GitHub username and commit target in the app. The CRE workflow checks unique matching commits on the default branch within the immutable activity window. The current service runs official CRE CLI simulation on an operator’s Mac and uses an authorized signer for settlement. It does not prove ownership of the GitHub account or work quality.",
+          "Check progress queues a verification request; the worker also discovers and rechecks supported active goals. Progress below the target leaves the goal active. Success must settle on-chain before the deadline. The app disables new external commitments when its verifier is unavailable or lacks the readiness fee balance. An API error does not establish success.",
+        ],
+      },
+      {
+        title: "Onchain activity · direct contract call",
+        paragraphs: [
+          "Configure a contract on Monad testnet and submit the transaction hash when checking progress. One successful, finalized direct call from the commitment account to that contract must occur inside the commitment window. Reverted transactions, internal calls and calls from another account do not qualify. This uses the same operator-backed CRE CLI service as GitHub verification.",
         ],
       },
       {
@@ -239,7 +246,7 @@ export const documentation: Record<string, Doc> = {
           "Fitness providers: no wearable or fitness API integration is live.",
           "Learning providers: no course platform integration is live.",
           "Custom external signals: the attestation contract path exists; provider integrations need implementation and explicit trust review.",
-          "A Chainlink CRE GitHub workflow and a separate production receiver are included in the repository. They are not deployed or operating on the current public app. The Node worker remains a separate option; do not describe it as CRE execution.",
+          "Live Chainlink DON deployment remains unavailable for this account. The production forwarder receiver is prepared for that future mode. The current app instead uses official CRE CLI simulation plus authorized EOA settlement; the older standalone Node verifier is a separate integration.",
         ],
         links: [
           {
@@ -381,7 +388,7 @@ export const documentation: Record<string, Doc> = {
     sections: [
       {
         title: "System map",
-        code: "Browser / Next.js UI\n  ├─ Mera passkey → short-lived signing account → Monad\n  ├─ wagmi + viem → contract reads and confirmations\n  └─ signed app session → Next.js social API → Supabase\n\nMonad events → Envio HyperSync (or RPC)\n  → resumable Next.js indexer → atomic Supabase projections\n  → dashboard / Circle snapshots and public activity\n\nOptional GitHub worker → trusted on-chain attestation\nMera PRF vault → encrypted device-local journal / backups\nCRE workflow + receiver → compiled/tested; live activation pending",
+        code: "Browser / Next.js UI\n  ├─ Mera passkey → short-lived signing account → Monad\n  ├─ wagmi + viem → contract reads and confirmations\n  └─ signed app session → Next.js social API → Supabase\n\nMonad events → Envio HyperSync (or RPC)\n  → resumable Next.js indexer → atomic Supabase projections\n  → dashboard / Circle snapshots and public activity\n\nApp verification queue → Mac Node worker → official CRE CLI simulation\n  → authorized EOA attestation → existing Monad Core\nMera PRF vault → encrypted device-local journal / backups\nProduction CRE receiver → future live DON delivery; not deployed",
       },
       {
         title: "Contracts and events",
@@ -409,8 +416,8 @@ export const documentation: Record<string, Doc> = {
       {
         title: "Verifier architecture and CRE status",
         paragraphs: [
-          "scripts/verifier.mjs validates immutable GitHub specs, queries a bounded GitHub API response, hashes evidence, and can submit attestations from an authorized account. Configuration is worker-only; the frontend only receives the verifier address. --broadcast is an explicit spending action.",
-          "cre/github-verifier implements cron-triggered finalized Monad reads, bounded GitHub HTTP observations, identical consensus, signed reports, and EVM delivery. contracts/src/BondlineCREVerifier.sol authenticates the forwarder and workflow owner/name before calling the existing Core. SDK runtime tests and WebAssembly compilation pass; the receiver is not deployed or authorized and the workflow is not activated on the live app. See cre/README.md for exact setup.",
+          "cre/github-verifier/product-worker.mjs polls an authenticated service-only job queue, runs the compiled CRE workflow through the official CLI, validates bound progress against finalized Monad state, and submits permitted attestations from a separate authorized EOA. The verifier rule is immutable in the existing Core. Worker authentication secrets and signing material stay outside the browser. The older scripts/verifier.mjs remains separate.",
+          "The generic workflow supports GitHub activity and successful direct contract-call evidence. Developer mode retains local Anvil CLI simulation; product mode uses the deployed testnet Core with the operator’s signer. contracts/src/BondlineCREVerifier.sol retains strict forwarder/workflow authentication for future DON delivery and is not weakened for simulator reports. See cre/PRODUCT.md for the runtime, trust model and confirmed live receipt.",
         ],
         links: [
           { label: "Verification guide", href: "/docs/verification" },
@@ -472,7 +479,8 @@ export const documentation: Record<string, Doc> = {
           "BONDLINE_INDEXER_SECRET or CRON_SECRET: authenticates the indexer run endpoint. Use a distinct random secret.",
           "HYPERSYNC_BEARER_TOKEN and BONDLINE_HYPERSYNC_URL: optional HyperSync transport configuration.",
           "BONDLINE_DEPLOYMENT_BLOCK and indexer range/finality options: configure the cursor and scan bounds.",
-          "BONDLINE_VERIFIER_PRIVATE_KEY and GITHUB_VERIFIER_TOKEN: optional worker-only secrets. Never expose them to the browser.",
+          "BONDLINE_VERIFICATION_WORKER_SECRET: a separate 32+ character server/worker secret authenticating the product queue. BONDLINE_VERIFICATION_MODE=cli-simulation and BONDLINE_VERIFICATION_WORKER_ENABLED=true enable the configured bridge; readiness also checks heartbeat, authorization and fee balance.",
+          "BONDLINE_VERIFIER_PRIVATE_KEY: optional durable worker signer supplied through secure runtime secret management. The current testnet demo explicitly uses an in-memory ephemeral signer. GITHUB_VERIFIER_TOKEN belongs only to the older standalone worker. Never expose signing material to the browser.",
         ],
       },
       {

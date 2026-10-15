@@ -82,7 +82,7 @@ The visual inspection covered homepage layouts, Circle history, documentation, s
 - Add real support/private contact information and social URLs when available. GitHub issues are the current public fallback; do not post secrets or personal records there. Privacy/terms are lightweight product disclosures, not a legal review.
 - Obtain independent contract review and complete deployment/operational review before moving this v2 release to mainnet. It currently uses Monad testnet 10143 and unaudited contracts. No mainnet deployment was performed here.
 
-CRE orchestration and the encrypted PRF private journal remain unimplemented and are explicitly described that way. Mera is the account layer; Envio HyperSync is the event retrieval integration. No fabricated users, awards, testimonials, or volume were added.
+CRE orchestration is implemented through official Chainlink CRE CLI simulation, with an authorized worker signer settling verified outcomes on Monad testnet; live DON deployment is not enabled. The encrypted PRF private journal is implemented, with save, unlock, and backup restoration tested. Mera provides the passkey account layer, and Envio HyperSync retrieves on-chain events for feeds, profiles, and analytics. No fabricated users, awards, testimonials, or volume were added.
 
 ## Source and release provenance
 
@@ -124,8 +124,20 @@ After a local-only time jump and finalized-block advancement, the CLI delivered 
 
 The deployed app now includes verifier configuration, progress/details, authenticated verification requests, leased service-only queue processing, and a MetaMask administrator setup page. Generic adapters cover public GitHub targets and a successful direct call to a specified contract, alongside existing native balance and community review. The approved additive Supabase migration is applied; service queue claims return 200 and anonymous reads return 401. The approved production verification settings are configured.
 
-The dedicated in-memory Mac signer 0xc361dC272FcfEaA34Ab723e24491691a7B59bA8F is authorized on testnet by transaction 0x794d6407f058456d6d3f52475d4ecea462476b6e9732e3b66a00962c163739a9 and funded with 0.5 test MON. The supervised worker polls the deployed app, evaluates immutable conditions through official CRE CLI simulation, and can attest to the existing Core. Its readiness endpoint reports external verification available. This is a trusted EOA service using CRE simulation, not a live DON or production forwarder deployment.
+The dedicated in-memory Mac signer 0xc361dC272FcfEaA34Ab723e24491691a7B59bA8F is authorized on testnet by transaction 0x794d6407f058456d6d3f52475d4ecea462476b6e9732e3b66a00962c163739a9 and funded with 0.5 test MON. The long-running worker polls the deployed app, evaluates immutable conditions through official CRE CLI simulation, and can attest to the existing Core. Its readiness endpoint reports external verification available. This is a trusted EOA service using CRE simulation, not a live DON or production forwarder deployment.
 
 Validation: 32 frontend tests, 11 CRE SDK runtime tests, 106 offline contract tests, frontend/CRE TypeScript checks, WebAssembly compilation and a 49-page production build pass. The official authenticated CLI produced a correctly bound structured 0/1 progress observation using real GitHub HTTP on an isolated local fork, with no report writes. Local output is not a public settlement receipt.
 
 Latest production deployment: dpl_AhDPJ8dUU5j54cctvgBEnSCmtu5e. Setup and Docs routes return 200; media GET returns expected 405; unauthenticated worker access returns 401; authenticated worker queue access returns 200. No video was produced. A new app-created commitment, qualifying activity, real testnet refund receipt and final UI/profile/activity validation remain necessary to close the end-to-end demo.
+
+## Live product verification confirmed · October 15, 2026
+
+The user confirmed the app-created GitHub commitment worked. Independent Monad and queue read-back confirmed commitment **3** has Core status **2 (Met/completed)**, stake **0.01 test MON**, repository **Psalmuel01/bondline**, GitHub author **Psalmuel01**, and configured target **1 commit**. The queue records **verified**, progress **1/1**, and a successful settlement hash:
+
+`0x6977ed00eaea8ff2c10c222afb4685c922e3d1b602d7b9d8c8127c6af4a864b0`
+
+The recorded evidence check time is October 15 at **03:59:14 Africa/Lagos** (02:59:14 UTC). Settlement succeeded in block **71139430** at **03:59:20 Africa/Lagos**, from the dedicated verifier to the existing Core. The receipt contains `CommitmentVerified(id=3, success=true)` and `BondResolved(id=3, status=2, stake=10000000000000000)`. Independent historical balance reads show the creator gained exactly **10000000000000000 wei (0.01 MON)** across that block. This is a public Monad testnet product settlement, distinct from the earlier Anvil fixtures. It validates the one-commit case, not the originally proposed three-commit demo. CRE mode remains official CLI simulation with an authorized operator EOA; no live DON deployment is claimed. A fresh readiness request returned external verification available.
+
+Operational status: the Mac runs a local Node command-session process. No launchd/PM2 supervisor, automatic boot startup, automatic crash restart or sleep prevention was installed. The website, queue and escrow are hosted independently, but this external verifier needs the Mac process and network. Its current service signer is ephemeral and cannot survive process termination. See cre/PRODUCT.md for the runtime diagram and host migration requirements.
+
+Documentation/status refresh published on October 15 as deployment `dpl_GQizcpBPm4hFFbwBN4j9hLBas9LY`. Updated verification, architecture and environment guidance distinguishes the working one-commit receipt from future DON deployment and explains the Mac process lifecycle. TypeScript and the 49-page production build pass; no runtime verification behavior, power settings or worker lifecycle was changed.

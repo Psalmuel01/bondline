@@ -2,7 +2,7 @@
 
 ## Two execution modes
 
-**Product mode for the hackathon:** Bondline UI → authenticated app job → supervised worker on the operator's Mac → official CRE CLI simulation → bound progress result → explicitly trusted EOA attestation → deployed Monad testnet Core settlement → finalized Envio/RPC projections → UI.
+**Product mode for the hackathon:** Bondline UI → authenticated app job → long-running worker on the operator's Mac → official CRE CLI simulation → bound progress result → explicitly trusted EOA attestation → deployed Monad testnet Core settlement → finalized Envio/RPC projections → UI.
 
 This mode does not require live CRE deployment access. It is not a DON-signed attestation: the authorized service operator is trusted to run the official workflow faithfully. The production CRE forwarder receiver is never made permissive to accept simulator metadata. The Core escrow contract remains unchanged and contains no GitHub logic.
 
@@ -30,7 +30,7 @@ Success must ARRIVE ON CHAIN BEFORE the deadline, not merely be performed before
 3. Run `pnpm --dir cre/github-verifier build`. The worker uses the compiled WASM artifact and official CRE CLI with no `--broadcast` flag.
 4. Supply the worker's signer through secure runtime secret management. Never export a MetaMask administrator key to the worker. For a single-session testnet demo, explicitly set `BONDLINE_VERIFICATION_EPHEMERAL_SIGNER=true`; the worker generates a signer only in memory and prints its PUBLIC address. It is lost on restart, so fund minimally and use only test MON. Existing commitments remain bound to the old verifier if that process is lost; they are not migrated silently.
 5. With the administrator's MetaMask account, visit `/verification-setup`, verify chain 10143, Core and worker address, and authorize the signer. Fund the dedicated signer with enough test MON for settlement fees. The administrator does not sign individual goal settlements.
-6. Start the supervised worker with the existing CRE CLI login:
+6. Start the long-running worker with the existing CRE CLI login:
 
 ```sh
 # Provide configuration through an ignored local environment or a secret manager.
@@ -59,4 +59,37 @@ Use a consenting user and a Circle named Builders Circle. Create a specific GitH
 
 ## Current readiness
 
-The additive migration is applied and service-only access was verified (service RPC 200, anonymous queue read 401). Hosting values are configured and the app is deployed at https://bondline-circle.vercel.app (deployment dpl_AhDPJ8dUU5j54cctvgBEnSCmtu5e). The Mac worker is running with an in-memory testnet signer and authorized and funded with 0.5 test MON. The public verifier is 0xc361dC272FcfEaA34Ab723e24491691a7B59bA8F, authorized by transaction 0x794d6407f058456d6d3f52475d4ecea462476b6e9732e3b66a00962c163739a9. Live end-to-end validation still requires a real app-created commitment with qualifying activity and settlement receipts. CRE DON deployment remains unavailable for this account and is not required by the simulation-backed bridge.
+The additive migration is applied and service-only access was verified (service RPC 200, anonymous queue read 401). Hosting values are configured and the app is deployed at https://bondline-circle.vercel.app (documentation release dpl_GQizcpBPm4hFFbwBN4j9hLBas9LY). The Mac worker uses an in-memory testnet signer, authorized and initially funded with 0.5 test MON. The public verifier is 0xc361dC272FcfEaA34Ab723e24491691a7B59bA8F, authorized by transaction 0x794d6407f058456d6d3f52475d4ecea462476b6e9732e3b66a00962c163739a9. On October 15, 2026, the user confirmed the app flow worked. Independent read-back confirmed commitment 3 completed (Core status 2), its actual configured GitHub target was 1 commit, and the service recorded 1/1 with settlement transaction `0x6977ed00eaea8ff2c10c222afb4685c922e3d1b602d7b9d8c8127c6af4a864b0`. The settlement receipt succeeded in block 71139430, emitted CommitmentVerified and BondResolved, and historical balance reads confirmed an exact 0.01 MON increase for the creator. This validates the one-commit case; the proposed three-commit demo was not the rule used for this receipt. CRE DON deployment remains unavailable for this account and is not required by the simulation-backed bridge.
+
+## How the Mac worker runs
+
+The operator started `node --env-file=web/.env.local cre/github-verifier/product-worker.mjs` in a long-lived local command session. macOS keeps that Node process running independently of the Bondline browser tab. It is not an installed launchd service, and this setup has no automatic boot start, crash restart, or sleep-prevention service. “Always-on” describes the uptime required from an operator host, not a guarantee supplied by this Mac setup.
+
+The code's `do … while (!stop)` loop sends an authenticated outbound HTTPS request to the hosted jobs API, claims at most one job, handles it, waits ten seconds with `setTimeout`, and repeats. Empty polls do not launch CRE. For a job, Node starts the official CRE CLI as a child process, supplies a temporary public rule configuration and precompiled WASM, captures its structured result, and removes the temporary config afterward. It validates the result against Monad and, when settlement is permitted, signs and broadcasts the attestation through Monad RPC. Progress goes back to the hosted API. No inbound public port, public IP, or router port forwarding is needed. The Mac is not a Monad blockchain node.
+
+```mermaid
+flowchart TD
+    App[Bondline in browser] -->|Request check| Queue[Hosted API and durable queue]
+    subgraph Mac[Your Mac]
+        Worker[Long-running Node worker]
+        CLI[CRE CLI child process]
+        Worker -->|Launch only for a job| CLI
+        CLI -->|Structured result| Worker
+        Worker -->|Wait 10 seconds and repeat| Worker
+    end
+    Worker -->|Outbound HTTPS polling| Queue
+    Queue -->|Claimed job| Worker
+    CLI -->|Read matching public activity| GitHub[GitHub API]
+    Worker -->|Authorized attestation| Core[Existing BondlineCore on Monad]
+    Core -->|Finalized events and updated state| App
+```
+
+| Event | Effect |
+| --- | --- |
+| Close the Bondline browser tab | The separate worker can keep processing. |
+| Mac sleeps or loses internet | Checks pause or fail to reach services; queued requests remain in the hosted database. Deadlines keep advancing on Monad. |
+| Mac wakes with the same process alive | Polling can resume with the same in-memory signer. |
+| Stop/kill the worker, restart the Mac, or terminate its command session | The process ends. Its ephemeral signing key is lost; restarting generates a different address unless a durable service key is configured. |
+| Mac is unavailable | The hosted website, queue and on-chain escrow remain online; this Mac's external checks and attestations are unavailable. Native balance checks and community review do not require this worker. |
+
+A worker heartbeat helps the app detect recent polling and disable new external commitments when unavailable. It does not reserve future uptime or extend a deadline. Do not terminate an ephemeral worker while commitments still depend on it. The next operational milestone is an independent host with a securely recoverable service signer, process supervision and monitoring; it does not require DON deployment access.

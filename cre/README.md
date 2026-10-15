@@ -2,11 +2,13 @@
 
 This package implements a real Chainlink CRE workflow using HTTP, consensus, finalized EVM reads, report generation, and EVM report delivery. It compiles to WebAssembly. Its tests run through the official SDK's capability/runtime harness. A separate Solidity receiver connects authenticated reports to the existing v2 Core's `attest` entry point.
 
-**Operational status:** the official authenticated CRE CLI end-to-end LOCAL simulation passed with real GitHub HTTP evidence, consensus/report delivery, a verified 0.01 local-MON refund, insufficient-evidence waiting, and deadline failure reserving 0.01 local MON in the Circle Pot. All 104 contract tests pass, including public-chain rejection of the local adapter. The Metropolis requirement accepts a successful CLI simulation or a live deployment; its required demonstration video remains to be recorded. No receiver is registered on the public Core and no workflow is activated on a DON. Local receipts are not live Monad receipts or real-user traction.
+**Operational status:** the official authenticated CRE CLI end-to-end LOCAL simulation passed with real GitHub HTTP evidence, consensus/report delivery, a verified 0.01 local-MON refund, insufficient-evidence waiting, and deadline failure reserving 0.01 local MON in the Circle Pot. All 106 contract tests pass, including public-chain rejection of the local adapter. The Metropolis requirement accepts a successful CLI simulation or a live deployment; its required demonstration video remains to be recorded. No receiver is registered on the public Core and no workflow is activated on a DON. Local receipts are not live Monad receipts or real-user traction.
 
 ## App integration
 
-The simulation-backed product bridge is documented in [PRODUCT.md](PRODUCT.md). It queues checks from the Bondline UI, runs the official CLI on a supervised Mac worker, records progress, and uses a separately authorized EOA for public testnet settlement. This is not a live DON deployment. Hosting/database/signer setup and actual app-to-testnet receipts remain required before claiming the product flow is operating. The local Anvil commands below remain a separate developer mode.
+**October 15 product status:** the app-created testnet commitment 3 completed using its configured one-commit GitHub target. Recorded progress is 1/1 and settlement is `0x6977ed00eaea8ff2c10c222afb4685c922e3d1b602d7b9d8c8127c6af4a864b0`. This uses CRE CLI simulation plus an authorized EOA, not live DON delivery. The Mac worker is a long-running command-session process; no automatic startup or restart service is installed.
+
+The simulation-backed product bridge is documented in [PRODUCT.md](PRODUCT.md). It queues checks from the Bondline UI, runs the official CLI on a long-running Mac worker, records progress, and uses a separately authorized EOA for public testnet settlement. This is not a live DON deployment. Hosting/database/signer setup is applied and the first app-to-testnet settlement is confirmed; an independent always-on host and durable service signer remain operational follow-up work. The local Anvil commands below remain a separate developer mode.
 
 ## Data path
 
