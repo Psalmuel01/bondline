@@ -10,6 +10,7 @@ import {
 } from "@/lib/contracts";
 import { useBondlineWrite } from "@/lib/useBondlineWrite";
 import { formatMon, shortAddr } from "@/lib/format";
+import { VerificationDetails } from "./VerificationDetails";
 import { Avatar } from "./Avatar";
 import { useProfiles } from "@/lib/useProfiles";
 
@@ -88,7 +89,7 @@ export function CommitmentSignals({
             ? "Circle evidence review"
             : kind === 1
               ? `Balance target: ${formatMon(verification![2])} MON`
-              : "GitHub · authorized verifier"}
+              : "External verification"}
       </p>
       {supporters.length > 0 && (
         <div
@@ -132,12 +133,7 @@ export function CommitmentSignals({
           {busy ? "Checking…" : "Check progress & return stake"}
         </button>
       )}
-      {active && kind === 2 && (
-        <p className="text-xs text-faint">
-          The verifier checks your repository automatically. Keep the required
-          commits on its default branch before this deadline.
-        </p>
-      )}
+      {kind === 2 && <VerificationDetails bond={bond} onChange={onChange}/>}
       {write.error && (
         <p role="alert" className="text-xs text-forfeit">
           {write.error}

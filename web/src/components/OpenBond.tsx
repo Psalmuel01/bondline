@@ -2,8 +2,9 @@
 
 import { isAddress, parseEther } from "viem";
 import { hasV2 } from "@/lib/contracts";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBondlineWrite } from "@/lib/useBondlineWrite";
+import { parseExternalSpec } from "../../scripts/verifier-adapters.mjs";
 import { requiredForBond } from "@/lib/threshold";
 import { explorerTx } from "@/lib/chain";
 import type { Circle } from "@/lib/contracts";
@@ -35,6 +36,20 @@ export function OpenBond({
   const [repo, setRepo] = useState("");
   const [author, setAuthor] = useState("");
   const [commits, setCommits] = useState(3);
+  const [externalType, setExternalType] = useState("github");
+  const [contract, setContract] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [externalAvailable, setExternalAvailable] = useState(false);
+  useEffect(() => {
+    let active = true;
+    const check = () => fetch("/api/verification/capabilities", {cache:"no-store"}).then(r=>r.json()).then(v=>{if(active)setExternalAvailable(v.external===true);}).catch(()=>{if(active)setExternalAvailable(false);});
+    void check();
+    const interval=setInterval(check,15000);
+    return ()=>{active=false;clearInterval(interval);};
+  }, []);
+  const spec = externalType === "github" ? {type:"github",version:1,repo,author,commits,...(startTime?{startTime:Math.floor(new Date(startTime).getTime()/1000)}:{})} : {type:"onchain",version:1,rule:"contract-call",contract,count:1,...(startTime?{startTime:Math.floor(new Date(startTime).getTime()/1000)}:{})};
+  let externalValid = false;
+  try { parseExternalSpec(JSON.stringify(spec)); externalValid=true; } catch { /* Field validation below. */ }
   const [reviewing, setReviewing] = useState(false);
   const [reviewDeadline, setReviewDeadline] = useState<bigint>();
   const verifier = process.env.NEXT_PUBLIC_EXTERNAL_VERIFIER_ADDRESS;
@@ -44,14 +59,7 @@ export function OpenBond({
       /^\d+(\.\d{1,18})?$/.test(target) &&
       Number(target) > 0 &&
       Number(target) <= 1000000) ||
-    (kind === 2 &&
-      !!verifier &&
-      isAddress(verifier) &&
-      /^[\w.-]+\/[\w.-]+$/.test(repo) &&
-      /^[a-zA-Z0-9-]{1,39}$/.test(author) &&
-      Number.isInteger(commits) &&
-      commits >= 1 &&
-      commits <= 100);
+    (kind === 2 && externalAvailable && !!verifier && isAddress(verifier) && externalValid);
 
   const stakeNum = Number(stake);
   const customTimestamp = customDeadline
@@ -70,7 +78,7 @@ export function OpenBond({
     /^\d+(\.\d{1,18})?$/.test(stake) &&
     stakeNum > 0 &&
     stakeNum <= 1000000 &&
-    conditionValid;
+    conditionValid && (kind!==2 || !startTime || (new Date(startTime).getTime()>Date.now() && new Date(startTime).getTime()/1000 < (reviewing && reviewDeadline ? Number(reviewDeadline) : customTimestamp ?? Math.floor(Date.now()/1000)+hours*3600)));
   const busy = write.isPending || write.isConfirming;
 
   async function submit() {
@@ -93,7 +101,7 @@ export function OpenBond({
             : "0x0000000000000000000000000000000000000000",
           kind === 1 ? parseEther(target) : 0n,
           kind === 2
-            ? JSON.stringify({ type: "github", repo, author, commits })
+            ? JSON.stringify(spec)
             : "",
         ));
     // Keep the reviewed details visible until the confirmed receipt closes the dialog.
@@ -104,7 +112,7 @@ export function OpenBond({
       ? "Your Circle reviews evidence"
       : kind === 1
         ? `Account balance reaches ${target} MON`
-        : `${commits} commits by ${author} in ${repo}`;
+        : externalType === "github" ? `${author} must make at least ${commits} commits to ${repo} on its default branch` : `Your commitment account must successfully call ${contract} on Monad testnet`;
   return (
     <div className="p-6 sm:p-8">
       <div className="mb-7 flex items-center gap-3 text-xs">
@@ -209,15 +217,16 @@ export function OpenBond({
           </label>
           {hasV2 && (
             <label className="block text-sm font-medium">
-              How is completion verified?
+              How should Bondline verify this?
               <select
-                value={kind}
-                onChange={(e) => setKind(Number(e.target.value))}
+                value={kind === 2 ? externalType : String(kind)}
+                onChange={(e) => { if (["github","onchain"].includes(e.target.value)) {setKind(2);setExternalType(e.target.value);} else setKind(Number(e.target.value)); }}
                 className="product-field mt-2"
               >
-                <option value={0}>Circle reviews your evidence</option>
-                <option value={1}>Automatic account balance check</option>
-                {verifier && <option value={2}>GitHub contributions</option>}
+                <option value={0}>Community review</option>
+                <option value={1}>Wallet balance</option>
+                <option value="github" disabled={!externalAvailable}>GitHub activity{!externalAvailable ? " · temporarily unavailable" : ""}</option>
+                <option value="onchain" disabled={!externalAvailable}>Onchain activity{!externalAvailable ? " · temporarily unavailable" : ""}</option>
               </select>
             </label>
           )}
@@ -236,7 +245,7 @@ export function OpenBond({
               </span>
             </label>
           )}
-          {kind === 2 && (
+          {kind === 2 && externalType === "github" && (
             <div className="space-y-4">
               <label className="block text-sm">
                 Public repository
@@ -274,6 +283,8 @@ export function OpenBond({
               </p>
             </div>
           )}
+          {kind === 2 && externalType === "onchain" && <label className="block text-sm font-medium">Contract to call<input value={contract} onChange={e=>setContract(e.target.value)} placeholder="0x…" className="product-field mt-2"/><span className="mt-2 block text-xs font-normal text-muted">One successful direct call from your commitment account during the window. Submit its transaction hash when checking progress. Internal calls and reverted transactions do not count.</span></label>}
+          {kind === 2 && <label className="block text-sm">Optional activity start<input type="datetime-local" value={startTime} onChange={e=>setStartTime(e.target.value)} className="product-field mt-2"/><span className="mt-2 block text-xs text-muted">Defaults to commitment activation. A future start narrows the window; earlier activity never counts.</span></label>}
           <button
             disabled={!canSubmit || busy}
             onClick={() => {
@@ -324,7 +335,8 @@ export function OpenBond({
               </div>
               <div>
                 <dt className="text-muted">Verification</dt>
-                <dd className="mt-1">{verificationLabel}</dd>
+                <dd className="mt-1">{verificationLabel} before the deadline above.</dd>
+                {kind === 2 && <dd className="mt-2 text-xs text-muted">Activity starts {startTime ? new Date(startTime).toLocaleString() : "when your commitment activates"}. Check progress while there is time for settlement. Completion must reach the contract before your deadline. The rule cannot be edited after activation.</dd>}
               </div>
             </dl>
           </div>

@@ -4,6 +4,10 @@ This package implements a real Chainlink CRE workflow using HTTP, consensus, fin
 
 **Operational status:** the official authenticated CRE CLI end-to-end LOCAL simulation passed with real GitHub HTTP evidence, consensus/report delivery, a verified 0.01 local-MON refund, insufficient-evidence waiting, and deadline failure reserving 0.01 local MON in the Circle Pot. All 104 contract tests pass, including public-chain rejection of the local adapter. The Metropolis requirement accepts a successful CLI simulation or a live deployment; its required demonstration video remains to be recorded. No receiver is registered on the public Core and no workflow is activated on a DON. Local receipts are not live Monad receipts or real-user traction.
 
+## App integration
+
+The simulation-backed product bridge is documented in [PRODUCT.md](PRODUCT.md). It queues checks from the Bondline UI, runs the official CLI on a supervised Mac worker, records progress, and uses a separately authorized EOA for public testnet settlement. This is not a live DON deployment. Hosting/database/signer setup and actual app-to-testnet receipts remain required before claiming the product flow is operating. The local Anvil commands below remain a separate developer mode.
+
 ## Data path
 
 ```mermaid

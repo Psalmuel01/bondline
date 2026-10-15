@@ -80,4 +80,23 @@ contract BondlineCREVerifierTest is Test {
     function test_zeroIdentityRejectedAtConfiguration() public {
         vm.expectRevert(BondlineCREVerifier.InvalidConfiguration.selector);new BondlineCREVerifier(address(core),address(forwarder),address(0),NAME);
     }
+    function productReport(uint256 id, uint8 outcome, uint256 current, uint64 checkedAt) internal pure returns (bytes memory) {
+        return abi.encode(id,outcome,keccak256(bytes(SPEC)),keccak256(abi.encode(id,current,checkedAt)),current,uint256(3),checkedAt);
+    }
+    function test_productProgressDoesNotSettleAndIdenticalReplayIsNoOp() public {
+        uint256 id=open();bytes memory payload=productReport(id,0,2,uint64(block.timestamp));
+        forwarder.deliver(receiver,metadata(),payload);
+        (uint256 current,uint256 target,uint64 checkedAt,uint8 outcome,)=receiver.progress(id);
+        assertEq(current,2);assertEq(target,3);assertEq(outcome,0);assertEq(checkedAt,block.timestamp);
+        (,,,,,BondlineCore.Status status,,,,,)=core.bonds(id);assertEq(uint256(status),0);
+        forwarder.deliver(receiver,metadata(),payload);
+        vm.warp(block.timestamp+1);forwarder.deliver(receiver,metadata(),productReport(id,1,3,uint64(block.timestamp)));
+        (,,,,,status,,,,,)=core.bonds(id);assertEq(uint256(status),2);
+        vm.expectRevert(BondlineCREVerifier.InvalidReport.selector);forwarder.deliver(receiver,metadata(),payload);
+    }
+    function test_productEarlyFailureAndFutureObservationRejected() public {
+        uint256 id=open();vm.expectRevert(BondlineCREVerifier.InvalidReport.selector);forwarder.deliver(receiver,metadata(),productReport(id,2,0,uint64(block.timestamp)));
+        vm.expectRevert(BondlineCREVerifier.InvalidReport.selector);forwarder.deliver(receiver,metadata(),productReport(id,0,1,uint64(block.timestamp+1)));
+    }
+
 }

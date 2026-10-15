@@ -140,3 +140,9 @@ npm run build
 ```
 
 The app targets Monad mainnet and is not audited.
+
+## AI-Assisted Development
+
+Bondline was developed with assistance from OpenAI Codex and ChatGPT for implementation support, debugging, refactoring, documentation, and test generation.
+
+All AI-generated or suggested code was reviewed, modified where necessary, and integrated by the project author. Final product decisions, architecture, smart contract behavior, verification logic, and deployment choices were made and validated by the author.

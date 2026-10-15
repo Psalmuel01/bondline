@@ -178,13 +178,14 @@ export function useBondlineWrite(onConfirmed?: () => void) {
   const openVerifiedBond = (circle: `0x${string}`, description: string, deadline: bigint, stake: string, kind: number, verifier: `0x${string}`, target: bigint, spec: string) => run(() => writeEstimated({ address: CORE_ADDRESS, abi: coreAbi, functionName: "openVerifiedBond", args: [circle, description, deadline, kind, verifier, target, spec], value: parseEther(stake) }));
   const backCommitment = (id: bigint) => run(() => writeEstimated({ address: CORE_ADDRESS, abi: coreAbi, functionName: "backCommitment", args: [id] }));
   const verifyBalance = (id: bigint) => run(() => writeEstimated({ address: CORE_ADDRESS, abi: coreAbi, functionName: "verifyBalance", args: [id] }));
+  const setTrustedVerifier = (verifier: Address, trusted: boolean) => run(() => writeEstimated({address:CORE_ADDRESS,abi:coreAbi,functionName:"setTrustedVerifier",args:[verifier,trusted]}));
   const joinTesterCohort = () => run(() => writeEstimated({ address: CORE_ADDRESS, abi: coreAbi, functionName: "joinTesterCohort" }));
   const withdrawRefund = (to: Address) => run(() => writeEstimated({ address: CORE_ADDRESS, abi: coreAbi, functionName: "withdrawRefund", args: [to] }));
   const claimReward = (circle: `0x${string}`, epoch: bigint, to: `0x${string}`) => run(() => writeEstimated({ address: CORE_ADDRESS, abi: coreAbi, functionName: "claimReward", args: [circle, epoch, to] }));
   const invite = (circle: `0x${string}`, member: `0x${string}`) => run(() => writeEstimated({ address: circle, abi: circleAbi, functionName: "invite", args: [member] }));
   const join = (circle: `0x${string}`) => run(() => writeEstimated({ address: circle, abi: circleAbi, functionName: "join" }));
   return {
-    openVerifiedBond, backCommitment, verifyBalance, claimReward, invite, join, withdrawRefund, joinTesterCohort,
+    setTrustedVerifier, openVerifiedBond, backCommitment, verifyBalance, claimReward, invite, join, withdrawRefund, joinTesterCohort,
     createCircle,
     openBond,
     declareDone,

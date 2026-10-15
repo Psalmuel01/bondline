@@ -15,7 +15,7 @@ Actual rendered homepage; the chat is a labeled interactive illustration. [Mobil
 - **Circles:** private member conversation, shared goals, invitation/acceptance, identity, and a separate on-chain Pot.
 - **Commitments:** a specific goal, stake, deadline, and verification rule, with review before signing.
 - **Support and evidence:** backing records encouragement; later evidence approval determines a Circle-reviewed outcome. These are separate actions.
-- **Verification:** Circle evidence review and native MON balance checks. A trusted GitHub worker is included but requires authorization, funding, and recurring operation.
+- **Verification:** Circle evidence review, native MON balance checks, configurable public GitHub commit targets, and successful direct contract-call evidence. External checks use an authenticated app queue and a supervised CRE CLI simulation worker with a separately authorized testnet signer. Availability requires a healthy, funded worker; this is not a live DON integration.
 - **Rewards:** v2 failed stakes are reserved for deadline-week pools. Completed commitments earn equal shares after the week ends and all its commitments settle.
 - **Reliability:** completion rate, settled history, streak, committed amounts, and unique supporters. This is not a credit score.
 - **Mera accounts:** passkey-based signing without a seed phrase screen, extension requirement, or custody backend. A browser wallet remains optional.
@@ -57,7 +57,7 @@ flowchart LR
 
 The event pipeline consumes **Envio HyperSync** and has RPC fallback. It is not a deployed HyperIndex/Envio Cloud indexer. The indexer writes finalized projections atomically, with a contiguous cursor and overlap-safe retries. Live contract state remains the authority for actions and accounting.
 
-**CRE code is now included:** a GitHub consensus workflow compiled to WebAssembly, plus a production receiver adapter and tests. Its official CLI simulation now exercises real GitHub evidence, local success/refund, waiting and failure/Pot settlement on a guarded Anvil fork. It is not deployed or activated on the live app; see [CRE setup](cre/README.md). The Node worker is a separate integration. **Private journal:** Mera’s separate PRF-derived AES-GCM vault encrypts reflections on the device, with explicit lock, encrypted export/import, private commitment associations, and recovery limits. Member chat remains access-controlled, not end-to-end encrypted.
+**CRE code is now included:** a GitHub consensus workflow compiled to WebAssembly, plus a production receiver adapter and tests. Its official CLI simulation now exercises real GitHub evidence, local success/refund, waiting and failure/Pot settlement on a guarded Anvil fork. The DON workflow and production forwarder receiver are not deployed. The app now has a simulation-backed verification bridge: its supervised operator runs the official CRE CLI and submits results using an explicitly trusted EOA. See [product verification](cre/PRODUCT.md) for the trust model, setup and live validation status. The older standalone Node worker remains separate. **Private journal:** Mera’s separate PRF-derived AES-GCM vault encrypts reflections on the device, with explicit lock, encrypted export/import, private commitment associations, and recovery limits. Member chat remains access-controlled, not end-to-end encrypted.
 
 ## Why Monad
 

@@ -7,7 +7,8 @@
     "simulate:local": "node ./local-simulation.mjs",
     "typecheck": "tsc --noEmit",
     "build": "cre-compile ./main.ts ./dist/workflow.wasm",
-    "test": "bun test ./workflow.test.ts"
+    "test": "bun test ./workflow.test.ts",
+    "worker:product": "node ./product-worker.mjs"
   },
   "dependencies": {
     "@chainlink/cre-sdk": "1.23.0",

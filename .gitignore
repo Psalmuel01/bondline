@@ -39,3 +39,8 @@ cre/**/dist/
 cre/**/artifacts/
 
 cre/**/.cre_build_tmp*
+.vercel
+.env*
+
+# Local deployment link
+.vercel/

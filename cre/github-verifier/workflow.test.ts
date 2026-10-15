@@ -7,7 +7,7 @@ import {
   addContractMock,
   REPORT_METADATA_HEADER_LENGTH,
 } from "@chainlink/cre-sdk/test";
-import { cre } from "@chainlink/cre-sdk";
+import { cre, consensusIdenticalAggregation } from "@chainlink/cre-sdk";
 import {
   decodeAbiParameters,
   parseAbiParameters,
@@ -15,7 +15,7 @@ import {
   keccak256,
   toBytes,
 } from "viem";
-import { onCron, coreAbi, configSchema, type Config } from "./workflow";
+import { fetchContractCallObservation, onCron, coreAbi, configSchema, type Config } from "./workflow";
 const config: Config = {
   schedule: "0 */1 * * * *",
   coreAddress: "0x1111111111111111111111111111111111111111",
@@ -38,6 +38,8 @@ function fixture(
     verifier?: string;
     badHash?: boolean;
     reverted?: boolean;
+    observeOnly?: boolean;
+    productReports?: boolean;
   } = {},
 ) {
   const evm = EvmMock.testInstance(
@@ -119,7 +121,7 @@ function fixture(
       txHash: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
     };
   };
-  const runtime = newTestRuntime<Config>(null, {}, config);
+  const runtime = newTestRuntime<Config>(null, {}, {...config,observeOnly:options.observeOnly,productReports:options.productReports});
   return { runtime, stats: () => ({ requests, writes, outcome }) };
 }
 test("CRE capabilities read immutable rules, reach consensus on GitHub, and produce the bound report", () => {
@@ -174,4 +176,42 @@ test("placeholder recipients and unbounded workload are rejected", () => {
   expect(() =>
     configSchema.parse({ ...config, commitmentIds: Array(6).fill("7") }),
   ).toThrow();
+});
+
+test("product observation returns bound progress without any report write", () => {
+  const f = fixture({commits: 0, observeOnly: true});
+  onCron(f.runtime);
+  expect(f.stats().requests).toBe(1);
+  expect(f.stats().writes).toBe(0);
+  const line=f.runtime.getLogs().find(line => line.includes("BONDLINE_RESULT "))!;
+  const result=JSON.parse(line.split("BONDLINE_RESULT ")[1]);
+  expect(result.current).toBe(0);expect(result.required).toBe(1);
+  expect(result.commitmentId).toBe("7");expect(result.chainId).toBe(10143);
+  expect(result.outcome).toBe(0);expect(result.conditionHash).toBe(keccak256(toBytes(raw)));
+});
+test("observed expiry is final failure, not early unmet requirement", () => {
+  const f = fixture({observedAt: 2100, observeOnly: true});
+  onCron(f.runtime);expect(f.stats().requests).toBe(0);expect(f.stats().writes).toBe(0);
+  const result=JSON.parse(f.runtime.getLogs().find(line=>line.includes("BONDLINE_RESULT "))!.split("BONDLINE_RESULT ")[1]);
+  expect(result.outcome).toBe(2);
+});
+
+test('onchain call observation excludes reverted, wrong-sender, wrong-contract, late and unfinalized calls', () => {
+  const creator='0x'+'a'.repeat(40), contract='0x'+'b'.repeat(40), hash='0x'+'c'.repeat(64);
+  const http=HttpActionsMock.testInstance();
+  for(const variant of ['valid','reverted','sender','contract','late','unfinalized']) {
+    http.sendRequest=(request)=>{
+      const input=JSON.parse(new TextDecoder().decode(request.body));
+      let result:unknown;
+      if(input.method==='eth_chainId')result='0x279f';
+      else if(input.method==='eth_getTransactionReceipt')result={status:variant==='reverted'?'0x0':'0x1',from:variant==='sender'?contract:creator,to:variant==='contract'?creator:contract,blockHash:hash};
+      else if(input.method==='eth_getBlockByNumber')result={number:'0xa'};
+      else if(input.method==='eth_getBlockByHash')result={number:variant==='unfinalized'?'0xb':'0x9',timestamp:variant==='late'?'0x7d0':'0x4b0'};
+      else if(input.method==='eth_getCode')result='0x6000';
+      return {statusCode:200,body:Buffer.from(JSON.stringify({jsonrpc:'2.0',id:1,result})).toString('base64')};
+    };
+    const runtime=newTestRuntime<Config>(null,{},config);
+    const observation=runtime.runInNodeMode(fetchContractCallObservation,consensusIdenticalAggregation<string>())(contract,creator,hash,100,2000,1500).result();
+    expect(JSON.parse(observation).length).toBe(variant==='valid'?1:0);
+  }
 });
