@@ -8,7 +8,9 @@
     "typecheck": "tsc --noEmit",
     "build": "cre-compile ./main.ts ./dist/workflow.wasm",
     "test": "bun test ./workflow.test.ts",
-    "worker:product": "node ./product-worker.mjs"
+    "worker:product": "node ./product-worker.mjs",
+    "worker:http": "node ./worker-http.mjs",
+    "test:hosting": "node --test ./worker-http.test.mjs ./cre-session.test.mjs"
   },
   "dependencies": {
     "@chainlink/cre-sdk": "1.23.0",

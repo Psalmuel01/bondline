@@ -1,6 +1,8 @@
 import { getWalletSession } from '@/lib/server/session';
 import { isCircleMember } from '@/lib/server/membership';
 import { enqueueVerification, finalPhase, getJob, productConfigured, readVerification, workerAvailable } from '@/lib/server/verification';
+import {after} from 'next/server';
+import {workerWakeConfigured,wakeVerificationWorker} from '@/lib/server/verification-wake';
 export const runtime='nodejs';
 export const maxDuration=30;
 type Context={params:Promise<{id:string}>};
@@ -10,7 +12,13 @@ export async function GET(_request:Request,context:Context) {
     const {bond,rule,spec}=await readVerification(id);
     const job=rule[0]===2?await getJob(id):undefined;
     const final=finalPhase(bond[5]);
-    return Response.json({type:rule[0]===0?'manual':rule[0]===1?'balance':spec?.type,config:spec,targetBalance:rule[2].toString(),createdAt:Number(rule[4]),deadline:Number(bond[3]),status:final ?? job?.phase ?? 'not_checked',lastVerificationTime:job?.checked_at ?? null,result:job?.result ?? null,error:job?.error ?? null,available:await workerAvailable() && rule[1].toLowerCase()===process.env.NEXT_PUBLIC_EXTERNAL_VERIFIER_ADDRESS?.toLowerCase(),mode:'cli-simulation'},{headers:{'Cache-Control':'no-store'}});
+    const online=await workerAvailable();
+    const onDemand=workerWakeConfigured();
+    const matching=rule[1].toLowerCase()===process.env.NEXT_PUBLIC_EXTERNAL_VERIFIER_ADDRESS?.toLowerCase();
+    const pending=Boolean(!final && job && ['queued','checking','in_progress','requirement_met','error'].includes(job.phase));
+    if(onDemand && matching && pending && !online)after(wakeVerificationWorker);
+    const starting=onDemand && matching && pending && !online;
+    return Response.json({type:rule[0]===0?'manual':rule[0]===1?'balance':spec?.type,config:spec,targetBalance:rule[2].toString(),createdAt:Number(rule[4]),deadline:Number(bond[3]),status:final ?? job?.phase ?? 'not_checked',lastVerificationTime:job?.checked_at ?? null,requestedAt:job?.requested_at ?? null,result:job?.result ?? null,error:job?.error ?? null,available:productConfigured() && (online || onDemand) && matching,workerState:starting?'starting':online?'online':'offline',execution:onDemand?'on-demand':'continuous',mode:'cli-simulation'},{headers:{'Cache-Control':'no-store'}});
   } catch { return Response.json({error:'Verification details are temporarily unavailable.'},{status:503}); }
 }
 export async function POST(request:Request,context:Context) {
@@ -32,6 +40,7 @@ export async function POST(request:Request,context:Context) {
     if(Object.keys(input).some(k=>k!=='transactionHash') || (input.transactionHash && !/^0x[0-9a-fA-F]{64}$/.test(input.transactionHash))) return Response.json({error:'Invalid transaction evidence.'},{status:400});
     if(spec?.type==='onchain' && !input.transactionHash && !(await getJob(id))?.transaction_hash) return Response.json({error:'Add the transaction hash for your contract call.'},{status:400});
     const queued=await enqueueVerification(id,rule[3],input.transactionHash);
-    return Response.json({status:queued?'queued':'checking'},{status:queued?202:429,headers:queued?{}:{'Retry-After':'60'}});
+    if(workerWakeConfigured())after(wakeVerificationWorker);
+    return Response.json({status:queued?'queued':'checking',execution:workerWakeConfigured()?'on-demand':'continuous'},{status:queued?202:429,headers:queued?{}:{'Retry-After':'60'}});
   } catch { return Response.json({error:'Could not request verification. Try again shortly.'},{status:503}); }
 }

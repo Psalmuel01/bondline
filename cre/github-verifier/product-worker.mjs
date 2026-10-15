@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
 import {createPublicClient,createWalletClient,http,parseAbi,keccak256,toBytes} from 'viem';
 import {privateKeyToAccount,generatePrivateKey} from 'viem/accounts';
+import {persistCreSession} from './cre-session.mjs';
 import {monadTestnet} from 'viem/chains';
 import {parseExternalSpec,requiredProgress} from '../../web/scripts/verifier-adapters.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
@@ -49,7 +50,8 @@ function runSimulation(config) {
   let out='';const timer=setTimeout(()=>child.kill('SIGTERM'),180000);
   const collect=data=>{out+=data.toString();if(out.length>1000000)child.kill('SIGTERM');};child.stdout.on('data',collect);child.stderr.on('data',collect);
   child.on('error',error=>{clearTimeout(timer);rmSync(dir,{recursive:true,force:true});reject(error);});
-  child.on('close',code=>{clearTimeout(timer);rmSync(dir,{recursive:true,force:true});
+  child.on('close',async code=>{clearTimeout(timer);rmSync(dir,{recursive:true,force:true});
+   try {await persistCreSession();}catch {return reject(new Error('Could not persist refreshed CRE login'));}
    if(code!==0)return reject(new Error('CRE CLI evaluation failed'));
    const lines=out.split('\n').filter(line=>line.includes('BONDLINE_RESULT '));
    if(lines.length!==1)return reject(new Error('Expected one CRE evaluation result'));
