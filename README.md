@@ -126,4 +126,6 @@ Commitments, on-chain membership, evidence URIs, and outcomes are public. Profil
 
 OpenAI Codex/ChatGPT assisted with implementation, debugging, refactoring, documentation, and tests. The project author retains responsibility for product decisions, review, and validation.
 
+## License
 
+[MIT](LICENSE).
