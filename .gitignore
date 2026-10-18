@@ -44,3 +44,6 @@ cre/**/.cre_build_tmp*
 
 # Local deployment link
 .vercel/
+
+# Local media projects and exports
+/media/

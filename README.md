@@ -4,15 +4,9 @@
 
 Bondline is a social accountability app on Monad. Create a Circle with people you trust, commit to a goal, and stake MON against a deadline. Verified completion returns your stake; missed commitments fund your Circle’s shared Pot.
 
-<!--
-## Demo video
-
-[Watch the Bondline demo](DEMO_VIDEO_URL)
--->
-
 [Live app](https://bondline-circle.vercel.app) · [Product guide](https://bondline-circle.vercel.app/guide) · [Documentation](https://bondline-circle.vercel.app/docs)
 
-![Bondline homepage with an illustrative Circle preview](docs/assets/homepage-desktop.png)
+[![Watch the Bondline demo on YouTube](docs/assets/homepage-video-cover.png)](https://youtu.be/NJeAI1Rbe_0)
 
 ## How it works
 
