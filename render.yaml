@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: bondline-verification
+    branch: chainlink
+    runtime: docker
+    plan: free
+    dockerfilePath: ./cre/github-verifier/Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    numInstances: 1
+    autoDeployTrigger: off
+    envVars:
+      - key: BONDLINE_APP_URL
+        value: https://bondline-circle.vercel.app
+      - key: NEXT_PUBLIC_CORE_ADDRESS
+        value: "0x7b37d3be163f10af7662e083709aea9102530823"
+      - key: MONAD_RPC_URL
+        value: https://testnet-rpc.monad.xyz
+      - key: BONDLINE_VERIFICATION_WORKER_SECRET
+        sync: false
+      - key: BONDLINE_VERIFIER_PRIVATE_KEY
+        sync: false
+      - key: BONDLINE_CRE_LOGIN_BASE64
+        sync: false

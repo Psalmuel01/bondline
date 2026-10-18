@@ -1,0 +1,20 @@
+# Allowlist the build context so no local secrets or unrelated projects upload.
+**
+!cre/
+!cre/project.yaml
+!cre/github-verifier/
+!cre/github-verifier/Dockerfile
+!cre/github-verifier/Dockerfile.dockerignore
+!cre/github-verifier/package.json
+!cre/github-verifier/pnpm-lock.yaml
+!cre/github-verifier/main.ts
+!cre/github-verifier/workflow.ts
+!cre/github-verifier/tsconfig.json
+!cre/github-verifier/workflow.yaml
+!cre/github-verifier/product-worker.mjs
+!cre/github-verifier/worker-http.mjs
+!cre/github-verifier/cre-session.mjs
+!web/
+!web/scripts/
+!web/scripts/verification.mjs
+!web/scripts/verifier-adapters.mjs

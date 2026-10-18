@@ -40,9 +40,10 @@ export function OpenBond({
   const [contract, setContract] = useState("");
   const [startTime, setStartTime] = useState("");
   const [externalAvailable, setExternalAvailable] = useState(false);
+  const [externalOnDemand, setExternalOnDemand] = useState(false);
   useEffect(() => {
     let active = true;
-    const check = () => fetch("/api/verification/capabilities", {cache:"no-store"}).then(r=>r.json()).then(v=>{if(active)setExternalAvailable(v.external===true);}).catch(()=>{if(active)setExternalAvailable(false);});
+    const check = () => fetch("/api/verification/capabilities", {cache:"no-store"}).then(r=>r.json()).then(v=>{if(active){setExternalAvailable(v.external===true);setExternalOnDemand(v.execution==='on-demand');}}).catch(()=>{if(active)setExternalAvailable(false);});
     void check();
     const interval=setInterval(check,15000);
     return ()=>{active=false;clearInterval(interval);};
@@ -245,6 +246,7 @@ export function OpenBond({
               </span>
             </label>
           )}
+          {kind === 2 && externalOnDemand && <p className="text-xs text-muted">Verification runs on request. The service may take a minute or longer to start. Use Check progress well before your deadline; automatic checks are not guaranteed while it sleeps.</p>}
           {kind === 2 && externalType === "github" && (
             <div className="space-y-4">
               <label className="block text-sm">
